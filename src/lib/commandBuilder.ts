@@ -24,6 +24,8 @@ export interface BuildOptions {
   requiresValue?: boolean
   /** Comando livre: chaves ficam literais. */
   freeMode?: boolean
+  /** O valor veio de um atalho/opção que pode ser vazio de propósito (ex.: "Reiniciar → Normal"). */
+  allowEmptyValue?: boolean
 }
 
 export const NO_SERIAL_SUBCOMMANDS: readonly string[] = ['devices', 'kill-server', 'start-server', 'connect', 'disconnect', 'version']
@@ -58,7 +60,7 @@ export function buildCommand(template: string, ctx: BuildContext, opts: BuildOpt
   const value = (ctx.value ?? '').trim()
   if (!opts.freeMode) {
     const usesValue = [...template.matchAll(PLACEHOLDER_RE)].some((m) => VALUE_PLACEHOLDERS.has(m[1]))
-    if ((opts.requiresValue || usesValue) && value === '') {
+    if ((opts.requiresValue || usesValue) && value === '' && !opts.allowEmptyValue) {
       throw new BuildError('missing-value', 'Preencha o valor antes de executar.')
     }
   }
@@ -84,7 +86,7 @@ function buildLine(line: string, ctx: BuildContext, value: string, freeMode: boo
     token
       .map((part) => {
         if (freeMode) return part.text
-        return part.text.replace(PLACEHOLDER_RE, (whole, name: string) => {
+        return part.text.replace(PLACEHOLDER_RE, (whole, name: string, offset: number) => {
           if (!KNOWN_PLACEHOLDERS.has(name)) throw new BuildError('unknown-placeholder', `Marcador desconhecido: ${whole}.`)
           if (name === 's') return ctx.serial
           if (name === 'd') return ctx.deviceDir
@@ -93,14 +95,20 @@ function buildLine(line: string, ctx: BuildContext, value: string, freeMode: boo
             usesPrevious = true
             return whole
           }
-          return deviceShell && part.quoted ? shQuote(value) : value
+          if (!deviceShell || !part.quoted) return value
+          // Já dentro de '…' do próprio modelo (ex.: grep '{p}'): só neutraliza a aspa simples.
+          const insideSingleQuotes = (part.text.slice(0, offset).match(/'/g)?.length ?? 0) % 2 === 1
+          return insideSingleQuotes ? value.replace(/'/g, `'\\''`) : shQuote(value)
         })
       })
       .join('')
 
   const args: string[] = []
   for (const token of tokens) {
-    args.push(substitute(token, inDeviceShell))
+    const arg = substitute(token, inDeviceShell)
+    // Valor vazio de atalho (ex.: "Reiniciar → Normal") num {p} sem aspas: o arg some.
+    if (arg === '' && token.every((p) => !p.quoted)) continue
+    args.push(arg)
     if (!inDeviceShell && token.length === 1 && !token[0].quoted && DEVICE_SHELL_SUBCOMMANDS.has(token[0].text)) {
       inDeviceShell = true
     }

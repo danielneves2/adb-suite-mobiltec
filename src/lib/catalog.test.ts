@@ -24,6 +24,15 @@ test.each(catalog.comandos)('$id monta sem erro', (c) => {
   for (const extra of [c.comando_parar, c.comando_depois]) if (extra) buildCommand(extra, ctx)
 })
 
+test.each(catalog.comandos.filter((c) => c.atalhos?.length))('$id: todos os atalhos montam', (c) => {
+  for (const a of c.atalhos ?? []) {
+    const r = buildCommand(c.comando, { ...ctx, value: a.valor }, { requiresValue: c.parametro !== null, allowEmptyValue: true })
+    expect(r.steps[0].args, a.rotulo).not.toContain('')
+  }
+})
+test('listarpasta aceita caminho com espaço', () =>
+  expect(buildCommand(byId('listarpasta').comando, { ...ctx, value: '/sdcard/My Files' }).steps[0].args.slice(-3)).toEqual(['ls', '-la', "'/sdcard/My Files'"]))
+
 test('sem data fixa, <…> nem IP fixo', () => {
   for (const c of catalog.comandos) expect(c.comando, c.id).not.toMatch(/\d{8}_\d{4}|\d{4}-\d{2}-\d{2}|<[^>]+>|192\.168\./)
 })

@@ -571,7 +571,7 @@
       "categoria": "Arquivos",
       "nome": "Listar pasta do aparelho",
       "resumo": "Mostra os arquivos de uma pasta do aparelho, com tamanho e data.",
-      "comando": "adb -s {s} shell ls -la {p}",
+      "comando": "adb -s {s} shell ls -la \"{p}\"",
       "parametro": "path",
       "exemplo": "/sdcard/Download/",
       "atalhos": [

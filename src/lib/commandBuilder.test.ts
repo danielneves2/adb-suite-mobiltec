@@ -98,6 +98,19 @@ describe('buildCommand', () => {
       expect(build('adb shell getprop > "{d}\\{p}.txt"', { ...ctx, value: "a b" }).steps[0].redirectTo).toBe(
         'C:\\ADB-Suite\\Saidas\\Samsung-A10_R58M\\a b.txt',
       ))
+    test("'{p}' aninhado dentro de string da shell não permite injeção", () =>
+      expect(build(`adb shell "dumpsys package | grep '{p}'"`, { ...ctx, value: "a'; echo INJECTED; '" }).steps[0].args.at(-1)).toBe(
+        `dumpsys package | grep 'a'\\''; echo INJECTED; '\\'''`,
+      ))
+    test("'{p}' aninhado com valor simples fica igual", () =>
+      expect(build(`adb shell "grep -A2 '{p}'"`, { ...ctx, value: 'a b; c' }).steps[0].args.at(-1)).toBe(`grep -A2 'a b; c'`))
+  })
+
+  describe('valor vazio vindo de atalho', () => {
+    test('allowEmptyValue some com o arg (Reiniciar → Normal)', () =>
+      expect(build('adb -s {s} reboot {p}', { ...ctx, value: '' }, { allowEmptyValue: true }).steps[0].args).toEqual(['-s', 'R58M', 'reboot']))
+    test('sem allowEmptyValue continua exigindo', () =>
+      expect(() => build('adb -s {s} reboot {p}', { ...ctx, value: '' })).toThrow(expect.objectContaining({ code: 'missing-value' })))
   })
 })
 
