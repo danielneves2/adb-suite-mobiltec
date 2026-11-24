@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>ADB Suite – janela principal</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#131215}
+a{color:#EA86CF}a:hover{color:#F0A8DD}
+input::placeholder{color:#9C96A0}
+</style>
+</helmet>
+<div style="min-height: 820px; background: #131215; color: #EDEAEE; font-family: 'Space Mono', ui-monospace, Consolas, monospace; font-size: 12px; display: flex; flex-direction: column">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; padding: 8px 16px; background: #0E0D10; border-bottom: 3px solid #7B0A5D">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <img src="/_blob/d77c166dedbdac9bc4c032e5c59379f8" alt="Mobiltec" width="30" height="30" style="width: 30px; height: 30px; object-fit: contain; display: block">
+      <span style="font-weight: 700; font-size: 15px; letter-spacing: 0.02em">ADB SUITE <span style="color: #A9A4AE; font-weight: 400">-</span> MOBILTEC</span>
+      <span style="font-size: 10px; color: #ADA7B2">v0.1</span>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex: 1 1 420px">
+      <span style="font-size: 10px; font-weight: 700; color: #A9A4AE; letter-spacing: 0.08em; margin-right: 2px">APARELHO</span>
+      <sc-for list="{{ devices }}" as="d" hint-placeholder-count="2">
+        <sc-if value="{{ d.selected }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ d.pick }}" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; border-color: #46414C; background: #2E2B33; color: #FFFFFF">
+            <span style="width: 8px; height: 8px; background: #EA86CF"></span>
+            <span>{{ d.model }}</span><span style="font-weight: 400; font-size: 11px; color: #C9C4CC">{{ d.android }}</span>
+          </button>
+        </sc-if>
+        <sc-if value="{{ d.notSelected }}" hint-placeholder-val="{{ false }}">
+          <button type="button" onClick="{{ d.pick }}" style="display: flex; align-items: center; gap: 8px; height: 32px; padding: 0 10px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; border-color: #322F37; background: #1F1D22; color: #EDEAEE">
+            <span style="width: 8px; height: 8px; border: 2px solid #8A8590; box-sizing: border-box"></span>
+            <span>{{ d.model }}</span><span style="font-weight: 400; font-size: 11px; color: #ADA7B2">{{ d.android }}</span>
+          </button>
+        </sc-if>
+      </sc-for>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 6px">
+      <button type="button" onClick="{{ goConn }}" style="height: 32px; padding: 0 10px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; border-color: #322F37; background: #1F1D22; color: #EDEAEE">Diagnosticar conexão</button>
+      <button type="button" onClick="{{ goDiag }}" style="height: 32px; padding: 0 10px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; border-color: #46414C; background: #2E2B33; color: #FFFFFF">Coletar diagnóstico</button>
+    </div>
+  </header>
+
+  <div style="display: flex; flex-wrap: wrap; flex: 1 1 auto">
+
+    <nav aria-label="Categorias" style="flex: 0 0 72px; box-sizing: border-box; padding: 8px 6px; background: #0B0A0D; border-right: 1px solid #211F25; display: flex; flex-direction: column; gap: 4px">
+      <sc-for list="{{ rail }}" as="r" hint-placeholder-count="9">
+        <sc-if value="{{ r.active }}" hint-placeholder-val="{{ false }}">
+          <button type="button" onClick="{{ r.pick }}" aria-current="page" style="display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 2px; border: 0; border-radius: 0; background: #7B0A5D; color: #FFFFFF; font: inherit; font-size: 9px; font-weight: 700; letter-spacing: 0.02em; cursor: pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="{{ r.icon }}"></path></svg>
+            <span>{{ r.label }}</span>
+          </button>
+        </sc-if>
+        <sc-if value="{{ r.notActive }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ r.pick }}" style="display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 2px; border: 0; border-radius: 0; background: transparent; color: #B9B3BD; font: inherit; font-size: 9px; font-weight: 700; letter-spacing: 0.02em; cursor: pointer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="square" stroke-linejoin="miter" aria-hidden="true"><path d="{{ r.icon }}"></path></svg>
+            <span>{{ r.label }}</span>
+          </button>
+        </sc-if>
+      </sc-for>
+    </nav>
+
+    <aside aria-label="Comandos" style="flex: 1 1 220px; max-width: 250px; box-sizing: border-box; padding: 10px 8px; background: #111013; border-right: 1px solid #211F25; display: flex; flex-direction: column; gap: 10px">
+      <label for="busca" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Buscar em todos os comandos</label>
+      <input id="busca" type="search" value="{{ query }}" onChange="{{ onQuery }}" placeholder="&gt; buscar em tudo…" style="height: 30px; box-sizing: border-box; padding: 0 8px; border: 2px solid #403C46; border-radius: 0; background: #0A090C; color: #EDEAEE; font: inherit">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 6px; padding: 0 4px">
+        <span style="font-size: 12px; font-weight: 700; color: #EDEAEE">{{ listTitle }}</span>
+        <span style="font-size: 10px; color: #ADA7B2">{{ listCount }}</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 1px">
+        <sc-for list="{{ listItems }}" as="it" hint-placeholder-count="6">
+          <sc-if value="{{ it.selected }}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{ it.pick }}" title="{{ it.desc }}" style="display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 30px; padding: 3px 6px; border: 0; border-radius: 0; background: #2E2B33; color: #FFFFFF; font: inherit; font-weight: 700; text-align: left; cursor: pointer">
+              <span style="display: flex; flex-direction: column"><span>&gt; {{ it.name }}</span><sc-if value="{{ it.hasHint }}" hint-placeholder-val="{{ false }}"><span style="font-size: 10px; font-weight: 400; color: #C9C4CC">{{ it.hint }}</span></sc-if></span>
+              <span style="display: flex; gap: 4px; font-size: 10px">
+                <sc-if value="{{ it.custom }}" hint-placeholder-val="{{ false }}"><span style="color: #C9C4CC">LOCAL</span></sc-if>
+                <sc-if value="{{ it.danger }}" hint-placeholder-val="{{ false }}"><span style="color: #F4C2E7">[!]</span></sc-if>
+              </span>
+            </button>
+          </sc-if>
+          <sc-if value="{{ it.notSelected }}" hint-placeholder-val="{{ true }}">
+            <button type="button" onClick="{{ it.pick }}" title="{{ it.desc }}" style="display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 30px; padding: 3px 6px; border: 0; border-radius: 0; background: transparent; color: #DCD7DF; font: inherit; text-align: left; cursor: pointer">
+              <span style="display: flex; flex-direction: column"><span>{{ it.name }}</span><sc-if value="{{ it.hasHint }}" hint-placeholder-val="{{ false }}"><span style="font-size: 10px; color: #ADA7B2">{{ it.hint }}</span></sc-if></span>
+              <span style="display: flex; gap: 4px; font-size: 10px">
+                <sc-if value="{{ it.custom }}" hint-placeholder-val="{{ false }}"><span style="color: #ADA7B2">LOCAL</span></sc-if>
+                <sc-if value="{{ it.danger }}" hint-placeholder-val="{{ false }}"><span style="font-weight: 700; color: #EA86CF">[!]</span></sc-if>
+              </span>
+            </button>
+          </sc-if>
+        </sc-for>
+        <sc-if value="{{ listEmpty }}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 0; padding: 4px 6px; color: #ADA7B2; font-size: 11px; line-height: 1.5">{{ listEmptyText }}</p>
+        </sc-if>
+      </div>
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px solid #211F25">
+        <button type="button" onClick="{{ newCmd }}" style="height: 30px; padding: 0 10px; border: 2px solid #7B0A5D; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; background: #7B0A5D; color: #FFFFFF; text-align: left">+ Novo comando</button>
+        <sc-if value="{{ isMine }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; gap: 6px">
+            <button type="button" onClick="{{ doImport }}" style="flex: 1 1 0; height: 26px; padding: 0 6px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; background: #1F1D22; color: #EDEAEE; font-size: 11px">Importar</button>
+            <button type="button" onClick="{{ doExport }}" style="flex: 1 1 0; height: 26px; padding: 0 6px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; background: #1F1D22; color: #EDEAEE; font-size: 11px">Exportar</button>
+          </div>
+        </sc-if>
+      </div>
+    </aside>
+
+    <main style="flex: 999 1 480px; min-width: 0; box-sizing: border-box; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; background: #131215">
+      <sc-if value="{{ viewing }}" hint-placeholder-val="{{ true }}">
+
+      <div style="display: flex; flex-direction: column; gap: 4px; max-width: 860px">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+          <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">{{ cur.cat }} /</span>
+          <button type="button" onClick="{{ togglePin }}" aria-pressed="{{ pinned }}" style="display: flex; align-items: center; gap: 4px; height: 22px; padding: 0 6px; border: 1px solid #322F37; border-radius: 0; background: transparent; color: #DCD7DF; font: inherit; font-size: 10px; font-weight: 700; cursor: pointer">
+            <sc-if value="{{ pinned }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="#EA86CF" stroke="#EA86CF" stroke-width="1.8" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"></path></svg></sc-if>
+            <sc-if value="{{ notPinned }}" hint-placeholder-val="{{ true }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z"></path></svg></sc-if>
+            <span>{{ pinLabel }}</span>
+          </button>
+          <sc-if value="{{ cur.danger }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size: 10px; font-weight: 700; color: #FFFFFF; background: #7B0A5D; padding: 1px 6px">PEDE CONFIRMAÇÃO</span>
+          </sc-if>
+        </div>
+        <h1 style="margin: 0; font-size: 20px; font-weight: 700; color: #EDEAEE">{{ cur.name }}</h1>
+        <p style="margin: 0; color: #B9B3BD; line-height: 1.5">{{ cur.desc }}</p>
+        <sc-if value="{{ hasReq }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px; padding: 8px 10px; border: 1px solid #322F37; background: #111013; max-width: 640px">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">Antes de rodar, confira</span>
+            <sc-for list="{{ reqs }}" as="rq" hint-placeholder-count="3">
+              <span style="color: #DCD7DF; line-height: 1.5">· {{ rq.text }}</span>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ cur.custom }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px">
+            <span style="font-size: 11px; color: #ADA7B2">Comando seu, salvo neste computador.</span>
+            <button type="button" onClick="{{ editCur }}" style="height: 26px; padding: 0 10px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; background: #1F1D22; color: #EDEAEE; font-size: 11px">Editar</button>
+            <button type="button" onClick="{{ delCur }}" style="height: 26px; padding: 0 10px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; background: #1F1D22; color: #EDEAEE; font-size: 11px">{{ delLabel }}</button>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ isChoice }}" hint-placeholder-val="{{ false }}">
+        <fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 6px">
+          <legend style="padding: 0 0 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">{{ choiceLabel }}</legend>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{ choices }}" as="op" hint-placeholder-count="3">
+              <sc-if value="{{ op.selected }}" hint-placeholder-val="{{ false }}">
+                <button type="button" onClick="{{ op.pick }}" aria-pressed="true" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 150px; max-width: 300px; padding: 7px 10px; border: 2px solid #7B0A5D; border-radius: 0; background: #2A0921; color: #FFFFFF; font: inherit; text-align: left; cursor: pointer">
+                  <span style="display: flex; align-items: center; gap: 6px; font-weight: 700"><span style="width: 8px; height: 8px; background: #EA86CF"></span>{{ op.label }}</span>
+                  <sc-if value="{{ op.hasSub }}" hint-placeholder-val="{{ false }}"><span style="font-size: 10px; color: #E9C4DF; overflow-wrap: anywhere">{{ op.sub }}</span></sc-if>
+                </button>
+              </sc-if>
+              <sc-if value="{{ op.notSelected }}" hint-placeholder-val="{{ true }}">
+                <button type="button" onClick="{{ op.pick }}" aria-pressed="false" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 150px; max-width: 300px; padding: 7px 10px; border: 2px solid #322F37; border-radius: 0; background: #131215; color: #EDEAEE; font: inherit; text-align: left; cursor: pointer">
+                  <span style="display: flex; align-items: center; gap: 6px; font-weight: 700"><span style="width: 8px; height: 8px; border: 2px solid #8A8590; box-sizing: border-box"></span>{{ op.label }}</span>
+                  <sc-if value="{{ op.hasSub }}" hint-placeholder-val="{{ false }}"><span style="font-size: 10px; color: #ADA7B2; overflow-wrap: anywhere">{{ op.sub }}</span></sc-if>
+                </button>
+              </sc-if>
+            </sc-for>
+          </div>
+        </fieldset>
+      </sc-if>
+
+      <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px">
+        <sc-if value="{{ showInput }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 320px; max-width: 520px">
+            <label for="param" style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">{{ paramLabel }}</label>
+            <div style="display: flex; gap: 6px">
+              <input id="param" type="text" value="{{ val }}" onChange="{{ onVal }}" placeholder="{{ paramPlaceholder }}" style="flex: 1 1 auto; min-width: 0; height: 34px; box-sizing: border-box; padding: 0 8px; border: 2px solid #403C46; border-radius: 0; background: #0A090C; color: #EDEAEE; font: inherit">
+              <sc-if value="{{ isFile }}" hint-placeholder-val="{{ false }}">
+                <button type="button" style="height: 34px; padding: 0 10px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; background: #1F1D22; color: #EDEAEE">Procurar…</button>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ cur.danger }}" hint-placeholder-val="{{ false }}">
+          <button type="button" onClick="{{ run }}" style="height: 34px; padding: 0 14px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; border-color: #7B0A5D; background: #7B0A5D; color: #FFFFFF">▶ {{ runLabel }}</button>
+        </sc-if>
+        <sc-if value="{{ notDanger }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ run }}" style="height: 34px; padding: 0 14px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; border-color: #7B0A5D; background: #7B0A5D; color: #FFFFFF">▶ {{ runLabel }}</button>
+        </sc-if>
+        <button type="button" onClick="{{ toggleCmd }}" style="height: 34px; padding: 0 10px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; border-color: #322F37; background: #1F1D22; color: #A9A4AE">{{ toggleLabel }}</button>
+      </div>
+
+      <sc-if value="{{ hasSug }}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: -6px">
+          <span style="font-size: 10px; color: #ADA7B2">{{ sugLabel }}</span>
+          <sc-for list="{{ suggestions }}" as="sg" hint-placeholder-count="3">
+            <button type="button" onClick="{{ sg.pick }}" style="height: 24px; padding: 0 8px; border: 1px solid #322F37; border-radius: 0; background: #1B191F; color: #DCD7DF; font: inherit; font-size: 11px; cursor: pointer">{{ sg.name }}</button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showCmd }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; max-width: 860px; padding: 4px 4px 4px 10px; background: #070609">
+          <code style="flex: 1 1 360px; min-width: 0; overflow-x: auto; white-space: pre; font-family: VT323, 'Space Mono', ui-monospace, Consolas, monospace; font-size: 18px; line-height: 1.2; color: #C85F00">$ {{ cmdText }}</code>
+          <button type="button" onClick="{{ copyCmd }}" style="height: 28px; padding: 0 10px; border: 0; border-radius: 0; background: #19161C; color: #F2EFF5; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer">{{ copyCmdLabel }}</button>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ confirming }}" hint-placeholder-val="{{ false }}">
+        <div role="alertdialog" aria-labelledby="conf-t" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; max-width: 860px; padding: 10px 12px; border: 2px solid #7B0A5D; background: #2A0921">
+          <strong id="conf-t" style="font-size: 11px; letter-spacing: 0.08em; color: #FFFFFF; background: #7B0A5D; padding: 2px 6px">ATENÇÃO</strong>
+          <p style="margin: 0; flex: 1 1 300px; color: #F8D8F0; line-height: 1.5">{{ confirmText }}</p>
+          <div style="display: flex; gap: 6px">
+            <button type="button" onClick="{{ cancel }}" style="height: 30px; padding: 0 10px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; border-color: #322F37; background: #1F1D22; color: #EDEAEE">Cancelar</button>
+            <button type="button" onClick="{{ confirm }}" style="height: 30px; padding: 0 10px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; border-color: #7B0A5D; background: #7B0A5D; color: #FFFFFF">Sim, executar</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <label for="livre" style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">Comando livre</label>
+        <div style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 6px">
+          <div style="flex: 1 1 360px; min-width: 0; display: flex; align-items: center; gap: 6px; padding: 0 8px; border: 2px solid #322F37; background: #070609">
+            <span aria-hidden="true" style="font-family: VT323, 'Space Mono', ui-monospace, Consolas, monospace; font-size: 18px; color: #8A8590; white-space: nowrap">$ adb -s {{ devId }}</span>
+            <input id="livre" type="text" value="{{ free }}" onChange="{{ onFree }}" onKeyDown="{{ onFreeKey }}" placeholder="shell dumpsys battery  (qualquer comando, Enter pra rodar)" autocomplete="off" spellcheck="false" style="flex: 1 1 auto; min-width: 0; height: 32px; border: 0; outline-offset: 2px; background: transparent; color: #C85F00; font-family: VT323, 'Space Mono', ui-monospace, Consolas, monospace; font-size: 18px">
+          </div>
+          <button type="button" onClick="{{ runFree }}" style="height: 36px; padding: 0 14px; border: 2px solid #7B0A5D; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; background: #7B0A5D; color: #FFFFFF">▶ Rodar</button>
+          <button type="button" onClick="{{ saveFree }}" style="height: 36px; padding: 0 10px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; background: #1F1D22; color: #EDEAEE">Salvar como comando</button>
+        </div>
+      </div>
+
+      <section aria-label="Saída do comando" style="display: flex; flex-direction: column; flex: 1 1 auto; min-height: 300px; border: 2px solid #322F37; background: #070609; overflow: hidden">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 6px 4px 10px; background: #211F25">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="font-weight: 700; color: #FFFFFF; letter-spacing: 0.06em">SAIDA.LOG</span>
+            <span style="font-size: 11px; color: #C9C4CC">{{ status }}</span>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-if value="{{ saves }}" hint-placeholder-val="{{ false }}">
+              <button type="button" onClick="{{ openFolder }}" style="height: 26px; padding: 0 10px; border: 0; border-radius: 0; background: #131215; color: #EDEAEE; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer">Abrir pasta</button>
+            </sc-if>
+            <button type="button" onClick="{{ saveOut }}" style="height: 26px; padding: 0 10px; border: 0; border-radius: 0; background: #131215; color: #EDEAEE; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer">Salvar saída</button>
+            <button type="button" onClick="{{ copyOut }}" style="height: 26px; padding: 0 10px; border: 0; border-radius: 0; background: #131215; color: #EDEAEE; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer">{{ copyOutLabel }}</button>
+            <button type="button" onClick="{{ copyTicket }}" style="height: 26px; padding: 0 10px; border: 0; border-radius: 0; background: #7B0A5D; color: #FFFFFF; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer">{{ copyTicketLabel }}</button>
+          </div>
+        </div>
+        <sc-if value="{{ ran }}" hint-placeholder-val="{{ false }}">
+          <div style="padding: 8px 12px 0; font-family: VT323, 'Space Mono', ui-monospace, Consolas, monospace; font-size: 17px; color: #A9A2B2; white-space: pre-wrap"># {{ meta }}</div>
+          <pre style="margin: 0; padding: 4px 12px 12px; overflow-x: auto; font-family: VT323, 'Space Mono', ui-monospace, Consolas, monospace; font-size: 19px; line-height: 1.2; color: #E0832A">{{ output }}</pre>
+        </sc-if>
+        <sc-if value="{{ running }}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 0; padding: 10px 12px; font-family: VT323, 'Space Mono', ui-monospace, Consolas, monospace; font-size: 19px; color: #C85F00">executando... █</p>
+        </sc-if>
+        <sc-if value="{{ idle }}" hint-placeholder-val="{{ true }}">
+          <p style="margin: 0; padding: 10px 12px; font-family: VT323, 'Space Mono', ui-monospace, Consolas, monospace; font-size: 19px; line-height: 1.2; color: #B3ACBB">&gt; pronto. execute o comando pra ver a saída aqui. █</p>
+        </sc-if>
+      </section>
+      </sc-if>
+
+      <sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 14px; max-width: 760px">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">Meus comandos /</span>
+            <h1 style="margin: 0; font-size: 20px; font-weight: 700; color: #EDEAEE">{{ formTitle }}</h1>
+            <p style="margin: 0; color: #B9B3BD; line-height: 1.5">Fica salvo só neste computador. Pra passar pros colegas, use Exportar e mande o arquivo.</p>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 12px">
+            <div style="display: flex; flex-direction: column; gap: 4px; flex: 2 1 280px">
+              <label for="f-nome" style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">Nome do comando</label>
+              <input id="f-nome" type="text" value="{{ form.name }}" onChange="{{ onFName }}" placeholder="ex.: Abrir config. de Wi-Fi" style="height: 34px; box-sizing: border-box; padding: 0 8px; border: 2px solid #403C46; border-radius: 0; background: #0A090C; color: #EDEAEE; font: inherit">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 180px">
+              <label for="f-cat" style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">Categoria</label>
+              <select id="f-cat" value="{{ form.cat }}" onChange="{{ onFCat }}" style="height: 34px; box-sizing: border-box; padding: 0 6px; border: 2px solid #403C46; border-radius: 0; background: #0A090C; color: #EDEAEE; font: inherit">
+                <sc-for list="{{ catOptions }}" as="o" hint-placeholder-count="5">
+                  <option value="{{ o }}">{{ o }}</option>
+                </sc-for>
+              </select>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <label for="f-desc" style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">Pra que serve (opcional)</label>
+            <input id="f-desc" type="text" value="{{ form.desc }}" onChange="{{ onFDesc }}" placeholder="Uma frase que ajude o colega a entender" style="height: 34px; box-sizing: border-box; padding: 0 8px; border: 2px solid #403C46; border-radius: 0; background: #0A090C; color: #EDEAEE; font: inherit">
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <label for="f-cmd" style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">Comando adb</label>
+            <textarea id="f-cmd" rows="4" value="{{ form.cmd }}" onChange="{{ onFCmd }}" placeholder="adb shell am start -a android.settings.WIFI_SETTINGS" style="box-sizing: border-box; padding: 8px; resize: vertical; border: 2px solid #403C46; border-radius: 0; background: #0A090C; color: #EDEAEE; font: inherit; font-family: VT323, 'Space Mono', ui-monospace, Consolas, monospace; font-size: 18px; line-height: 1.2"></textarea>
+            <p style="margin: 0; color: #ADA7B2; font-size: 11px; line-height: 1.5">Um comando por linha. Não precisa do <code>-s</code>: o app coloca o aparelho selecionado. Onde entra o valor digitado, escreva <code>{{ pkgTag }}</code>, <code>{{ fileTag }}</code>, <code>{{ pathTag }}</code> ou <code>{{ textTag }}</code>. Pra salvar na pasta de saída, use <code>{{ folderTag }}</code>.</p>
+          </div>
+
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px">
+            <div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 220px; max-width: 300px">
+              <label for="f-param" style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">O comando pede</label>
+              <select id="f-param" value="{{ form.param }}" onChange="{{ onFParam }}" style="height: 34px; box-sizing: border-box; padding: 0 6px; border: 2px solid #403C46; border-radius: 0; background: #0A090C; color: #EDEAEE; font: inherit">
+                <option value="">Nada, roda direto</option>
+                <option value="pkg">Um pacote de app</option>
+                <option value="file">Um arquivo do computador</option>
+                <option value="path">Um caminho no aparelho</option>
+                <option value="text">Um texto livre</option>
+              </select>
+            </div>
+            <label style="display: flex; align-items: center; gap: 8px; min-height: 34px; cursor: pointer">
+              <input type="checkbox" checked="{{ form.danger }}" onChange="{{ onFDanger }}" style="width: 16px; height: 16px; accent-color: #7B0A5D">
+              <span>Pedir confirmação antes de rodar</span>
+            </label>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">Prévia no {{ devModel }}</span>
+            <div style="padding: 6px 10px; background: #070609; overflow-x: auto">
+              <code style="white-space: pre; font-family: VT323, 'Space Mono', ui-monospace, Consolas, monospace; font-size: 18px; line-height: 1.2; color: #C85F00">{{ formPreview }}</code>
+            </div>
+          </div>
+
+          <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}">
+            <p role="alert" style="margin: 0; padding: 6px 10px; background: #2A0921; color: #F8D8F0">{{ formErrorText }}</p>
+          </sc-if>
+
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <button type="button" onClick="{{ saveForm }}" style="height: 34px; padding: 0 16px; border: 2px solid #7B0A5D; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; background: #7B0A5D; color: #FFFFFF">Salvar comando</button>
+            <button type="button" onClick="{{ cancelForm }}" style="height: 34px; padding: 0 14px; border: 2px solid #322F37; border-radius: 0; cursor: pointer; font: inherit; font-weight: 700; background: #1F1D22; color: #EDEAEE">Cancelar</button>
+          </div>
+        </div>
+      </sc-if>
+
+    </main>
+  </div>
+  <footer style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; padding: 4px 12px; background: #0B0A0D; border-top: 1px solid #211F25; font-size: 11px; color: #ADA7B2">
+    <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #A9A4AE; text-transform: uppercase">Pasta de saída</span>
+    <sc-if value="{{ folderView }}" hint-placeholder-val="{{ true }}">
+      <span style="display: flex; align-items: center; gap: 6px; min-width: 0">
+        <span title="{{ devDir }}" style="color: #DCD7DF; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 520px">{{ devDir }}</span>
+        <button type="button" onClick="{{ editFolder }}" style="height: 22px; padding: 0 8px; border: 1px solid #322F37; border-radius: 0; background: #1F1D22; color: #EDEAEE; font: inherit; font-size: 10px; font-weight: 700; cursor: pointer">Alterar…</button>
+        <button type="button" onClick="{{ openFolder }}" style="height: 22px; padding: 0 8px; border: 1px solid #322F37; border-radius: 0; background: #1F1D22; color: #EDEAEE; font: inherit; font-size: 10px; font-weight: 700; cursor: pointer">Abrir</button>
+      </span>
+    </sc-if>
+    <sc-if value="{{ folderEdit }}" hint-placeholder-val="{{ false }}">
+      <span style="display: flex; align-items: center; gap: 6px">
+        <label for="pasta" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Pasta de saída</label>
+        <input id="pasta" type="text" value="{{ folderDraft }}" onChange="{{ onFolderDraft }}" style="width: 280px; height: 24px; box-sizing: border-box; padding: 0 6px; border: 2px solid #403C46; border-radius: 0; background: #0A090C; color: #EDEAEE; font: inherit; font-size: 11px">
+        <button type="button" onClick="{{ saveFolder }}" style="height: 24px; padding: 0 8px; border: 0; border-radius: 0; background: #7B0A5D; color: #FFFFFF; font: inherit; font-size: 10px; font-weight: 700; cursor: pointer">OK</button>
+      </span>
+    </sc-if>
+    <span style="flex: 1 1 auto"></span>
+    <sc-if value="{{ hasFlash }}" hint-placeholder-val="{{ false }}">
+      <span role="status" style="color: #F8D8F0">{{ flash }}</span>
+    </sc-if>
+    <span>2 aparelhos conectados</span>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":820}}'>
+var DEVICES = [
+  { id: 'R58N12ABCDE', model: 'Galaxy A54', brand: 'Samsung', android: 'Android 14' },
+  { id: 'ZY22H9KLMN', model: 'Moto G84', brand: 'Motorola', android: 'Android 13' }
+];
+var MINE = 'Meus comandos';
+var PINNED = 'Fixados';
+var CATS = [MINE, 'Apps', 'Pacotes', 'Telas', 'Controle', 'Aparelho', 'Captura', 'Logs', 'Arquivos', 'Conexão'];
+var RAIL = [
+  { key: PINNED, label: 'Fixados', icon: 'M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9z' },
+  { key: 'Apps', label: 'Apps', icon: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z' },
+  { key: 'Pacotes', label: 'Pacotes', icon: 'M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10' },
+  { key: 'Telas', label: 'Telas', icon: 'M3 5h18v14H3zM3 9h18' },
+  { key: 'Controle', label: 'Controle', icon: 'M2 8h20v10H2zM6 13h4M8 11v4M15 12h.01M18 14h.01' },
+  { key: 'Logs', label: 'Logs', icon: 'M5 3h14v18H5zM8 8h8M8 12h8M8 16h5' },
+  { key: 'Captura', label: 'Captura', icon: 'M4 7h4l2-2h4l2 2h4v12H4zM12 16a3 3 0 1 0 0-6 3 3 0 0 0 0 6z' },
+  { key: 'Aparelho', label: 'Aparelho', icon: 'M7 2h10v20H7zM11 18h2' },
+  { key: 'Arquivos', label: 'Arquivos', icon: 'M3 6h7l2 2h9v11H3z' },
+  { key: 'Conexão', label: 'Conexão', icon: 'M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4' },
+  { key: MINE, label: 'Meus', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c0-4 4-6 8-6s8 2 8 6' }
+];
+var PIN_KEY = 'adbsuite.fixados.v1';
+var DEFAULT_PINS = ['extrair', 'logcontinuo', 'bugreport', 'desinstalar', 'foco'];
+var PKG_DEFAULT = 'br.com.mobiltec.c4m.android.agent';
+var PKGS = ['br.com.mobiltec.c4m.android.agent', 'com.google.android.apps.work.clouddpc', 'com.android.chrome'];
+var STORE_KEY = 'adbsuite.meus-comandos.v1';
+var FOLDER_KEY = 'adbsuite.pasta.v1';
+var DEFAULT_FOLDER = 'C:\\ADB-Suite\\Saidas';
+var SEED = [
+  { id: 'c_wifi', custom: true, cat: MINE, name: 'Abrir config. de Wi-Fi', desc: 'Abre a tela de Wi-Fi do aparelho. Exemplo de comando cadastrado pelo técnico.', cmd: 'adb shell am start -a android.settings.WIFI_SETTINGS', param: '', danger: false }
+];
+var PH = { pkg: 'br.com.mobiltec.c4m.android.agent', apk: 'C:\\adb\\c4magent.apk', file: 'C:\\adb\\c4magent.apk', path: '/sdcard/Download/arquivo.txt', text: 'digite o valor' };
+var LABELS = { pkg: 'Pacote do app', apk: 'Arquivo APK no computador', file: 'Arquivo no computador', path: 'Caminho do arquivo no aparelho', text: 'Valor' };
+var CATALOG = [
+  { id: 'listar', cat: 'Pacotes', name: 'Listar pacotes', choice: true, choiceLabel: 'Quais pacotes?', desc: 'Lista os pacotes do aparelho. Escolha o filtro: só os instalados pelo usuário, só os de sistema, todos, ou todos com o caminho do APK.', cmd: 'adb -s {s} shell pm list packages {p}', param: 'text', label: 'Filtro', ph: '-3',
+    presets: [{ label: 'Do usuário', value: '-3' }, { label: 'Do sistema', value: '-s' }, { label: 'Todos', value: '-a' }, { label: 'Com caminho', value: '-f' }],
+    out: 'package:br.com.mobiltec.c4m.android.agent\npackage:com.google.android.apps.work.clouddpc\npackage:com.android.chrome\npackage:com.spotify.lite' },
+  { id: 'buscar', cat: 'Pacotes', name: 'Localizar pacote pelo nome', desc: 'Procura o pacote digitando só um pedaço do nome. Inclui apps do sistema.', cmd: 'adb -s {s} shell "pm list packages | grep {p}"', param: 'text', label: 'Parte do nome do pacote', ph: 'mobiltec', presets: [{ label: 'mobiltec', value: 'mobiltec' }, { label: 'datamob', value: 'datamob' }, { label: 'emergencymode', value: 'emergencymode' }],
+    out: 'package:br.com.mobiltec.c4m.android.agent' },
+  { id: 'path', cat: 'Pacotes', name: 'Localizar caminho do APK', desc: 'Mostra onde o APK do app está no aparelho, inclusive apps de sistema em /system/priv-app.', cmd: 'adb -s {s} shell pm path {p}', param: 'pkg',
+    out: 'package:/data/app/~~a1B2c3==/{p}-x9Y8z7==/base.apk' },
+  { id: 'extrair', cat: 'Apps', name: 'Extrair APK', desc: 'Localiza o APK (de usuário ou de sistema) e copia pra pasta de saída com o nome do pacote.', cmd: 'adb -s {s} shell pm path {p}\nadb -s {s} pull <caminho> "{d}\\{p}.apk"', param: 'pkg', saves: true,
+    out: 'package:/data/app/~~a1B2c3==/{p}-x9Y8z7==/base.apk\n/data/app/~~a1B2c3==/{p}-x9Y8z7==/base.apk: 1 file pulled, 0 skipped. 31.2 MB/s (48213904 bytes in 1.474s)\nSalvo em: {d}\\{p}.apk' },
+  { id: 'instalar', cat: 'Apps', name: 'Instalar APK', desc: 'Instala um APK do computador. Se o app já existir, atualiza mantendo os dados.', cmd: 'adb -s {s} install -r "{p}"', param: 'apk',
+    out: 'Performing Streamed Install\nSuccess' },
+  { id: 'downgrade', cat: 'Apps', name: 'Instalar APK forçado (downgrade)', desc: 'Instala mesmo sendo versão mais antiga ou build de teste. Mantém os dados do app.', cmd: 'adb -s {s} install -t -r -d "{p}"', param: 'apk',
+    out: 'Performing Streamed Install\nSuccess' },
+  { id: 'desinstalar', cat: 'Apps', name: 'Remover app', desc: 'Desinstala o app do aparelho, junto com os dados dele.', cmd: 'adb -s {s} uninstall {p}', param: 'pkg', danger: true, verb: 'desinstalar {p}',
+    out: 'Success' },
+{ id: 'removersis', cat: 'Apps', name: 'Remover app de sistema', desc: 'Tira um app de sistema do usuário sem root (some do aparelho, mas dá pra trazer de volta). Bom pra bloatware.', cmd: 'adb -s {s} shell pm uninstall -k --user 0 {p}', param: 'text', label: 'Pacote de sistema', ph: 'com.sec.android.emergencymode.service', danger: true, verb: 'remover {p} do usuário',
+    presets: [{ label: 'Modo emergência (Samsung)', value: 'com.sec.android.emergencymode.service' }],
+    out: 'Success' },
+  { id: 'reativar', cat: 'Apps', name: 'Reativar app de sistema removido', desc: 'Traz de volta um app de sistema removido com o comando acima.', cmd: 'adb -s {s} shell cmd package install-existing {p}', param: 'text', label: 'Pacote de sistema', ph: 'com.sec.android.emergencymode.service',
+    presets: [{ label: 'Modo emergência (Samsung)', value: 'com.sec.android.emergencymode.service' }],
+    out: 'Package {p} installed for user: 0' },
+  { id: 'limpar', cat: 'Apps', name: 'Limpar dados do app', desc: 'Apaga dados, cache e login do app, deixando como recém-instalado.', cmd: 'adb -s {s} shell pm clear {p}', param: 'pkg', danger: true, verb: 'apagar todos os dados de {p}',
+    out: 'Success' },
+  { id: 'parar', cat: 'Apps', name: 'Forçar parada', desc: 'Fecha o app à força. Útil quando ele trava.', cmd: 'adb -s {s} shell am force-stop {p}', param: 'pkg',
+    out: '(sem saída — app encerrado)' },
+  { id: 'versao', cat: 'Pacotes', name: 'Ver versão do app', desc: 'Versão instalada e quando o app foi instalado/atualizado.', cmd: 'adb -s {s} shell "dumpsys package {p} | grep -E \'versionName|versionCode|firstInstallTime|lastUpdateTime\'"', param: 'pkg',
+    out: '    versionCode=10452 minSdk=26 targetSdk=34\n    versionName=4.12.0\n    firstInstallTime=2026-08-03 10:14:22\n    lastUpdateTime=2026-11-18 16:02:51' },
+  { id: 'permissoes', cat: 'Pacotes', name: 'Ver permissões do app', desc: 'Permissões em tempo de execução e se estão concedidas.', cmd: 'adb -s {s} shell "dumpsys package {p} | grep granted="', param: 'pkg',
+    out: '      android.permission.CAMERA: granted=true\n      android.permission.ACCESS_FINE_LOCATION: granted=true\n      android.permission.POST_NOTIFICATIONS: granted=false' },
+
+{ id: 'rodando', cat: 'Pacotes', name: 'Ver se o app está rodando', desc: 'Mostra se o processo do app está ativo agora, com o PID.', cmd: 'adb -s {s} shell "ps -A | grep {p}"', param: 'pkg',
+    out: 'u0_a214      8812   612 5412340 182340 0                   0 S {p}' },
+  { id: 'grant', cat: 'Pacotes', name: 'Conceder permissão', desc: 'Dá uma permissão ao app sem precisar tocar na tela. Escreva o pacote, um espaço e a permissão.', cmd: 'adb -s {s} shell pm grant {p}', param: 'text', label: 'Pacote e permissão', ph: 'pacote android.permission.X',
+    presets: [{ label: 'Localização', value: 'br.com.mobiltec.c4m.android.agent android.permission.ACCESS_FINE_LOCATION' }, { label: 'Telefone', value: 'br.com.mobiltec.c4m.android.agent android.permission.READ_PHONE_STATE' }, { label: 'Notificações', value: 'br.com.mobiltec.c4m.android.agent android.permission.POST_NOTIFICATIONS' }],
+    out: '(sem saída — permissão concedida)' },
+  { id: 'resetperm', cat: 'Pacotes', name: 'Resetar permissões do app', desc: 'Volta todas as permissões do app pro estado inicial, como se nunca tivessem sido pedidas.', cmd: 'adb -s {s} shell pm reset-permissions -p {p}', param: 'pkg', danger: true, verb: 'resetar todas as permissões de {p}',
+    out: '(sem saída — permissões resetadas)' },
+  { id: 'verowner', cat: 'Aparelho', name: 'Ver Device Owner atual', desc: 'Mostra qual app é o dono do dispositivo hoje.', cmd: 'adb -s {s} shell "dumpsys device_policy | grep -A2 \'Device Owner\'"', param: null,
+    out: 'Device Owner:\n  admin=ComponentInfo{br.com.mobiltec.c4m.android.agent/br.com.mobiltec.c4m.android.agent.app.MainActivity_}\n  name=C4M Agent' },
+
+  { id: 'foco', cat: 'Telas', name: 'Ver app em foco', desc: 'Mostra qual app e tela estão na frente agora (mCurrentFocus).', cmd: 'adb -s {s} shell "dumpsys window windows | grep -E \'mCurrentFocus\'"', param: null,
+    out: '  mCurrentFocus=Window{8a1c2e3 u0 com.sec.android.app.launcher/com.sec.android.app.launcher.activities.LauncherActivity}' },
+  { id: 'topo', cat: 'Telas', name: 'Ver activity no topo', desc: 'Nome completo da activity aberta, pra usar depois no “Abrir tela”.', cmd: 'adb -s {s} shell "dumpsys activity top | grep ACTIVITY"', param: null,
+    out: '  ACTIVITY com.android.settings/.Settings 4f2a1b0 pid=12873' },
+  { id: 'topold', cat: 'Telas', name: 'Ver top-activity (Android antigo)', desc: 'Alternativa pra aparelhos antigos, onde o comando acima não traz resultado.', cmd: 'adb -s {s} shell "dumpsys activity | grep top-activity"', param: null,
+    out: '    Proc # 0: fore  T/A/TOP  trm: 0 12873:com.android.settings/u0a72 (top-activity)' },
+  { id: 'abrirtela', cat: 'Telas', name: 'Abrir tela específica', desc: 'Abre uma activity direto pelo nome. Use os atalhos ou cole o que saiu em “Ver activity no topo”.', cmd: 'adb -s {s} shell am start -n {p}', param: 'text', label: 'Activity (pacote/classe)', ph: 'pacote/classe',
+    presets: [{ label: 'Chrome', value: 'com.android.chrome/com.google.android.apps.chrome.Main' }, { label: 'Launcher Samsung', value: 'com.sec.android.app.launcher/com.android.launcher2.Launcher' }, { label: 'Configurações', value: 'com.android.settings/com.android.settings.Settings' }, { label: 'Meus Arquivos Samsung', value: 'com.sec.android.app.myfiles/com.sec.android.app.myfiles.MainActivity' }],
+    out: 'Starting: Intent { cmp={p} }' },
+
+{ id: 'url', cat: 'Telas', name: 'Abrir link no aparelho', desc: 'Abre um endereço no navegador padrão do aparelho.', cmd: 'adb -s {s} shell am start -a android.intent.action.VIEW -d "{p}"', param: 'text', label: 'Endereço', ph: 'https://www.google.com',
+    out: 'Starting: Intent { act=android.intent.action.VIEW dat={p} }' },
+  { id: 'botao', cat: 'Controle', name: 'Apertar botão', choice: true, choiceLabel: 'Qual botão?', other: 'Outra tecla…', desc: 'Simula um botão físico ou de navegação: Home, Voltar, Recentes, Power, Volume.', cmd: 'adb -s {s} shell input keyevent {p}', param: 'text', label: 'Código da tecla', ph: '3',
+    presets: [{ label: 'Home', value: '3' }, { label: 'Voltar', value: '4' }, { label: 'Recentes', value: '187' }, { label: 'Power (tela)', value: '26' }, { label: 'Volume +', value: '24' }, { label: 'Volume −', value: '25' }, { label: 'Enter', value: '66' }],
+    out: '(sem saída — tecla enviada)' },
+  { id: 'digitar', cat: 'Controle', name: 'Digitar texto no aparelho', desc: 'Escreve o texto no campo aberto no aparelho. Útil pra senha de Wi-Fi, códigos e URLs longas.', cmd: 'adb -s {s} shell input text "{p}"', param: 'text', label: 'Texto', ph: 'texto a digitar',
+    out: '(sem saída — texto enviado)' },
+  { id: 'tela', cat: 'Controle', name: 'Ver resolução e densidade', desc: 'Mostra a resolução e a densidade da tela, úteis pra checar layout de quiosque.', cmd: 'adb -s {s} shell wm size\nadb -s {s} shell wm density', param: null,
+    out: 'Physical size: 1080x2340\nPhysical density: 450' },
+  { id: 'info', cat: 'Aparelho', name: 'Informações do aparelho', desc: 'Modelo, fabricante, versão do Android, patch de segurança e build.', cmd: 'adb -s {s} shell "getprop | grep -E \'ro.product.model|ro.product.manufacturer|ro.build.version.release|ro.build.version.security_patch|ro.build.display.id\'"', param: null,
+    out: '[ro.build.display.id]: [UP1A.231005.007.A546EXXS5CXK1]\n[ro.build.version.release]: [14]\n[ro.build.version.security_patch]: [2026-10-01]\n[ro.product.manufacturer]: [samsung]\n[ro.product.model]: [SM-A546E]' },
+  { id: 'bateria', cat: 'Aparelho', name: 'Estado da bateria', desc: 'Nível, temperatura, se está carregando e saúde da bateria.', cmd: 'adb -s {s} shell dumpsys battery', param: null,
+    out: 'Current Battery Service state:\n  AC powered: false\n  USB powered: true\n  level: 78\n  temperature: 312' },
+  { id: 'armazenamento', cat: 'Aparelho', name: 'Espaço de armazenamento', desc: 'Quanto espaço está usado e livre na memória interna.', cmd: 'adb -s {s} shell df -h /data', param: null,
+    out: 'Filesystem      Size  Used Avail Use% Mounted on\n/dev/block/dm-48 110G   64G   46G  59% /data' },
+  { id: 'hora', cat: 'Aparelho', name: 'Data e hora do aparelho', desc: 'Hora errada costuma quebrar sincronização e certificados.', cmd: 'adb -s {s} shell date', param: null,
+    out: 'Tue Nov 24 14:32:05 BRT 2026' },
+  { id: 'reiniciar', cat: 'Aparelho', name: 'Reiniciar aparelho', desc: 'Reinicia o aparelho normalmente, ou direto no modo recovery ou bootloader.', choice: true, choiceLabel: 'Reiniciar em qual modo?', cmd: 'adb -s {s} reboot {p}', param: 'text', label: 'Modo', ph: '', danger: true, verb: 'reiniciar o aparelho',
+    presets: [{ label: 'Normal', value: ' ' }, { label: 'Recovery', value: 'recovery' }, { label: 'Bootloader', value: 'bootloader' }],
+    out: '(aparelho reiniciando — aguardando reconexão…)' },
+  { id: 'print', cat: 'Captura', name: 'Screenshot pra área de transferência', desc: 'Tira print da tela e já deixa copiado. Também salva na pasta de saída.', cmd: 'adb -s {s} exec-out screencap -p > "{d}\\screenshot_2026-11-24_14-32-05.png"', param: null, saves: true,
+    out: 'Imagem copiada (PNG 1080 × 2340).\nTambém salva em: {d}\\screenshot_2026-11-24_14-32-05.png' },
+  { id: 'gravar', cat: 'Captura', name: 'Gravar tela', desc: 'Grava até 3 minutos da tela. Clique de novo pra parar e salvar.', cmd: 'adb -s {s} shell screenrecord /sdcard/gravacao.mp4', param: null, saves: true,
+    out: 'Gravando… (00:14)\nClique em "Parar" pra salvar em {d}\\gravacao.mp4' },
+
+  { id: 'loglimpar', cat: 'Logs', name: 'Limpar log do aparelho', desc: 'Zera o log antes de reproduzir o problema, pra o log salvo só ter o que interessa.', cmd: 'adb -s {s} logcat -c', param: null,
+    out: '(log limpo — reproduza o problema e depois salve o log)' },
+  { id: 'logcontinuo', cat: 'Logs', name: 'Gravar log contínuo em arquivo', desc: 'Fica gravando o logcat em .txt até você clicar em Parar. Nome do arquivo com a data, no padrão log20261124.', cmd: 'adb -s {s} logcat -v threadtime > "{d}\\log20261124_1432.txt"', param: null, saves: true,
+    out: 'Gravando log em {d}\\log20261124_1432.txt\n00:42 · 6318 linhas · clique em Parar pra encerrar' },
+  { id: 'logsalvar', cat: 'Logs', name: 'Salvar log atual em arquivo', desc: 'Puxa o log que já está no aparelho e salva na hora, sem ficar gravando.', cmd: 'adb -s {s} logcat -d -v threadtime > "{d}\\log20261124_1432.txt"', param: null, saves: true,
+    out: 'Log salvo em: {d}\\log20261124_1432.txt\n18302 linhas · 2.4 MB' },
+  { id: 'logcat', cat: 'Logs', name: 'Logcat de um app', desc: 'Mostra só o log do app escolhido, sem o ruído do resto do sistema.', cmd: 'adb -s {s} logcat -v threadtime --pid=<pid de {p}>', param: 'pkg',
+    out: '11-24 14:31:58.204  8812  8812 I MainActivity: onResume\n11-24 14:31:59.032  8812  8870 W SyncWorker: timeout ao conectar, tentando de novo (1/3)\n11-24 14:32:01.448  8812  8870 I SyncWorker: sync concluído em 2.8s' },
+  { id: 'bugreport', cat: 'Logs', name: 'Extrair bugreport', desc: 'Relatório completo do Android, salvo na pasta de saída. Demora de 1 a 3 minutos.', cmd: 'adb -s {s} bugreport "{d}\\bugreport_2026-11-24_14-32.zip"', param: null, saves: true,
+    out: '[100%] generating bugreport\nBug report copied to {d}\\bugreport_2026-11-24_14-32.zip' },
+  { id: 'diag', cat: 'Logs', name: 'Coletar diagnóstico completo', desc: 'Junta log, propriedades, apps, bateria e screenshot num zip só.', cmd: 'adb -s {s} logcat -d -v threadtime > "{d}\\logcat.txt"\nadb -s {s} shell getprop > "{d}\\props.txt"\nadb -s {s} shell pm list packages > "{d}\\apps.txt"\nadb -s {s} shell dumpsys battery > "{d}\\bateria.txt"\nadb -s {s} exec-out screencap -p > "{d}\\tela.png"', param: null, saves: true,
+    out: '✓ logcat.txt (2.4 MB)\n✓ props.txt (38 KB)\n✓ apps.txt (6 KB)\n✓ bateria.txt (1 KB)\n✓ tela.png (812 KB)\n\nCompactado em: {d}\\diagnostico_2026-11-24_14-32.zip' },
+
+  { id: 'enviar', cat: 'Arquivos', name: 'Enviar arquivo pro aparelho', desc: 'Copia um arquivo (ex.: um APK) do computador pra raiz do armazenamento do aparelho.', cmd: 'adb -s {s} push "{p}" /sdcard/', param: 'file',
+    out: '{p}: 1 file pushed, 0 skipped. 28.7 MB/s (31457280 bytes in 1.045s)' },
+  { id: 'baixar', cat: 'Arquivos', name: 'Baixar arquivo do aparelho', desc: 'Copia um arquivo do aparelho pra pasta de saída.', cmd: 'adb -s {s} pull "{p}" "{d}"', param: 'path', saves: true,
+    out: '{p}: 1 file pulled, 0 skipped. 30.1 MB/s (204800 bytes in 0.006s)' },
+
+{ id: 'listarpasta', cat: 'Arquivos', name: 'Listar pasta do aparelho', desc: 'Mostra os arquivos de uma pasta do aparelho, com tamanho e data.', cmd: 'adb -s {s} shell ls -la {p}', param: 'path', ph: '/sdcard/Download/',
+    presets: [{ label: 'Download', value: '/sdcard/Download/' }, { label: 'Raiz', value: '/sdcard/' }, { label: 'Fotos', value: '/sdcard/DCIM/Camera/' }],
+    out: 'total 30752\n-rw-rw---- 1 u0_a214 media_rw 31457280 2026-11-24 10:12 c4magent.apk\n-rw-rw---- 1 u0_a214 media_rw   204800 2026-11-23 17:40 relatorio.pdf' },
+  { id: 'conexao', cat: 'Conexão', name: 'Diagnosticar conexão', desc: 'Verifica se o adb enxerga os aparelhos e se a depuração USB está autorizada.', cmd: 'adb devices -l', param: null,
+    out: 'List of devices attached\nR58N12ABCDE   device usb:1-4 model:SM_A546E\nZY22H9KLMN    device usb:1-2 model:moto_g84_5G\n\n✓ Depuração autorizada nos 2 aparelhos' },
+  { id: 'servidor', cat: 'Conexão', name: 'Reiniciar o adb', desc: 'Derruba e sobe de novo o servidor do adb. Resolve a maioria dos “aparelho não aparece” e “offline”.', cmd: 'adb kill-server\nadb start-server', param: null,
+    out: '* daemon not running; starting now at tcp:5037\n* daemon started successfully' },
+  { id: 'shell', cat: 'Conexão', name: 'Abrir shell do aparelho', desc: 'Abre uma janela de terminal já dentro do aparelho selecionado, pra digitar comandos livres.', cmd: 'adb -s {s} shell', param: null,
+    out: '(abre uma janela de terminal: a54x:/ $ )' },
+  { id: 'wifi', cat: 'Conexão', name: 'Conectar via Wi-Fi', desc: 'Libera o adb pela rede, pra trabalhar sem cabo (aparelho e PC na mesma rede).', cmd: 'adb -s {s} tcpip 5555\nadb connect 192.168.0.143:5555', param: null,
+    out: 'restarting in TCP mode port: 5555\nconnected to 192.168.0.143:5555' },
+{ id: 'usb', cat: 'Conexão', name: 'Voltar pra conexão USB', desc: 'Desliga o adb pela rede e volta a usar só o cabo.', cmd: 'adb -s {s} usb', param: null,
+    out: 'restarting in USB mode' }
+];
+
+function fillCustom(raw, serial, value, dir) {
+  return String(raw || '').split('\n').map(function (line) {
+    var l = line.replace(/^(\s*)adb(?!\s+-s\s)(\s+|$)/, '$1adb -s ' + serial + ' ');
+    return l.split('{pacote}').join(value).split('{arquivo}').join(value).split('{caminho}').join(value).split('{texto}').join(value).split('{pasta}').join(dir || '').replace(/\s+$/, '');
+  }).join('\n');
+}
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { dev: 0, cat: PINNED, pins: DEFAULT_PINS.slice(), cmd: 'extrair', val: 'br.com.mobiltec.c4m.android.agent', otherMode: false, free: '', lastFree: false, freeShown: '', query: '', showCmd: true, confirming: false, running: false, ran: false, copied: '', custom: SEED.slice(), editing: null, formError: '', delArm: false, flash: '', folder: DEFAULT_FOLDER, folderEdit: false, folderDraft: '' };
+  }
+  componentDidMount() {
+    try {
+      var raw = window.localStorage.getItem(STORE_KEY);
+      if (raw) { var list = JSON.parse(raw); if (Array.isArray(list)) this.setState({ custom: list }); }
+      var pr = window.localStorage.getItem(PIN_KEY);
+      if (pr) { var pl = JSON.parse(pr); if (Array.isArray(pl)) this.setState({ pins: pl }); }
+      var fd = window.localStorage.getItem(FOLDER_KEY);
+      if (fd) this.setState({ folder: fd });
+    } catch (e) {}
+  }
+  componentWillUnmount() { clearTimeout(this._t); clearTimeout(this._f); }
+  persist(list) {
+    try { window.localStorage.setItem(STORE_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+  all() { return this.state.custom.concat(CATALOG); }
+  find(id) { return this.all().find(function (x) { return x.id === id; }); }
+  say(msg) {
+    var self = this;
+    this.setState({ flash: msg });
+    clearTimeout(this._f);
+    this._f = setTimeout(function () { self.setState({ flash: '' }); }, 3500);
+  }
+  pick(id) {
+    var c = this.find(id);
+    var v = !c ? '' : (c.presets && c.presets.length ? c.presets[0].value : (c.param === 'pkg' ? PKG_DEFAULT : ''));
+    this.setState({ cmd: id, val: v, otherMode: false, lastFree: false, confirming: false, running: false, ran: false, editing: null, delArm: false });
+  }
+  runFree() {
+    var t = String(this.state.free || '').trim();
+    if (!t) { this.say('Digite um comando no campo livre.'); return; }
+    var self = this;
+    this.setState({ lastFree: true, freeShown: t, running: true, ran: false, confirming: false });
+    setTimeout(function () { self.setState({ running: false, ran: true }); }, 650);
+  }
+  exec() {
+    var self = this;
+    this.setState({ running: true, ran: false, confirming: false });
+    setTimeout(function () { self.setState({ running: false, ran: true }); }, 650);
+  }
+  copy(key, text) {
+    var self = this;
+    try { if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function () {}); } catch (e) {}
+    this.setState({ copied: key });
+    clearTimeout(this._t);
+    this._t = setTimeout(function () { self.setState({ copied: '' }); }, 1600);
+  }
+  setForm(patch) {
+    var f = Object.assign({}, this.state.editing, patch);
+    this.setState({ editing: f, formError: '' });
+  }
+  save() {
+    var f = this.state.editing;
+    var name = (f.name || '').trim();
+    var cmd = (f.cmd || '').trim();
+    if (!name) { this.setState({ formError: 'Dá um nome pro comando.' }); return; }
+    if (!cmd) { this.setState({ formError: 'Escreve o comando adb.' }); return; }
+    if (!/^\s*adb\s/m.test(cmd)) { this.setState({ formError: 'Cada linha precisa começar com adb.' }); return; }
+    var entry = { id: f.id || ('c_' + Date.now()), custom: true, cat: f.cat || MINE, name: name, desc: (f.desc || '').trim(), cmd: cmd, param: f.param || '', danger: !!f.danger };
+    var list = this.state.custom.filter(function (x) { return x.id !== entry.id; });
+    list.unshift(entry);
+    this.persist(list);
+    this.setState({ custom: list, editing: null, cmd: entry.id, val: entry.param === 'pkg' ? PKG_DEFAULT : '', ran: false, confirming: false });
+    this.say('Salvo. Fica guardado em comandos-locais.json neste computador.');
+  }
+  remove(id) {
+    var list = this.state.custom.filter(function (x) { return x.id !== id; });
+    this.persist(list);
+    this.setState({ custom: list, pins: this.state.pins.filter(function (p) { return p !== id; }), cmd: list.length ? list[0].id : 'listar', delArm: false, ran: false, val: '' });
+    this.say('Comando excluído.');
+  }
+  renderVals() {
+    var self = this;
+    var s = this.state;
+    var dev = DEVICES[s.dev];
+    var devDir = s.folder.replace(/[\\/]+$/, '') + '\\' + dev.brand + '-' + dev.model.replace(/\s+/g, '-') + '_' + dev.id;
+    var q = (s.query || '').toLowerCase();
+    var all = this.all();
+
+
+    var match = function (x) { return x.name.toLowerCase().indexOf(q) >= 0 || x.cmd.toLowerCase().indexOf(q) >= 0 || (x.desc || '').toLowerCase().indexOf(q) >= 0; };
+    var listSrc, listTitle;
+    if (q) { listSrc = all.filter(match); listTitle = 'Resultados'; }
+    else if (s.cat === PINNED) { listSrc = s.pins.map(function (id) { return self.find(id); }).filter(Boolean); listTitle = 'Fixados'; }
+    else { listSrc = all.filter(function (x) { return x.cat === s.cat; }); listTitle = s.cat; }
+    var listItems = listSrc.map(function (x) {
+      var sel = !s.editing && x.id === s.cmd;
+      return { name: x.name, desc: x.desc || '', danger: !!x.danger, custom: !!x.custom, selected: sel, notSelected: !sel, hasHint: !!q || s.cat === PINNED, hint: x.cat, pick: function () { self.pick(x.id); } };
+    });
+    var listEmptyText = q ? 'Nenhum comando encontrado.' : (s.cat === PINNED ? 'Nada fixado. Abra um comando e clique em Fixar.' : 'Nenhum comando seu ainda. Use “+ Novo comando”.');
+    var cur = this.find(s.cmd) || CATALOG[0];
+    var isPinned = s.pins.indexOf(cur.id) >= 0;
+    var ptype = cur.param || '';
+    var p = ptype ? (s.val ? s.val.trim() : (cur.ph || PH[ptype])) : '';
+    var cmdText, output;
+    if (cur.custom) {
+      cmdText = fillCustom(cur.cmd, dev.id, p, devDir);
+      output = '(protótipo: no app de verdade aparece aqui a resposta do aparelho)';
+    } else {
+      var fill = function (t) { return t.split('{s}').join(dev.id).split('{p}').join(p).split('{d}').join(devDir).replace(/ +$/gm, ''); };
+      cmdText = fill(cur.cmd);
+      output = fill(cur.out);
+    }
+    var freeFull = function (raw) {
+      var t = String(raw || '').trim().replace(/^\.\\?adb(\.exe)?\s+/i, 'adb ').replace(/^adb\s+-s\s+\S+\s+/, '');
+      t = t.replace(/^adb\s+/, '');
+      return 'adb -s ' + dev.id + (t ? ' ' + t : '');
+    };
+    if (s.lastFree) {
+      cmdText = freeFull(s.freeShown);
+      output = '(protótipo: aqui aparece a resposta do aparelho pro comando livre)';
+    }
+    var verb = cur.custom ? 'rodar “' + cur.name + '”' : (cur.verb || '').split('{p}').join(p);
+    var meta = dev.brand + ' ' + dev.model + ' · ' + dev.android + ' · serial ' + dev.id + ' · 24/11/2026 14:32';
+    var ticket = 'Aparelho: ' + dev.brand + ' ' + dev.model + ' (' + dev.android + ')\nSerial: ' + dev.id + '\nData: 24/11/2026 14:32\nComando: ' + cmdText + '\n----------------------------------------\n' + output;
+
+    var f = s.editing || { name: '', cat: MINE, desc: '', cmd: '', param: '', danger: false };
+    var fpv = f.param ? PH[f.param] : '';
+    var formPreview = (f.cmd || '').trim() ? '$ ' + fillCustom(f.cmd.trim(), dev.id, fpv, devDir).split('\n').join('\n$ ') : '$ adb -s ' + dev.id + ' …';
+
+    return {
+      devices: DEVICES.map(function (d, i) {
+        return { id: d.id, model: d.brand + ' ' + d.model, android: d.android, selected: i === s.dev, notSelected: i !== s.dev, pick: function () { self.setState({ dev: i, ran: false, confirming: false }); } };
+      }),
+      devModel: dev.brand + ' ' + dev.model,
+      rail: RAIL.map(function (r) { var act = !q && s.cat === r.key; return { label: r.label, icon: r.icon, active: act, notActive: !act, pick: function () { self.setState({ cat: r.key, query: '' }); } }; }),
+      listTitle: listTitle,
+      listCount: String(listItems.length),
+      listItems: listItems,
+      listEmpty: listItems.length === 0,
+      listEmptyText: listEmptyText,
+      isMine: s.cat === MINE && !q,
+      pinned: isPinned,
+      notPinned: !isPinned,
+      pinLabel: isPinned ? 'Fixado' : 'Fixar',
+      togglePin: function () {
+        var pins = isPinned ? s.pins.filter(function (p) { return p !== cur.id; }) : s.pins.concat([cur.id]);
+        try { window.localStorage.setItem(PIN_KEY, JSON.stringify(pins)); } catch (e) {}
+        self.setState({ pins: pins });
+      },
+      query: s.query,
+      onQuery: function (e) { self.setState({ query: e.target.value }); },
+      flash: s.flash,
+      hasFlash: !!s.flash,
+      newCmd: function () { self.setState({ editing: { name: '', cat: CATS.indexOf(s.cat) >= 0 ? s.cat : MINE, desc: '', cmd: '', param: '', danger: false }, formError: '', confirming: false }); },
+      doImport: function () { self.say('No app real: escolhe um comandos.json de um colega e os comandos entram em “Meus comandos”.'); },
+      doExport: function () { self.say('Exportado ' + s.custom.length + ' comando(s) em Downloads\\comandos-locais.json'); },
+
+      viewing: !s.editing,
+      editing: !!s.editing,
+      formTitle: s.editing && s.editing.id ? 'Editar comando' : 'Novo comando',
+      form: { name: f.name, cat: f.cat, desc: f.desc, cmd: f.cmd, param: f.param, danger: !!f.danger },
+      catOptions: CATS,
+      onFName: function (e) { self.setForm({ name: e.target.value }); },
+      onFCat: function (e) { self.setForm({ cat: e.target.value }); },
+      onFDesc: function (e) { self.setForm({ desc: e.target.value }); },
+      onFCmd: function (e) { self.setForm({ cmd: e.target.value }); },
+      onFParam: function (e) { self.setForm({ param: e.target.value }); },
+      onFDanger: function (e) { self.setForm({ danger: e.target.checked }); },
+      folderTag: '{pasta}',
+      pkgTag: '{pacote}', fileTag: '{arquivo}', pathTag: '{caminho}', textTag: '{texto}',
+      formPreview: formPreview,
+      formError: !!s.formError,
+      formErrorText: s.formError,
+      saveForm: function () { self.save(); },
+      cancelForm: function () { self.setState({ editing: null, formError: '' }); },
+      editCur: function () { self.setState({ editing: { id: cur.id, name: cur.name, cat: cur.cat, desc: cur.desc, cmd: cur.cmd, param: cur.param || '', danger: !!cur.danger }, formError: '', confirming: false }); },
+      delCur: function () { if (s.delArm) self.remove(cur.id); else self.setState({ delArm: true }); },
+      delLabel: s.delArm ? 'Confirmar exclusão' : 'Excluir',
+
+      cur: { name: cur.name, desc: cur.desc, cat: cur.cat, danger: !!cur.danger, custom: !!cur.custom },
+      notDanger: !cur.danger,
+      devId: dev.id,
+      free: s.free,
+      onFree: function (e) { self.setState({ free: e.target.value }); },
+      onFreeKey: function (e) { if (e.key === 'Enter') { e.preventDefault(); self.runFree(); } },
+      runFree: function () { self.runFree(); },
+      saveFree: function () {
+        var t = String(s.free || '').trim();
+        if (!t) { self.say('Digite um comando no campo livre primeiro.'); return; }
+        self.setState({ editing: { name: '', cat: MINE, desc: '', cmd: freeFull(t).replace(/^adb -s \S+ /, 'adb '), param: '', danger: false }, formError: '', confirming: false });
+      },
+      hasParam: !!ptype,
+      isChoice: !!cur.choice,
+      showInput: !!ptype && (!cur.choice || s.otherMode),
+      choiceLabel: cur.choiceLabel || '',
+      choices: cur.choice ? (cur.presets || []).map(function (o) {
+        var sel = !s.otherMode && s.val === o.value;
+        return { label: o.label, sub: o.value, hasSub: !!cur.showSub, selected: sel, notSelected: !sel, pick: function () { self.setState({ val: o.value, otherMode: false, ran: false, confirming: false }); } };
+      }).concat(cur.other ? [{ label: cur.other, sub: 'digitar manualmente', hasSub: !!cur.showSub, selected: s.otherMode, notSelected: !s.otherMode, pick: function () { self.setState({ val: '', otherMode: true, ran: false, confirming: false }); } }] : []) : [],
+      hasReq: !!(cur.reqs && cur.reqs.length),
+      reqs: (cur.reqs || []).map(function (t) { return { text: t }; }),
+      isPkg: ptype === 'pkg',
+      isFile: ptype === 'apk' || ptype === 'file',
+      paramLabel: ptype ? (cur.label || LABELS[ptype]) : '',
+      paramPlaceholder: ptype ? (cur.ph || PH[ptype]) : '',
+      val: s.val,
+      onVal: function (e) { self.setState({ val: e.target.value, ran: false }); },
+      suggestions: (cur.presets || (ptype === 'pkg' ? PKGS.map(function (n) { return { label: n, value: n }; }) : [])).map(function (o) { return { name: o.label, pick: function () { self.setState({ val: o.value, ran: false }); } }; }),
+      hasSug: !cur.choice && (!!cur.presets || ptype === 'pkg'),
+      sugLabel: cur.presets ? 'Atalhos:' : 'Instalados:',
+      runLabel: 'Executar no ' + dev.model,
+      run: function () { self.setState({ lastFree: false }); if (cur.danger) self.setState({ confirming: true }); else self.exec(); },
+      confirming: s.confirming,
+      confirmText: 'Você vai ' + verb + ' no ' + dev.brand + ' ' + dev.model + ' (' + dev.id + '). Isso pode não ter volta.',
+      cancel: function () { self.setState({ confirming: false }); },
+      confirm: function () { self.exec(); },
+      showCmd: s.showCmd,
+      toggleCmd: function () { self.setState({ showCmd: !s.showCmd }); },
+      toggleLabel: s.showCmd ? 'Esconder comando adb' : 'Ver comando adb',
+      cmdText: cmdText,
+      copyCmd: function () { self.copy('cmd', cmdText); },
+      copyCmdLabel: s.copied === 'cmd' ? 'Copiado ✓' : 'Copiar comando',
+      ran: s.ran,
+      running: s.running,
+      idle: !s.ran && !s.running,
+      meta: meta,
+      output: output,
+      status: s.running ? 'executando…' : (s.ran ? 'concluído em 0,6 s' : 'aguardando'),
+      copyOut: function () { if (s.ran) self.copy('out', output); },
+      copyOutLabel: s.copied === 'out' ? 'Copiado ✓' : 'Copiar saída',
+      copyTicket: function () { if (s.ran) self.copy('ticket', ticket); },
+      copyTicketLabel: s.copied === 'ticket' ? 'Copiado ✓' : 'Copiar pro chamado',
+      folder: s.folder,
+      devDir: devDir,
+      folderEdit: s.folderEdit,
+      folderView: !s.folderEdit,
+      folderDraft: s.folderDraft,
+      editFolder: function () { self.setState({ folderEdit: true, folderDraft: s.folder }); },
+      onFolderDraft: function (e) { self.setState({ folderDraft: e.target.value }); },
+      saveFolder: function () {
+        var v = (s.folderDraft || '').trim() || DEFAULT_FOLDER;
+        try { window.localStorage.setItem(FOLDER_KEY, v); } catch (e) {}
+        self.setState({ folder: v, folderEdit: false });
+        self.say('Pasta de saída alterada. Cada aparelho ganha uma subpasta própria.');
+      },
+      openFolder: function () { self.say('No app real: abre ' + devDir + ' no Explorer.'); },
+      saves: !!cur.saves && s.ran,
+      saveOut: function () { if (s.ran) self.say('Saída salva em ' + devDir + '\\saida_2026-11-24_14-32.txt'); },
+      goDiag: function () { self.pick('diag'); },
+      goConn: function () { self.pick('conexao'); }
+    };
+  }
+}
+</script>
+</body>
+</html>

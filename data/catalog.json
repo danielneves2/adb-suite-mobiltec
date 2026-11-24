@@ -1,0 +1,631 @@
+{
+  "versao": 1,
+  "placeholders": {
+    "{s}": "serial do aparelho selecionado",
+    "{p}": "valor digitado ou escolhido pelo técnico",
+    "{d}": "pasta de saída do aparelho: <pasta base>\\<Marca>-<Modelo>_<SERIAL>"
+  },
+  "categorias": [
+    "Apps",
+    "Pacotes",
+    "Telas",
+    "Controle",
+    "Aparelho",
+    "Captura",
+    "Logs",
+    "Arquivos",
+    "Conexão"
+  ],
+  "fixados_padrao": [
+    "extrair",
+    "logcontinuo",
+    "bugreport",
+    "desinstalar",
+    "foco"
+  ],
+  "pacotes_sugeridos": [
+    "br.com.mobiltec.c4m.android.agent",
+    "com.google.android.apps.work.clouddpc",
+    "com.android.chrome"
+  ],
+  "comandos": [
+    {
+      "id": "listar",
+      "categoria": "Pacotes",
+      "nome": "Listar pacotes",
+      "resumo": "Lista os pacotes do aparelho. Escolha o filtro: só os instalados pelo usuário, só os de sistema, todos, ou todos com o caminho do APK.",
+      "comando": "adb -s {s} shell pm list packages {p}",
+      "parametro": "text",
+      "rotulo_parametro": "Filtro",
+      "exemplo": "-3",
+      "atalhos": [
+        {
+          "rotulo": "Do usuário",
+          "valor": "-3"
+        },
+        {
+          "rotulo": "Do sistema",
+          "valor": "-s"
+        },
+        {
+          "rotulo": "Todos",
+          "valor": "-a"
+        },
+        {
+          "rotulo": "Com caminho",
+          "valor": "-f"
+        }
+      ],
+      "escolha": {
+        "pergunta": "Quais pacotes?",
+        "opcao_outro": null
+      },
+      "saida_exemplo": "package:br.com.mobiltec.c4m.android.agent\npackage:com.google.android.apps.work.clouddpc\npackage:com.android.chrome\npackage:com.spotify.lite"
+    },
+    {
+      "id": "buscar",
+      "categoria": "Pacotes",
+      "nome": "Localizar pacote pelo nome",
+      "resumo": "Procura o pacote digitando só um pedaço do nome. Inclui apps do sistema.",
+      "comando": "adb -s {s} shell \"pm list packages | grep {p}\"",
+      "parametro": "text",
+      "rotulo_parametro": "Parte do nome do pacote",
+      "exemplo": "mobiltec",
+      "atalhos": [
+        {
+          "rotulo": "mobiltec",
+          "valor": "mobiltec"
+        },
+        {
+          "rotulo": "datamob",
+          "valor": "datamob"
+        },
+        {
+          "rotulo": "emergencymode",
+          "valor": "emergencymode"
+        }
+      ],
+      "saida_exemplo": "package:br.com.mobiltec.c4m.android.agent"
+    },
+    {
+      "id": "path",
+      "categoria": "Pacotes",
+      "nome": "Localizar caminho do APK",
+      "resumo": "Mostra onde o APK do app está no aparelho, inclusive apps de sistema em /system/priv-app.",
+      "comando": "adb -s {s} shell pm path {p}",
+      "parametro": "pkg",
+      "saida_exemplo": "package:/data/app/~~a1B2c3==/{p}-x9Y8z7==/base.apk"
+    },
+    {
+      "id": "extrair",
+      "categoria": "Apps",
+      "nome": "Extrair APK",
+      "resumo": "Localiza o APK (de usuário ou de sistema) e copia pra pasta de saída com o nome do pacote.",
+      "comando": "adb -s {s} shell pm path {p}\nadb -s {s} pull <caminho> \"{d}\\{p}.apk\"",
+      "parametro": "pkg",
+      "gera_arquivo": true,
+      "saida_exemplo": "package:/data/app/~~a1B2c3==/{p}-x9Y8z7==/base.apk\n/data/app/~~a1B2c3==/{p}-x9Y8z7==/base.apk: 1 file pulled, 0 skipped. 31.2 MB/s (48213904 bytes in 1.474s)\nSalvo em: {d}\\{p}.apk"
+    },
+    {
+      "id": "instalar",
+      "categoria": "Apps",
+      "nome": "Instalar APK",
+      "resumo": "Instala um APK do computador. Se o app já existir, atualiza mantendo os dados.",
+      "comando": "adb -s {s} install -r \"{p}\"",
+      "parametro": "apk",
+      "saida_exemplo": "Performing Streamed Install\nSuccess"
+    },
+    {
+      "id": "downgrade",
+      "categoria": "Apps",
+      "nome": "Instalar APK forçado (downgrade)",
+      "resumo": "Instala mesmo sendo versão mais antiga ou build de teste. Mantém os dados do app.",
+      "comando": "adb -s {s} install -t -r -d \"{p}\"",
+      "parametro": "apk",
+      "saida_exemplo": "Performing Streamed Install\nSuccess"
+    },
+    {
+      "id": "desinstalar",
+      "categoria": "Apps",
+      "nome": "Remover app",
+      "resumo": "Desinstala o app do aparelho, junto com os dados dele.",
+      "comando": "adb -s {s} uninstall {p}",
+      "parametro": "pkg",
+      "pede_confirmacao": true,
+      "texto_confirmacao": "desinstalar {p}",
+      "saida_exemplo": "Success"
+    },
+    {
+      "id": "removersis",
+      "categoria": "Apps",
+      "nome": "Remover app de sistema",
+      "resumo": "Tira um app de sistema do usuário sem root (some do aparelho, mas dá pra trazer de volta). Bom pra bloatware.",
+      "comando": "adb -s {s} shell pm uninstall -k --user 0 {p}",
+      "parametro": "text",
+      "rotulo_parametro": "Pacote de sistema",
+      "exemplo": "com.sec.android.emergencymode.service",
+      "atalhos": [
+        {
+          "rotulo": "Modo emergência (Samsung)",
+          "valor": "com.sec.android.emergencymode.service"
+        }
+      ],
+      "pede_confirmacao": true,
+      "texto_confirmacao": "remover {p} do usuário",
+      "saida_exemplo": "Success"
+    },
+    {
+      "id": "reativar",
+      "categoria": "Apps",
+      "nome": "Reativar app de sistema removido",
+      "resumo": "Traz de volta um app de sistema removido com o comando acima.",
+      "comando": "adb -s {s} shell cmd package install-existing {p}",
+      "parametro": "text",
+      "rotulo_parametro": "Pacote de sistema",
+      "exemplo": "com.sec.android.emergencymode.service",
+      "atalhos": [
+        {
+          "rotulo": "Modo emergência (Samsung)",
+          "valor": "com.sec.android.emergencymode.service"
+        }
+      ],
+      "saida_exemplo": "Package {p} installed for user: 0"
+    },
+    {
+      "id": "limpar",
+      "categoria": "Apps",
+      "nome": "Limpar dados do app",
+      "resumo": "Apaga dados, cache e login do app, deixando como recém-instalado.",
+      "comando": "adb -s {s} shell pm clear {p}",
+      "parametro": "pkg",
+      "pede_confirmacao": true,
+      "texto_confirmacao": "apagar todos os dados de {p}",
+      "saida_exemplo": "Success"
+    },
+    {
+      "id": "parar",
+      "categoria": "Apps",
+      "nome": "Forçar parada",
+      "resumo": "Fecha o app à força. Útil quando ele trava.",
+      "comando": "adb -s {s} shell am force-stop {p}",
+      "parametro": "pkg",
+      "saida_exemplo": "(sem saída — app encerrado)"
+    },
+    {
+      "id": "versao",
+      "categoria": "Pacotes",
+      "nome": "Ver versão do app",
+      "resumo": "Versão instalada e quando o app foi instalado/atualizado.",
+      "comando": "adb -s {s} shell \"dumpsys package {p} | grep -E 'versionName|versionCode|firstInstallTime|lastUpdateTime'\"",
+      "parametro": "pkg",
+      "saida_exemplo": "    versionCode=10452 minSdk=26 targetSdk=34\n    versionName=4.12.0\n    firstInstallTime=2026-08-03 10:14:22\n    lastUpdateTime=2026-11-18 16:02:51"
+    },
+    {
+      "id": "permissoes",
+      "categoria": "Pacotes",
+      "nome": "Ver permissões do app",
+      "resumo": "Permissões em tempo de execução e se estão concedidas.",
+      "comando": "adb -s {s} shell \"dumpsys package {p} | grep granted=\"",
+      "parametro": "pkg",
+      "saida_exemplo": "      android.permission.CAMERA: granted=true\n      android.permission.ACCESS_FINE_LOCATION: granted=true\n      android.permission.POST_NOTIFICATIONS: granted=false"
+    },
+    {
+      "id": "rodando",
+      "categoria": "Pacotes",
+      "nome": "Ver se o app está rodando",
+      "resumo": "Mostra se o processo do app está ativo agora, com o PID.",
+      "comando": "adb -s {s} shell \"ps -A | grep {p}\"",
+      "parametro": "pkg",
+      "saida_exemplo": "u0_a214      8812   612 5412340 182340 0                   0 S {p}"
+    },
+    {
+      "id": "grant",
+      "categoria": "Pacotes",
+      "nome": "Conceder permissão",
+      "resumo": "Dá uma permissão ao app sem precisar tocar na tela. Escreva o pacote, um espaço e a permissão.",
+      "comando": "adb -s {s} shell pm grant {p}",
+      "parametro": "text",
+      "rotulo_parametro": "Pacote e permissão",
+      "exemplo": "pacote android.permission.X",
+      "atalhos": [
+        {
+          "rotulo": "Localização",
+          "valor": "br.com.mobiltec.c4m.android.agent android.permission.ACCESS_FINE_LOCATION"
+        },
+        {
+          "rotulo": "Telefone",
+          "valor": "br.com.mobiltec.c4m.android.agent android.permission.READ_PHONE_STATE"
+        },
+        {
+          "rotulo": "Notificações",
+          "valor": "br.com.mobiltec.c4m.android.agent android.permission.POST_NOTIFICATIONS"
+        }
+      ],
+      "saida_exemplo": "(sem saída — permissão concedida)"
+    },
+    {
+      "id": "resetperm",
+      "categoria": "Pacotes",
+      "nome": "Resetar permissões do app",
+      "resumo": "Volta todas as permissões do app pro estado inicial, como se nunca tivessem sido pedidas.",
+      "comando": "adb -s {s} shell pm reset-permissions -p {p}",
+      "parametro": "pkg",
+      "pede_confirmacao": true,
+      "texto_confirmacao": "resetar todas as permissões de {p}",
+      "saida_exemplo": "(sem saída — permissões resetadas)"
+    },
+    {
+      "id": "verowner",
+      "categoria": "Aparelho",
+      "nome": "Ver Device Owner atual",
+      "resumo": "Mostra qual app é o dono do dispositivo hoje.",
+      "comando": "adb -s {s} shell \"dumpsys device_policy | grep -A2 'Device Owner'\"",
+      "parametro": null,
+      "saida_exemplo": "Device Owner:\n  admin=ComponentInfo{br.com.mobiltec.c4m.android.agent/br.com.mobiltec.c4m.android.agent.app.MainActivity_}\n  name=C4M Agent"
+    },
+    {
+      "id": "foco",
+      "categoria": "Telas",
+      "nome": "Ver app em foco",
+      "resumo": "Mostra qual app e tela estão na frente agora (mCurrentFocus).",
+      "comando": "adb -s {s} shell \"dumpsys window windows | grep -E 'mCurrentFocus'\"",
+      "parametro": null,
+      "saida_exemplo": "  mCurrentFocus=Window{8a1c2e3 u0 com.sec.android.app.launcher/com.sec.android.app.launcher.activities.LauncherActivity}"
+    },
+    {
+      "id": "topo",
+      "categoria": "Telas",
+      "nome": "Ver activity no topo",
+      "resumo": "Nome completo da activity aberta, pra usar depois no “Abrir tela”.",
+      "comando": "adb -s {s} shell \"dumpsys activity top | grep ACTIVITY\"",
+      "parametro": null,
+      "saida_exemplo": "  ACTIVITY com.android.settings/.Settings 4f2a1b0 pid=12873"
+    },
+    {
+      "id": "topold",
+      "categoria": "Telas",
+      "nome": "Ver top-activity (Android antigo)",
+      "resumo": "Alternativa pra aparelhos antigos, onde o comando acima não traz resultado.",
+      "comando": "adb -s {s} shell \"dumpsys activity | grep top-activity\"",
+      "parametro": null,
+      "saida_exemplo": "    Proc # 0: fore  T/A/TOP  trm: 0 12873:com.android.settings/u0a72 (top-activity)"
+    },
+    {
+      "id": "abrirtela",
+      "categoria": "Telas",
+      "nome": "Abrir tela específica",
+      "resumo": "Abre uma activity direto pelo nome. Use os atalhos ou cole o que saiu em “Ver activity no topo”.",
+      "comando": "adb -s {s} shell am start -n {p}",
+      "parametro": "text",
+      "rotulo_parametro": "Activity (pacote/classe)",
+      "exemplo": "pacote/classe",
+      "atalhos": [
+        {
+          "rotulo": "Chrome",
+          "valor": "com.android.chrome/com.google.android.apps.chrome.Main"
+        },
+        {
+          "rotulo": "Launcher Samsung",
+          "valor": "com.sec.android.app.launcher/com.android.launcher2.Launcher"
+        },
+        {
+          "rotulo": "Configurações",
+          "valor": "com.android.settings/com.android.settings.Settings"
+        },
+        {
+          "rotulo": "Meus Arquivos Samsung",
+          "valor": "com.sec.android.app.myfiles/com.sec.android.app.myfiles.MainActivity"
+        }
+      ],
+      "saida_exemplo": "Starting: Intent { cmp={p} }"
+    },
+    {
+      "id": "url",
+      "categoria": "Telas",
+      "nome": "Abrir link no aparelho",
+      "resumo": "Abre um endereço no navegador padrão do aparelho.",
+      "comando": "adb -s {s} shell am start -a android.intent.action.VIEW -d \"{p}\"",
+      "parametro": "text",
+      "rotulo_parametro": "Endereço",
+      "exemplo": "https://www.google.com",
+      "saida_exemplo": "Starting: Intent { act=android.intent.action.VIEW dat={p} }"
+    },
+    {
+      "id": "botao",
+      "categoria": "Controle",
+      "nome": "Apertar botão",
+      "resumo": "Simula um botão físico ou de navegação: Home, Voltar, Recentes, Power, Volume.",
+      "comando": "adb -s {s} shell input keyevent {p}",
+      "parametro": "text",
+      "rotulo_parametro": "Código da tecla",
+      "exemplo": "3",
+      "atalhos": [
+        {
+          "rotulo": "Home",
+          "valor": "3"
+        },
+        {
+          "rotulo": "Voltar",
+          "valor": "4"
+        },
+        {
+          "rotulo": "Recentes",
+          "valor": "187"
+        },
+        {
+          "rotulo": "Power (tela)",
+          "valor": "26"
+        },
+        {
+          "rotulo": "Volume +",
+          "valor": "24"
+        },
+        {
+          "rotulo": "Volume −",
+          "valor": "25"
+        },
+        {
+          "rotulo": "Enter",
+          "valor": "66"
+        }
+      ],
+      "escolha": {
+        "pergunta": "Qual botão?",
+        "opcao_outro": "Outra tecla…"
+      },
+      "saida_exemplo": "(sem saída — tecla enviada)"
+    },
+    {
+      "id": "digitar",
+      "categoria": "Controle",
+      "nome": "Digitar texto no aparelho",
+      "resumo": "Escreve o texto no campo aberto no aparelho. Útil pra senha de Wi-Fi, códigos e URLs longas.",
+      "comando": "adb -s {s} shell input text \"{p}\"",
+      "parametro": "text",
+      "rotulo_parametro": "Texto",
+      "exemplo": "texto a digitar",
+      "saida_exemplo": "(sem saída — texto enviado)"
+    },
+    {
+      "id": "tela",
+      "categoria": "Controle",
+      "nome": "Ver resolução e densidade",
+      "resumo": "Mostra a resolução e a densidade da tela, úteis pra checar layout de quiosque.",
+      "comando": "adb -s {s} shell wm size\nadb -s {s} shell wm density",
+      "parametro": null,
+      "saida_exemplo": "Physical size: 1080x2340\nPhysical density: 450"
+    },
+    {
+      "id": "info",
+      "categoria": "Aparelho",
+      "nome": "Informações do aparelho",
+      "resumo": "Modelo, fabricante, versão do Android, patch de segurança e build.",
+      "comando": "adb -s {s} shell \"getprop | grep -E 'ro.product.model|ro.product.manufacturer|ro.build.version.release|ro.build.version.security_patch|ro.build.display.id'\"",
+      "parametro": null,
+      "saida_exemplo": "[ro.build.display.id]: [UP1A.231005.007.A546EXXS5CXK1]\n[ro.build.version.release]: [14]\n[ro.build.version.security_patch]: [2026-10-01]\n[ro.product.manufacturer]: [samsung]\n[ro.product.model]: [SM-A546E]"
+    },
+    {
+      "id": "bateria",
+      "categoria": "Aparelho",
+      "nome": "Estado da bateria",
+      "resumo": "Nível, temperatura, se está carregando e saúde da bateria.",
+      "comando": "adb -s {s} shell dumpsys battery",
+      "parametro": null,
+      "saida_exemplo": "Current Battery Service state:\n  AC powered: false\n  USB powered: true\n  level: 78\n  temperature: 312"
+    },
+    {
+      "id": "armazenamento",
+      "categoria": "Aparelho",
+      "nome": "Espaço de armazenamento",
+      "resumo": "Quanto espaço está usado e livre na memória interna.",
+      "comando": "adb -s {s} shell df -h /data",
+      "parametro": null,
+      "saida_exemplo": "Filesystem      Size  Used Avail Use% Mounted on\n/dev/block/dm-48 110G   64G   46G  59% /data"
+    },
+    {
+      "id": "hora",
+      "categoria": "Aparelho",
+      "nome": "Data e hora do aparelho",
+      "resumo": "Hora errada costuma quebrar sincronização e certificados.",
+      "comando": "adb -s {s} shell date",
+      "parametro": null,
+      "saida_exemplo": "Tue Nov 24 14:32:05 BRT 2026"
+    },
+    {
+      "id": "reiniciar",
+      "categoria": "Aparelho",
+      "nome": "Reiniciar aparelho",
+      "resumo": "Reinicia o aparelho normalmente, ou direto no modo recovery ou bootloader.",
+      "comando": "adb -s {s} reboot {p}",
+      "parametro": "text",
+      "rotulo_parametro": "Modo",
+      "atalhos": [
+        {
+          "rotulo": "Normal",
+          "valor": ""
+        },
+        {
+          "rotulo": "Recovery",
+          "valor": "recovery"
+        },
+        {
+          "rotulo": "Bootloader",
+          "valor": "bootloader"
+        }
+      ],
+      "escolha": {
+        "pergunta": "Reiniciar em qual modo?",
+        "opcao_outro": null
+      },
+      "pede_confirmacao": true,
+      "texto_confirmacao": "reiniciar o aparelho",
+      "saida_exemplo": "(aparelho reiniciando — aguardando reconexão…)"
+    },
+    {
+      "id": "print",
+      "categoria": "Captura",
+      "nome": "Screenshot pra área de transferência",
+      "resumo": "Tira print da tela e já deixa copiado. Também salva na pasta de saída.",
+      "comando": "adb -s {s} exec-out screencap -p > \"{d}\\screenshot_2026-11-24_14-32-05.png\"",
+      "parametro": null,
+      "gera_arquivo": true,
+      "saida_exemplo": "Imagem copiada (PNG 1080 × 2340).\nTambém salva em: {d}\\screenshot_2026-11-24_14-32-05.png"
+    },
+    {
+      "id": "gravar",
+      "categoria": "Captura",
+      "nome": "Gravar tela",
+      "resumo": "Grava até 3 minutos da tela. Clique de novo pra parar e salvar.",
+      "comando": "adb -s {s} shell screenrecord /sdcard/gravacao.mp4",
+      "parametro": null,
+      "gera_arquivo": true,
+      "saida_exemplo": "Gravando… (00:14)\nClique em \"Parar\" pra salvar em {d}\\gravacao.mp4"
+    },
+    {
+      "id": "loglimpar",
+      "categoria": "Logs",
+      "nome": "Limpar log do aparelho",
+      "resumo": "Zera o log antes de reproduzir o problema, pra o log salvo só ter o que interessa.",
+      "comando": "adb -s {s} logcat -c",
+      "parametro": null,
+      "saida_exemplo": "(log limpo — reproduza o problema e depois salve o log)"
+    },
+    {
+      "id": "logcontinuo",
+      "categoria": "Logs",
+      "nome": "Gravar log contínuo em arquivo",
+      "resumo": "Fica gravando o logcat em .txt até você clicar em Parar. Nome do arquivo com a data, no padrão log20261124.",
+      "comando": "adb -s {s} logcat -v threadtime > \"{d}\\log20261124_1432.txt\"",
+      "parametro": null,
+      "gera_arquivo": true,
+      "saida_exemplo": "Gravando log em {d}\\log20261124_1432.txt\n00:42 · 6318 linhas · clique em Parar pra encerrar"
+    },
+    {
+      "id": "logsalvar",
+      "categoria": "Logs",
+      "nome": "Salvar log atual em arquivo",
+      "resumo": "Puxa o log que já está no aparelho e salva na hora, sem ficar gravando.",
+      "comando": "adb -s {s} logcat -d -v threadtime > \"{d}\\log20261124_1432.txt\"",
+      "parametro": null,
+      "gera_arquivo": true,
+      "saida_exemplo": "Log salvo em: {d}\\log20261124_1432.txt\n18302 linhas · 2.4 MB"
+    },
+    {
+      "id": "logcat",
+      "categoria": "Logs",
+      "nome": "Logcat de um app",
+      "resumo": "Mostra só o log do app escolhido, sem o ruído do resto do sistema.",
+      "comando": "adb -s {s} logcat -v threadtime --pid=<pid de {p}>",
+      "parametro": "pkg",
+      "saida_exemplo": "11-24 14:31:58.204  8812  8812 I MainActivity: onResume\n11-24 14:31:59.032  8812  8870 W SyncWorker: timeout ao conectar, tentando de novo (1/3)\n11-24 14:32:01.448  8812  8870 I SyncWorker: sync concluído em 2.8s"
+    },
+    {
+      "id": "bugreport",
+      "categoria": "Logs",
+      "nome": "Extrair bugreport",
+      "resumo": "Relatório completo do Android, salvo na pasta de saída. Demora de 1 a 3 minutos.",
+      "comando": "adb -s {s} bugreport \"{d}\\bugreport_2026-11-24_14-32.zip\"",
+      "parametro": null,
+      "gera_arquivo": true,
+      "saida_exemplo": "[100%] generating bugreport\nBug report copied to {d}\\bugreport_2026-11-24_14-32.zip"
+    },
+    {
+      "id": "diag",
+      "categoria": "Logs",
+      "nome": "Coletar diagnóstico completo",
+      "resumo": "Junta log, propriedades, apps, bateria e screenshot num zip só.",
+      "comando": "adb -s {s} logcat -d -v threadtime > \"{d}\\logcat.txt\"\nadb -s {s} shell getprop > \"{d}\\props.txt\"\nadb -s {s} shell pm list packages > \"{d}\\apps.txt\"\nadb -s {s} shell dumpsys battery > \"{d}\\bateria.txt\"\nadb -s {s} exec-out screencap -p > \"{d}\\tela.png\"",
+      "parametro": null,
+      "gera_arquivo": true,
+      "saida_exemplo": "✓ logcat.txt (2.4 MB)\n✓ props.txt (38 KB)\n✓ apps.txt (6 KB)\n✓ bateria.txt (1 KB)\n✓ tela.png (812 KB)\n\nCompactado em: {d}\\diagnostico_2026-11-24_14-32.zip"
+    },
+    {
+      "id": "enviar",
+      "categoria": "Arquivos",
+      "nome": "Enviar arquivo pro aparelho",
+      "resumo": "Copia um arquivo (ex.: um APK) do computador pra raiz do armazenamento do aparelho.",
+      "comando": "adb -s {s} push \"{p}\" /sdcard/",
+      "parametro": "file",
+      "saida_exemplo": "{p}: 1 file pushed, 0 skipped. 28.7 MB/s (31457280 bytes in 1.045s)"
+    },
+    {
+      "id": "baixar",
+      "categoria": "Arquivos",
+      "nome": "Baixar arquivo do aparelho",
+      "resumo": "Copia um arquivo do aparelho pra pasta de saída.",
+      "comando": "adb -s {s} pull \"{p}\" \"{d}\"",
+      "parametro": "path",
+      "gera_arquivo": true,
+      "saida_exemplo": "{p}: 1 file pulled, 0 skipped. 30.1 MB/s (204800 bytes in 0.006s)"
+    },
+    {
+      "id": "listarpasta",
+      "categoria": "Arquivos",
+      "nome": "Listar pasta do aparelho",
+      "resumo": "Mostra os arquivos de uma pasta do aparelho, com tamanho e data.",
+      "comando": "adb -s {s} shell ls -la {p}",
+      "parametro": "path",
+      "exemplo": "/sdcard/Download/",
+      "atalhos": [
+        {
+          "rotulo": "Download",
+          "valor": "/sdcard/Download/"
+        },
+        {
+          "rotulo": "Raiz",
+          "valor": "/sdcard/"
+        },
+        {
+          "rotulo": "Fotos",
+          "valor": "/sdcard/DCIM/Camera/"
+        }
+      ],
+      "saida_exemplo": "total 30752\n-rw-rw---- 1 u0_a214 media_rw 31457280 2026-11-24 10:12 c4magent.apk\n-rw-rw---- 1 u0_a214 media_rw   204800 2026-11-23 17:40 relatorio.pdf"
+    },
+    {
+      "id": "conexao",
+      "categoria": "Conexão",
+      "nome": "Diagnosticar conexão",
+      "resumo": "Verifica se o adb enxerga os aparelhos e se a depuração USB está autorizada.",
+      "comando": "adb devices -l",
+      "parametro": null,
+      "saida_exemplo": "List of devices attached\nR58N12ABCDE   device usb:1-4 model:SM_A546E\nZY22H9KLMN    device usb:1-2 model:moto_g84_5G\n\n✓ Depuração autorizada nos 2 aparelhos"
+    },
+    {
+      "id": "servidor",
+      "categoria": "Conexão",
+      "nome": "Reiniciar o adb",
+      "resumo": "Derruba e sobe de novo o servidor do adb. Resolve a maioria dos “aparelho não aparece” e “offline”.",
+      "comando": "adb kill-server\nadb start-server",
+      "parametro": null,
+      "saida_exemplo": "* daemon not running; starting now at tcp:5037\n* daemon started successfully"
+    },
+    {
+      "id": "shell",
+      "categoria": "Conexão",
+      "nome": "Abrir shell do aparelho",
+      "resumo": "Abre uma janela de terminal já dentro do aparelho selecionado, pra digitar comandos livres.",
+      "comando": "adb -s {s} shell",
+      "parametro": null,
+      "saida_exemplo": "(abre uma janela de terminal: a54x:/ $ )"
+    },
+    {
+      "id": "wifi",
+      "categoria": "Conexão",
+      "nome": "Conectar via Wi-Fi",
+      "resumo": "Libera o adb pela rede, pra trabalhar sem cabo (aparelho e PC na mesma rede).",
+      "comando": "adb -s {s} tcpip 5555\nadb connect 192.168.0.143:5555",
+      "parametro": null,
+      "saida_exemplo": "restarting in TCP mode port: 5555\nconnected to 192.168.0.143:5555"
+    },
+    {
+      "id": "usb",
+      "categoria": "Conexão",
+      "nome": "Voltar pra conexão USB",
+      "resumo": "Desliga o adb pela rede e volta a usar só o cabo.",
+      "comando": "adb -s {s} usb",
+      "parametro": null,
+      "saida_exemplo": "restarting in USB mode"
+    }
+  ]
+}
