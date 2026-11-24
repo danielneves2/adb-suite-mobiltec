@@ -1,0 +1,66 @@
+@import '@fontsource/space-mono/400.css';
+@import '@fontsource/space-mono/700.css';
+@import '@fontsource/vt323/400.css';
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--texto);
+  font-family: var(--fonte-ui);
+  font-size: 12px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+.terminal {
+  font-family: var(--fonte-terminal);
+}
+
+.rotulo {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--rotulo);
+}
+
+.btn {
+  height: 32px;
+  padding: 0 10px;
+  border: 2px solid var(--borda);
+  background: var(--superficie);
+  color: var(--texto);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primario {
+  border-color: var(--roxo);
+  background: var(--roxo);
+  color: #fff;
+}
