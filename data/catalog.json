@@ -1,9 +1,11 @@
 {
-  "versao": 1,
+  "versao": 2,
   "placeholders": {
     "{s}": "serial do aparelho selecionado",
-    "{p}": "valor digitado ou escolhido pelo técnico",
-    "{d}": "pasta de saída do aparelho: <pasta base>\\<Marca>-<Modelo>_<SERIAL>"
+    "{p}": "valor digitado ou escolhido pelo técnico (aliases: {pacote} {arquivo} {caminho} {texto} {pasta})",
+    "{d}": "pasta de saída do aparelho: <pasta base>\\<Marca>-<Modelo>_<SERIAL>",
+    "{agora}": "data e hora local no padrão AAAAMMDD_HHMM",
+    "{anterior}": "1ª linha da saída do passo anterior, sem o prefixo package:"
   },
   "categorias": [
     "Apps",
@@ -101,7 +103,7 @@
       "categoria": "Apps",
       "nome": "Extrair APK",
       "resumo": "Localiza o APK (de usuário ou de sistema) e copia pra pasta de saída com o nome do pacote.",
-      "comando": "adb -s {s} shell pm path {p}\nadb -s {s} pull <caminho> \"{d}\\{p}.apk\"",
+      "comando": "adb -s {s} shell pm path {p}\nadb -s {s} pull {anterior} \"{d}\\{p}.apk\"",
       "parametro": "pkg",
       "gera_arquivo": true,
       "saida_exemplo": "package:/data/app/~~a1B2c3==/{p}-x9Y8z7==/base.apk\n/data/app/~~a1B2c3==/{p}-x9Y8z7==/base.apk: 1 file pulled, 0 skipped. 31.2 MB/s (48213904 bytes in 1.474s)\nSalvo em: {d}\\{p}.apk"
@@ -466,10 +468,11 @@
       "categoria": "Captura",
       "nome": "Screenshot pra área de transferência",
       "resumo": "Tira print da tela e já deixa copiado. Também salva na pasta de saída.",
-      "comando": "adb -s {s} exec-out screencap -p > \"{d}\\screenshot_2026-11-24_14-32-05.png\"",
+      "comando": "adb -s {s} exec-out screencap -p > \"{d}\\screenshot_{agora}.png\"",
       "parametro": null,
       "gera_arquivo": true,
-      "saida_exemplo": "Imagem copiada (PNG 1080 × 2340).\nTambém salva em: {d}\\screenshot_2026-11-24_14-32-05.png"
+      "saida_exemplo": "Imagem copiada (PNG 1080 × 2340).\nTambém salva em: {d}\\screenshot_20261124_1432.png",
+      "acao_extra": "copiar_imagem"
     },
     {
       "id": "gravar",
@@ -479,7 +482,10 @@
       "comando": "adb -s {s} shell screenrecord /sdcard/gravacao.mp4",
       "parametro": null,
       "gera_arquivo": true,
-      "saida_exemplo": "Gravando… (00:14)\nClique em \"Parar\" pra salvar em {d}\\gravacao.mp4"
+      "saida_exemplo": "Gravando… (00:14)\nClique em \"Parar\" pra salvar em {d}\\gravacao_20261124_1432.mp4",
+      "modo": "continuo",
+      "comando_parar": "adb -s {s} shell pkill -INT screenrecord",
+      "comando_depois": "adb -s {s} pull /sdcard/gravacao.mp4 \"{d}\\gravacao_{agora}.mp4\""
     },
     {
       "id": "loglimpar",
@@ -495,17 +501,18 @@
       "categoria": "Logs",
       "nome": "Gravar log contínuo em arquivo",
       "resumo": "Fica gravando o logcat em .txt até você clicar em Parar. Nome do arquivo com a data, no padrão log20261124.",
-      "comando": "adb -s {s} logcat -v threadtime > \"{d}\\log20261124_1432.txt\"",
+      "comando": "adb -s {s} logcat -v threadtime > \"{d}\\log{agora}.txt\"",
       "parametro": null,
       "gera_arquivo": true,
-      "saida_exemplo": "Gravando log em {d}\\log20261124_1432.txt\n00:42 · 6318 linhas · clique em Parar pra encerrar"
+      "saida_exemplo": "Gravando log em {d}\\log20261124_1432.txt\n00:42 · 6318 linhas · clique em Parar pra encerrar",
+      "modo": "continuo"
     },
     {
       "id": "logsalvar",
       "categoria": "Logs",
       "nome": "Salvar log atual em arquivo",
       "resumo": "Puxa o log que já está no aparelho e salva na hora, sem ficar gravando.",
-      "comando": "adb -s {s} logcat -d -v threadtime > \"{d}\\log20261124_1432.txt\"",
+      "comando": "adb -s {s} logcat -d -v threadtime > \"{d}\\log{agora}.txt\"",
       "parametro": null,
       "gera_arquivo": true,
       "saida_exemplo": "Log salvo em: {d}\\log20261124_1432.txt\n18302 linhas · 2.4 MB"
@@ -515,7 +522,7 @@
       "categoria": "Logs",
       "nome": "Logcat de um app",
       "resumo": "Mostra só o log do app escolhido, sem o ruído do resto do sistema.",
-      "comando": "adb -s {s} logcat -v threadtime --pid=<pid de {p}>",
+      "comando": "adb -s {s} shell \"logcat -v threadtime --pid=$(pidof {p})\"",
       "parametro": "pkg",
       "saida_exemplo": "11-24 14:31:58.204  8812  8812 I MainActivity: onResume\n11-24 14:31:59.032  8812  8870 W SyncWorker: timeout ao conectar, tentando de novo (1/3)\n11-24 14:32:01.448  8812  8870 I SyncWorker: sync concluído em 2.8s"
     },
@@ -524,20 +531,21 @@
       "categoria": "Logs",
       "nome": "Extrair bugreport",
       "resumo": "Relatório completo do Android, salvo na pasta de saída. Demora de 1 a 3 minutos.",
-      "comando": "adb -s {s} bugreport \"{d}\\bugreport_2026-11-24_14-32.zip\"",
+      "comando": "adb -s {s} bugreport \"{d}\\bugreport_{agora}.zip\"",
       "parametro": null,
       "gera_arquivo": true,
-      "saida_exemplo": "[100%] generating bugreport\nBug report copied to {d}\\bugreport_2026-11-24_14-32.zip"
+      "saida_exemplo": "[100%] generating bugreport\nBug report copied to {d}\\bugreport_20261124_1432.zip"
     },
     {
       "id": "diag",
       "categoria": "Logs",
       "nome": "Coletar diagnóstico completo",
       "resumo": "Junta log, propriedades, apps, bateria e screenshot num zip só.",
-      "comando": "adb -s {s} logcat -d -v threadtime > \"{d}\\logcat.txt\"\nadb -s {s} shell getprop > \"{d}\\props.txt\"\nadb -s {s} shell pm list packages > \"{d}\\apps.txt\"\nadb -s {s} shell dumpsys battery > \"{d}\\bateria.txt\"\nadb -s {s} exec-out screencap -p > \"{d}\\tela.png\"",
+      "comando": "adb -s {s} logcat -d -v threadtime > \"{d}\\diagnostico_{agora}\\logcat.txt\"\nadb -s {s} shell getprop > \"{d}\\diagnostico_{agora}\\props.txt\"\nadb -s {s} shell pm list packages > \"{d}\\diagnostico_{agora}\\apps.txt\"\nadb -s {s} shell dumpsys battery > \"{d}\\diagnostico_{agora}\\bateria.txt\"\nadb -s {s} exec-out screencap -p > \"{d}\\diagnostico_{agora}\\tela.png\"",
       "parametro": null,
       "gera_arquivo": true,
-      "saida_exemplo": "✓ logcat.txt (2.4 MB)\n✓ props.txt (38 KB)\n✓ apps.txt (6 KB)\n✓ bateria.txt (1 KB)\n✓ tela.png (812 KB)\n\nCompactado em: {d}\\diagnostico_2026-11-24_14-32.zip"
+      "saida_exemplo": "✓ logcat.txt (2.4 MB)\n✓ props.txt (38 KB)\n✓ apps.txt (6 KB)\n✓ bateria.txt (1 KB)\n✓ tela.png (812 KB)\n\nCompactado em: {d}\\diagnostico_20261124_1432.zip",
+      "acao_extra": "zipar"
     },
     {
       "id": "enviar",
@@ -607,16 +615,19 @@
       "resumo": "Abre uma janela de terminal já dentro do aparelho selecionado, pra digitar comandos livres.",
       "comando": "adb -s {s} shell",
       "parametro": null,
-      "saida_exemplo": "(abre uma janela de terminal: a54x:/ $ )"
+      "saida_exemplo": "(abre uma janela de terminal: a54x:/ $ )",
+      "modo": "terminal"
     },
     {
       "id": "wifi",
       "categoria": "Conexão",
       "nome": "Conectar via Wi-Fi",
-      "resumo": "Libera o adb pela rede, pra trabalhar sem cabo (aparelho e PC na mesma rede).",
-      "comando": "adb -s {s} tcpip 5555\nadb connect 192.168.0.143:5555",
-      "parametro": null,
-      "saida_exemplo": "restarting in TCP mode port: 5555\nconnected to 192.168.0.143:5555"
+      "resumo": "Libera o adb pela rede, pra trabalhar sem cabo (aparelho e PC na mesma rede). O IP fica em Configurações → Wi‑Fi → rede conectada.",
+      "comando": "adb -s {s} tcpip 5555\nadb connect {p}:5555",
+      "parametro": "text",
+      "saida_exemplo": "restarting in TCP mode port: 5555\nconnected to 192.168.0.143:5555",
+      "rotulo_parametro": "IP do aparelho",
+      "exemplo": "192.168.0.10"
     },
     {
       "id": "usb",
