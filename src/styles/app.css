@@ -295,3 +295,286 @@
     max-width: none;
   }
 }
+
+/* ---------- comando ---------- */
+.comando {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 860px;
+  flex: 1;
+  min-height: 0;
+}
+.comando-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-fixar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--borda);
+  background: transparent;
+  color: var(--texto);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.estrela.cheia {
+  color: var(--roxo-claro);
+}
+.selo {
+  padding: 1px 6px;
+  background: var(--roxo);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+}
+.comando-nome {
+  margin: 0;
+  font-size: 20px;
+}
+.comando-resumo {
+  margin: 0;
+  color: var(--texto-2);
+  line-height: 1.5;
+}
+.opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.opcoes legend {
+  margin-bottom: 6px;
+}
+.opcao {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 150px;
+  max-width: 300px;
+  padding: 7px 10px;
+  border: 2px solid var(--borda);
+  background: var(--bg);
+  color: var(--texto);
+  text-align: left;
+  cursor: pointer;
+}
+.opcao.selecionada {
+  border-color: var(--roxo);
+  background: var(--roxo-fundo);
+  color: #fff;
+}
+.opcao-valor {
+  color: var(--texto-2b);
+  font-size: 11px;
+}
+.campo-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.campo-linha .rotulo {
+  width: 100%;
+}
+.campo {
+  flex: 1 1 320px;
+  max-width: 520px;
+  height: 34px;
+  padding: 0 8px;
+  border: 2px solid var(--borda-campo);
+  background: var(--campo);
+}
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.btn-executar {
+  height: 34px;
+  padding: 0 14px;
+}
+.btn-ver {
+  color: var(--rotulo);
+}
+.aviso {
+  color: var(--roxo-texto);
+  font-size: 11px;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: -6px;
+}
+.chip {
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--borda);
+  background: var(--chip);
+  font-size: 11px;
+  cursor: pointer;
+}
+.caixa-comando {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 4px 4px 10px;
+  background: var(--terminal);
+}
+.caixa-comando code {
+  flex: 1;
+  font-size: 18px;
+  color: var(--laranja);
+  white-space: pre;
+  overflow-x: auto;
+}
+.btn-copiar {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  background: var(--btn-copiar);
+  color: var(--btn-copiar-texto);
+  font-weight: 700;
+  cursor: pointer;
+}
+.faixa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 10px 12px;
+  border: 2px solid var(--roxo);
+  background: var(--roxo-fundo);
+}
+.faixa-atencao {
+  padding: 2px 6px;
+  background: var(--roxo);
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.faixa-texto {
+  flex: 1 1 300px;
+  color: var(--roxo-texto);
+}
+.btn-faixa {
+  height: 30px;
+}
+.livre {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.livre-linha {
+  display: flex;
+  gap: 8px;
+}
+.livre-caixa {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  padding: 0 8px;
+  border: 2px solid var(--borda);
+  background: var(--terminal);
+  font-size: 18px;
+}
+.livre-prefixo {
+  color: var(--marcador-vazio);
+  white-space: nowrap;
+}
+.livre-input {
+  flex: 1;
+  height: 32px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--laranja);
+  font-family: var(--fonte-terminal);
+  font-size: 18px;
+}
+.btn-livre {
+  height: 36px;
+}
+
+/* ---------- saída ---------- */
+.saida {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 300px;
+  border: 2px solid var(--borda);
+  background: var(--terminal);
+}
+.saida-barra {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  background: var(--barra-terminal);
+}
+.saida-titulo {
+  letter-spacing: 0.06em;
+  color: #fff;
+}
+.saida-status {
+  font-size: 11px;
+  color: var(--texto-3);
+}
+.saida-espaco {
+  flex: 1;
+}
+.saida-btn {
+  height: 26px;
+  padding: 0 8px;
+  border: 0;
+  background: var(--bg);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.saida-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.saida-btn-chamado {
+  background: var(--roxo);
+  color: #fff;
+}
+.saida-corpo {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 10px;
+}
+.saida-corpo p {
+  margin: 0 0 4px;
+}
+.saida-ocioso {
+  font-size: 19px;
+  color: var(--ocioso);
+}
+.saida-executando {
+  font-size: 19px;
+  color: var(--laranja);
+}
+.saida-meta {
+  font-size: 17px;
+  color: var(--meta);
+}
+.saida-texto {
+  margin: 0;
+  font-family: var(--fonte-terminal);
+  font-size: 19px;
+  line-height: 1.2;
+  color: var(--laranja-saida);
+}

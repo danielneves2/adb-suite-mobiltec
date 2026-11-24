@@ -1,15 +1,46 @@
 import { openPath } from '@tauri-apps/plugin-opener'
+import { useEffect, useState } from 'react'
+import rawCatalog from '../data/catalog.json'
 import { CommandList } from './components/CommandList'
+import { CommandView } from './components/CommandView'
 import { Rail } from './components/Rail'
 import { StatusBar } from './components/StatusBar'
 import { TopBar } from './components/TopBar'
 import { adb } from './lib/adb'
+import type { Catalog } from './lib/catalogTypes'
+import { formatTimestamp } from './lib/commandBuilder'
 import { tauriConfigStore } from './lib/configStore'
 import { useAppState } from './state/useAppState'
+import { useRunner } from './state/useRunner'
 import './styles/app.css'
+
+const catalog = rawCatalog as unknown as Catalog
 
 export default function App() {
   const s = useAppState({ listDevices: adb.listDevices, store: tauriConfigStore })
+  const runner = useRunner({ api: adb })
+  const [packages, setPackages] = useState<string[]>([])
+  const device = s.selectedDevice
+  const ready = device?.state === 'device'
+
+  // Pacotes instalados do aparelho selecionado (autocomplete).
+  useEffect(() => {
+    setPackages([])
+    if (!ready || !device) return
+    let alive = true
+    adb
+      .listPackages(device.serial)
+      .then((list) => alive && setPackages(list))
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [device?.serial, ready])
+
+  // Trocar de comando ou de aparelho volta a saída para "aguardando".
+  useEffect(() => {
+    runner.reset()
+  }, [s.selectedCommandId, s.selectedSerial])
 
   const openFolder = async (path: string | null) => {
     if (!path) return
@@ -19,6 +50,27 @@ export default function App() {
       s.flash('A pasta ainda não existe: ela é criada quando um comando salvar algo.')
     }
   }
+
+  const saveOutput = async (text: string) => {
+    if (!s.currentDeviceDir) return
+    try {
+      const saved = await adb.writeTextFile(`${s.currentDeviceDir}\\saida_${formatTimestamp(new Date())}.txt`, text)
+      s.flash(`Saída salva em ${saved}`)
+    } catch (e) {
+      s.flash(String(e))
+    }
+  }
+
+  const restartServer = async () => {
+    try {
+      await adb.restartAdbServer()
+      s.flash('Servidor adb reiniciado.')
+    } catch (e) {
+      s.flash(String(e))
+    }
+  }
+
+  const cmd = s.selectedCommand
 
   return (
     <div className="app">
@@ -42,8 +94,37 @@ export default function App() {
           onSelect={s.selectCommand}
         />
         <main className="principal">
-          {s.devicesError && <p className="status-mensagem">{s.devicesError}</p>}
-          {s.selectedCommand ? <h1>{s.selectedCommand.nome}</h1> : <p className="lista-vazia">Escolha um comando na lista.</p>}
+          {s.devicesError && (
+            <div className="faixa" role="alert">
+              <strong className="faixa-atencao">ADB</strong>
+              <span className="faixa-texto">{s.devicesError}</span>
+              <button type="button" className="btn btn-primario btn-faixa" onClick={() => void restartServer()}>
+                Reiniciar servidor adb
+              </button>
+            </div>
+          )}
+          {cmd ? (
+            <CommandView
+              command={cmd}
+              device={device}
+              deviceDir={s.currentDeviceDir}
+              packages={packages}
+              suggestedPackages={catalog.pacotes_sugeridos}
+              pinned={s.pinned.includes(cmd.id)}
+              onTogglePin={() => s.togglePin(cmd.id)}
+              run={runner.view}
+              onRun={(value, allowEmptyValue) => device && runner.start(cmd, { device, value, baseDir: s.baseDir, allowEmptyValue })}
+              onRunFree={(input) => device && runner.startFree(input, { device, baseDir: s.baseDir })}
+              onStop={() => void runner.stop()}
+              onReset={runner.reset}
+              onOpenFolder={() => void openFolder(s.currentDeviceDir)}
+              onSaveOutput={(text) => void saveOutput(text)}
+              onRestartServer={() => void restartServer()}
+              flash={s.flash}
+            />
+          ) : (
+            <p className="lista-vazia">Escolha um comando na lista.</p>
+          )}
         </main>
       </div>
       <StatusBar
