@@ -1,25 +1,62 @@
-import { invoke } from '@tauri-apps/api/core'
-import { getCurrentWindow } from '@tauri-apps/api/window'
-import { useEffect, useState } from 'react'
+import { openPath } from '@tauri-apps/plugin-opener'
+import { CommandList } from './components/CommandList'
+import { Rail } from './components/Rail'
+import { StatusBar } from './components/StatusBar'
+import { TopBar } from './components/TopBar'
+import { adb } from './lib/adb'
+import { tauriConfigStore } from './lib/configStore'
+import { useAppState } from './state/useAppState'
+import './styles/app.css'
 
 export default function App() {
-  const [version, setVersion] = useState('verificando adb…')
+  const s = useAppState({ listDevices: adb.listDevices, store: tauriConfigStore })
 
-  useEffect(() => {
-    invoke<string>('adb_version')
-      .then((v) => {
-        setVersion(v)
-        void getCurrentWindow().setTitle(`ADB Suite – Mobiltec · ${v}`)
-      })
-      .catch((e) => setVersion(String(e)))
-  }, [])
+  const openFolder = async (path: string | null) => {
+    if (!path) return
+    try {
+      await openPath(path)
+    } catch {
+      s.flash('A pasta ainda não existe: ela é criada quando um comando salvar algo.')
+    }
+  }
 
   return (
-    <main style={{ padding: 16 }}>
-      <h1 style={{ fontSize: 20 }}>ADB SUITE - MOBILTEC</h1>
-      <p className="terminal" style={{ color: 'var(--laranja)', fontSize: 19 }}>
-        $ {version} █
-      </p>
-    </main>
+    <div className="app">
+      <TopBar
+        devices={s.devices}
+        selectedSerial={s.selectedSerial}
+        onSelect={s.selectSerial}
+        onDiagnose={() => s.selectCommand('conexao')}
+        onCollect={() => s.selectCommand('diag')}
+      />
+      <div className="app-corpo">
+        <Rail active={s.rail} searching={s.searching} onSelect={s.setRail} />
+        <CommandList
+          title={s.listTitle}
+          commands={s.listCommands}
+          selectedId={s.selectedCommandId}
+          showCategory={s.searching || s.rail === 'Fixados'}
+          emptyText={s.emptyText}
+          search={s.search}
+          onSearch={s.setSearch}
+          onSelect={s.selectCommand}
+        />
+        <main className="principal">
+          {s.devicesError && <p className="status-mensagem">{s.devicesError}</p>}
+          {s.selectedCommand ? <h1>{s.selectedCommand.nome}</h1> : <p className="lista-vazia">Escolha um comando na lista.</p>}
+        </main>
+      </div>
+      <StatusBar
+        deviceDir={s.currentDeviceDir}
+        baseDir={s.baseDir}
+        onChangeBase={(dir) => {
+          s.setBaseDir(dir)
+          s.flash('Pasta de saída alterada. Cada aparelho ganha uma subpasta própria.')
+        }}
+        onOpen={() => void openFolder(s.currentDeviceDir ?? s.baseDir)}
+        message={s.status}
+        deviceCount={s.devices.filter((d) => d.state === 'device').length}
+      />
+    </div>
   )
 }
