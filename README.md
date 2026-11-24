@@ -6,6 +6,13 @@ Arsenal de comandos ADB pros técnicos: escolhe o aparelho, clica no comando, co
 1. Primeira vez: dê dois cliques em `configurar-git.bat` (pede login do GitHub no navegador).
 2. Sempre que quiser sincronizar: dois cliques em `atualizar.bat`. Pra dar nome à alteração, rode no terminal `atualizar.bat "o que mudou"`.
 
+## Rodar o app em desenvolvimento
+Pré-requisitos (uma vez só): Node, Rust (`rustup`) e Build Tools do Visual Studio com o compilador C++.
+1. `npm install`
+2. `powershell -ExecutionPolicy Bypass -File scripts\baixar-platform-tools.ps1` — baixa o adb oficial do Google pra `src-tauri\binaries\adb\` (fica fora do git).
+3. `npm run tauri dev` — abre a janela do app.
+4. Testes: `npm test` (TypeScript) e `cargo test` dentro de `src-tauri` (Rust).
+
 ## O que tem nesta pasta
 - `CLAUDE.md` – contexto do projeto, stack e regras (o Claude Code lê sozinho).
 - `docs/MVP.md` – escopo do MVP e o que fica pra depois.

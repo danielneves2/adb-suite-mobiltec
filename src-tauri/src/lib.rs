@@ -1,14 +1,26 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+mod adb_path;
+mod process;
+
+use adb_path::app_adb_path;
+use process::hidden_command;
+
+/// Primeira linha de `adb version` do adb embutido.
 #[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+async fn adb_version(app: tauri::AppHandle) -> Result<String, String> {
+    let adb = app_adb_path(&app)?;
+    let out = hidden_command(&adb)
+        .arg("version")
+        .output()
+        .await
+        .map_err(|e| format!("Não deu pra rodar o adb: {e}"))?;
+    Ok(String::from_utf8_lossy(&out.stdout).lines().next().unwrap_or_default().to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![adb_version])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
