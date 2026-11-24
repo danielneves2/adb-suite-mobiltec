@@ -1,4 +1,4 @@
-import { buildCommand, formatTimestamp, type BuildContext, type BuildOptions } from './commandBuilder'
+import { buildCommand, buildFreeCommand, formatTimestamp, type BuildContext, type BuildOptions } from './commandBuilder'
 
 const ctx: BuildContext = {
   serial: 'R58M',
@@ -99,4 +99,16 @@ describe('buildCommand', () => {
         'C:\\ADB-Suite\\Saidas\\Samsung-A10_R58M\\a b.txt',
       ))
   })
+})
+
+describe('comando livre', () => {
+  const free = (input: string) => buildFreeCommand(input, { serial: ctx.serial, deviceDir: ctx.deviceDir, now: ctx.now })
+  test('shell …', () => expect(free('shell ls /sdcard').steps[0].args).toEqual(['-s', 'R58M', 'shell', 'ls', '/sdcard']))
+  test('adb shell …', () => expect(free('adb shell ls').steps[0].args).toEqual(['-s', 'R58M', 'shell', 'ls']))
+  test('.\\adb shell …', () => expect(free('.\\adb shell ls').steps[0].args).toEqual(['-s', 'R58M', 'shell', 'ls']))
+  test('adb -s OUTRO troca pelo selecionado', () => expect(free('adb -s ZZZ999 shell ls').steps[0].args).toEqual(['-s', 'R58M', 'shell', 'ls']))
+  test('adb devices sem -s', () => expect(free('adb devices').steps[0].args).toEqual(['devices']))
+  test('chaves ficam literais', () => expect(free('shell echo {x}').steps[0].args.at(-1)).toBe('{x}'))
+  test('> arquivo funciona no livre', () => expect(free('shell getprop > "C:\\t\\p.txt"').steps[0].redirectTo).toBe('C:\\t\\p.txt'))
+  test('vazio', () => expect(() => free('   ')).toThrow(expect.objectContaining({ code: 'empty' })))
 })

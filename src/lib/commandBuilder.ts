@@ -124,3 +124,12 @@ function displayStep(step: Step): string {
   const base = ['adb', ...step.args.map(displayArg)].join(' ')
   return step.redirectTo !== undefined ? `${base} > ${displayArg(step.redirectTo)}` : base
 }
+
+/**
+ * Comando livre digitado pelo técnico: aceita `shell …`, `adb shell …`,
+ * `.\adb shell …` e `adb -s X …`; sempre vira `adb -s <selecionado> …`.
+ * Chaves ficam literais (sem placeholders).
+ */
+export function buildFreeCommand(input: string, ctx: Omit<BuildContext, 'value'>): BuildResult {
+  return buildCommand(input, { ...ctx, value: '' }, { freeMode: true })
+}
