@@ -1,5 +1,6 @@
 mod adb_path;
 mod process;
+mod runner;
 
 use adb_path::app_adb_path;
 use process::hidden_command;
@@ -20,7 +21,8 @@ async fn adb_version(app: tauri::AppHandle) -> Result<String, String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![adb_version])
+        .manage(runner::RunRegistry::default())
+        .invoke_handler(tauri::generate_handler![adb_version, runner::run_steps, runner::cancel_run])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
