@@ -1,4 +1,5 @@
 mod adb_path;
+mod devices;
 mod process;
 mod runner;
 
@@ -22,7 +23,13 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .manage(runner::RunRegistry::default())
-        .invoke_handler(tauri::generate_handler![adb_version, runner::run_steps, runner::cancel_run])
+        .manage(devices::DeviceCache::default())
+        .invoke_handler(tauri::generate_handler![adb_version, runner::run_steps,
+            runner::cancel_run,
+            devices::list_devices,
+            devices::restart_adb_server,
+            devices::list_packages
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
