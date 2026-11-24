@@ -137,7 +137,7 @@ Segue `docs/DESIGN.md` e o protótipo (layout, cores, fontes Space Mono e VT323 
 - Instalador sem auto-update no MVP.
 - **Comportamentos extras são dados**: coluna `acao_extra text check (acao_extra in ('copiar_imagem','zipar'))` na migração 002. `print` → `copiar_imagem`; `diag` → `zipar`. Autocomplete de pacote liga por `parametro = 'pkg'`. A UI nunca decide pelo `id`.
 - **`diag`** grava numa subpasta `{d}\diagnostico_{agora}\` e o zip é só dela (`diagnostico_{agora}.zip` em `{d}`).
-- **Valor dentro de aspas da shell do aparelho**: quando o token começa com `shell` e o placeholder cai dentro de uma string entre aspas duplas, o montador escapa `\ " $ \`` com barra invertida. Testado com `"`, `$`, `;`, espaço.
+- **Valor dentro de aspas da shell do aparelho**: em args depois de `shell`/`exec-out`, quando o placeholder de valor estava entre aspas no modelo e o valor tem caractere especial, o montador insere o valor entre aspas simples de sh (`'` vira `'\''`), então ele chega como uma palavra só. Placeholder sem aspas vai cru (ex.: `grant` com duas palavras). Fora da shell (install, pull, redirect) vai sempre cru: o adb recebe argv sem passar por shell.
 - **Colisão de nomes**: logs seguem `logAAAAMMDD_HHMM.txt`; se o arquivo já existir, o Rust acrescenta `_2`, `_3`… (vale pra print, bugreport, gravação).
 - **Seed** usa `on conflict (id) do nothing`: rodar de novo nunca sobrescreve edição do time. Correção futura num oficial vai como migração explícita (`update … where id = …`), que dispara `atualizado_em` e chega a todos pelo sync.
 - **Diagnosticar conexão**: checa servidor adb respondendo, versão do adb em uso, aparelhos `unauthorized`/`offline`/nenhum (com dica de cabo, modo de transferência, driver do fabricante e "autorize a depuração").
