@@ -59,5 +59,7 @@ test('gravar para e puxa o vídeo', () => {
   expect(byId('gravar').comando_parar).toBe('adb -s {s} shell pkill -INT screenrecord')
   expect(byId('gravar').comando_depois).toBe('adb -s {s} pull /sdcard/gravacao.mp4 "{d}\\gravacao_{agora}.mp4"')
 })
+test('app em foco usa dumpsys window inteiro (no Android 14 "dumpsys window windows" não mostra mCurrentFocus)', () =>
+  expect(byId('foco').comando).toBe('adb -s {s} shell "dumpsys window | grep -E \'mCurrentFocus|mFocusedApp\'"'))
 test('logcat por app resolve o pid no aparelho', () =>
   expect(byId('logcat').comando).toBe('adb -s {s} shell "logcat -v threadtime --pid=$(pidof {p})"'))

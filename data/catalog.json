@@ -270,7 +270,7 @@
       "categoria": "Telas",
       "nome": "Ver app em foco",
       "resumo": "Mostra qual app e tela estão na frente agora (mCurrentFocus).",
-      "comando": "adb -s {s} shell \"dumpsys window windows | grep -E 'mCurrentFocus'\"",
+      "comando": "adb -s {s} shell \"dumpsys window | grep -E 'mCurrentFocus|mFocusedApp'\"",
       "parametro": null,
       "saida_exemplo": "  mCurrentFocus=Window{8a1c2e3 u0 com.sec.android.app.launcher/com.sec.android.app.launcher.activities.LauncherActivity}"
     },
