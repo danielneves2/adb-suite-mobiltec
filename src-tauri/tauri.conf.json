@@ -37,6 +37,18 @@
     ],
     "resources": {
       "binaries/adb/*": "adb/"
+    },
+    "publisher": "Mobiltec",
+    "shortDescription": "Comandos ADB do suporte Mobiltec num clique",
+    "copyright": "Mobiltec",
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": [
+          "PortugueseBR"
+        ],
+        "displayLanguageSelector": false
+      }
     }
   }
 }

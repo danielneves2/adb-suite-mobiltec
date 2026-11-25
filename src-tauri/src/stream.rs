@@ -199,7 +199,7 @@ pub async fn stop_stream(
     let adb = crate::adb_path::app_adb_path(&app)?;
     let entry = registry.0.lock().unwrap().remove(&run_id);
     let none = CancellationToken::new();
-    if let Some((token, mut handle)) = entry {
+    if let Some((token, handle)) = entry {
         if let Some(step) = &stop_step {
             run_one(&adb, step, None, &none).await?;
         }
