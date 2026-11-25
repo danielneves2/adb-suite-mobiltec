@@ -6,6 +6,7 @@ alter table comandos add column if not exists modo text not null default 'normal
 alter table comandos add column if not exists comando_parar text;
 alter table comandos add column if not exists comando_depois text;
 alter table comandos add column if not exists acao_extra text;
+alter table comandos add column if not exists texto_sem_resultado text;
 
 do $$
 begin

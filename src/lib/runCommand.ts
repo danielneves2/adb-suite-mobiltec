@@ -69,6 +69,11 @@ async function finishNormal(c: Command | null, built: BuildResult, outs: StepOut
     output = `Salvo em: ${savedTo}\n`
   }
 
+  // grep sem nenhuma linha encontrada devolve código 1 e saída vazia: é "nada encontrado", não erro.
+  if (last?.exitCode === 1 && output.trim() === '' && /\|\s*grep\b/.test(c?.comando ?? built.display)) {
+    return { output: `${c?.texto_sem_resultado ?? 'Nada encontrado.'}\n`, exitCode: 0, durationMs: sum(outs), display: built.display, at: o.now }
+  }
+
   return { output, exitCode: last?.exitCode ?? -1, durationMs: sum(outs), savedTo, display: built.display, at: o.now }
 }
 

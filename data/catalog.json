@@ -70,6 +70,7 @@
       "nome": "Localizar pacote pelo nome",
       "resumo": "Procura o pacote digitando só um pedaço do nome. Inclui apps do sistema.",
       "comando": "adb -s {s} shell \"pm list packages | grep {p}\"",
+      "texto_sem_resultado": "Nenhum pacote com esse nome neste aparelho.",
       "parametro": "text",
       "rotulo_parametro": "Parte do nome do pacote",
       "exemplo": "mobiltec",
@@ -208,6 +209,7 @@
       "nome": "Ver permissões do app",
       "resumo": "Permissões em tempo de execução e se estão concedidas.",
       "comando": "adb -s {s} shell \"dumpsys package {p} | grep granted=\"",
+      "texto_sem_resultado": "Nenhuma permissão concedida encontrada pra esse app.",
       "parametro": "pkg",
       "saida_exemplo": "      android.permission.CAMERA: granted=true\n      android.permission.ACCESS_FINE_LOCATION: granted=true\n      android.permission.POST_NOTIFICATIONS: granted=false"
     },
@@ -217,6 +219,7 @@
       "nome": "Ver se o app está rodando",
       "resumo": "Mostra se o processo do app está ativo agora, com o PID.",
       "comando": "adb -s {s} shell \"ps -A | grep {p}\"",
+      "texto_sem_resultado": "O app não está rodando.",
       "parametro": "pkg",
       "saida_exemplo": "u0_a214      8812   612 5412340 182340 0                   0 S {p}"
     },
@@ -262,6 +265,7 @@
       "nome": "Ver Device Owner atual",
       "resumo": "Mostra qual app é o dono do dispositivo hoje.",
       "comando": "adb -s {s} shell \"dumpsys device_policy | grep -A2 'Device Owner'\"",
+      "texto_sem_resultado": "Nenhum Device Owner definido neste aparelho.",
       "parametro": null,
       "saida_exemplo": "Device Owner:\n  admin=ComponentInfo{br.com.mobiltec.c4m.android.agent/br.com.mobiltec.c4m.android.agent.app.MainActivity_}\n  name=C4M Agent"
     },

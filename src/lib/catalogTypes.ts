@@ -27,6 +27,8 @@ export interface Command {
   comando_parar?: string | null
   comando_depois?: string | null
   acao_extra?: ExtraAction | null
+  /** Texto quando o filtro (grep) não acha nada (adb devolve código 1 sem saída). */
+  texto_sem_resultado?: string | null
   saida_exemplo?: string
   oficial?: boolean
   excluido?: boolean

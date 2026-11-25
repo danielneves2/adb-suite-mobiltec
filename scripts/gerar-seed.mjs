@@ -12,7 +12,7 @@ const catalog = JSON.parse(readFileSync(join(root, 'data', 'catalog.json'), 'utf
 const COLUMNS = [
   'id', 'categoria', 'nome', 'resumo', 'comando', 'parametro', 'rotulo_parametro', 'exemplo',
   'atalhos', 'escolha', 'pede_confirmacao', 'texto_confirmacao', 'gera_arquivo',
-  'modo', 'comando_parar', 'comando_depois', 'acao_extra', 'oficial',
+  'modo', 'comando_parar', 'comando_depois', 'acao_extra', 'texto_sem_resultado', 'oficial',
 ]
 const JSONB = new Set(['atalhos', 'escolha'])
 const BOOLEAN_DEFAULT_FALSE = new Set(['pede_confirmacao', 'gera_arquivo'])
