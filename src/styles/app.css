@@ -1494,3 +1494,9 @@ select.campo {
   margin: 4px 0;
   color: var(--texto-2);
 }
+
+/* Inputs dentro de caixas que já mostram o foco na borda: sem contorno extra. */
+.livre-input:focus-visible,
+.busca-input:focus-visible {
+  outline: none;
+}

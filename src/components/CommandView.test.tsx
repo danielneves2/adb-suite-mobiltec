@@ -23,7 +23,6 @@ function props(over: Partial<CommandViewProps> = {}): CommandViewProps {
     onTogglePin: vi.fn(),
     run: idle,
     onRun: vi.fn(),
-    onRunFree: vi.fn(),
     onStop: vi.fn(),
     onReset: vi.fn(),
     onOpenFolder: vi.fn(),
@@ -32,7 +31,6 @@ function props(over: Partial<CommandViewProps> = {}): CommandViewProps {
     flash: vi.fn(),
     onEdit: vi.fn(),
     onDelete: vi.fn(),
-    onSaveAsCommand: vi.fn(),
     loadPackages: vi.fn(async () => []),
     ...over,
   }
@@ -110,17 +108,6 @@ test('Copiar comando vira Copiado ✓', async () => {
   expect(await navigator.clipboard.readText()).toContain('adb -s R58N12ABCDE shell')
 })
 
-test('comando livre: Enter roda; vazio avisa', async () => {
-  const onRunFree = vi.fn()
-  const flash = vi.fn()
-  render(<CommandView {...props({ onRunFree, flash })} />)
-  const input = screen.getByRole('textbox', { name: 'Comando livre' })
-  await userEvent.type(input, '{Enter}')
-  expect(flash).toHaveBeenCalledWith('Digite um comando no campo livre.')
-  await userEvent.type(input, 'shell getprop{Enter}')
-  expect(onRunFree).toHaveBeenCalledWith('shell getprop')
-})
-
 test('Fixar alterna', async () => {
   const onTogglePin = vi.fn()
   render(<CommandView {...props({ onTogglePin })} />)
@@ -128,13 +115,10 @@ test('Fixar alterna', async () => {
   expect(onTogglePin).toHaveBeenCalled()
 })
 
-test('com algo rodando, Rodar fica desligado, Enter não roda e digitar não apaga a saída', async () => {
+test('com algo rodando, digitar não apaga a saída', async () => {
   const user = userEvent.setup()
   const p = props({ command: byId('desinstalar'), run: { ...idle, phase: 'running' } })
   render(<CommandView {...p} />)
-  expect(screen.getByRole('button', { name: '▶ Rodar' })).toBeDisabled()
-  await user.type(screen.getByLabelText('Comando livre'), 'shell ls{Enter}')
-  expect(p.onRunFree).not.toHaveBeenCalled()
   await user.type(screen.getByLabelText(/pacote/i), 'x')
   expect(p.onReset).not.toHaveBeenCalled()
 })
@@ -157,18 +141,6 @@ describe('comando do técnico', () => {
     render(<CommandView {...props()} />)
     expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument()
   })
-})
-
-test('Salvar como comando leva o comando livre sem o -s', async () => {
-  const user = userEvent.setup()
-  const onSaveAsCommand = vi.fn()
-  const p = props({ onSaveAsCommand })
-  render(<CommandView {...p} />)
-  await user.click(screen.getByRole('button', { name: 'Salvar como comando' }))
-  expect(p.flash).toHaveBeenCalledWith('Digite um comando no campo livre primeiro.')
-  await user.type(screen.getByLabelText('Comando livre'), 'adb -s OUTRO shell dumpsys battery')
-  await user.click(screen.getByRole('button', { name: 'Salvar como comando' }))
-  expect(onSaveAsCommand).toHaveBeenCalledWith('adb shell dumpsys battery')
 })
 
 describe('comando que pede pacote', () => {
@@ -194,4 +166,10 @@ describe('comando que pede pacote', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
     expect(screen.getByText(/\$ adb -s R58N12ABCDE shell pm path com\.whatsapp/)).toBeInTheDocument()
   })
+})
+
+test('a tela de um comando não tem mais o comando livre (ele tem menu próprio)', () => {
+  render(<CommandView {...props()} />)
+  expect(screen.queryByLabelText('Comando livre')).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: '▶ Rodar' })).not.toBeInTheDocument()
 })

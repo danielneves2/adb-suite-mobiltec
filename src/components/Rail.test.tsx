@@ -5,7 +5,7 @@ import { Rail } from './Rail'
 
 test('menu mostra Início no topo e marca o ativo', async () => {
   const onSelect = vi.fn()
-  render(<Rail active="Fixados" searching={false} onSelect={onSelect} onSettings={() => {}} settingsActive={false} />)
+  render(<Rail active="Fixados" searching={false} onSelect={onSelect} onSettings={() => {}} settingsActive={false} onFree={() => {}} freeActive={false} />)
   const items = screen.getAllByRole('button')
   expect(items[0]).toHaveAccessibleName('Início')
   expect(items[0]).toHaveAttribute('aria-current', 'page')
@@ -15,7 +15,7 @@ test('menu mostra Início no topo e marca o ativo', async () => {
 
 test('Configurações fica no fim do menu', async () => {
   const onSettings = vi.fn()
-  render(<Rail active="Fixados" searching={false} onSelect={() => {}} onSettings={onSettings} settingsActive />)
+  render(<Rail active="Fixados" searching={false} onSelect={() => {}} onSettings={onSettings} settingsActive onFree={() => {}} freeActive={false} />)
   const items = screen.getAllByRole('button')
   const last = items[items.length - 1]
   expect(last).toHaveAccessibleName('Configurações')
@@ -23,4 +23,15 @@ test('Configurações fica no fim do menu', async () => {
   expect(items[0]).not.toHaveAttribute('aria-current')
   await userEvent.click(last)
   expect(onSettings).toHaveBeenCalled()
+})
+
+test('Comando livre tem item próprio logo depois de Início', async () => {
+  const onFree = vi.fn()
+  render(<Rail active="Fixados" searching={false} onSelect={() => {}} onSettings={() => {}} settingsActive={false} onFree={onFree} freeActive />)
+  const items = screen.getAllByRole('button')
+  expect(items[1]).toHaveAccessibleName('Comando livre')
+  expect(items[1]).toHaveAttribute('aria-current', 'page')
+  expect(items[0]).not.toHaveAttribute('aria-current')
+  await userEvent.click(items[1])
+  expect(onFree).toHaveBeenCalled()
 })

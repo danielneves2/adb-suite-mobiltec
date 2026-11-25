@@ -5,6 +5,7 @@ import { CommandForm } from './components/CommandForm'
 import { CommandList } from './components/CommandList'
 import { CommandView } from './components/CommandView'
 import { DeviceOverview } from './components/DeviceOverview'
+import { FreeCommandView } from './components/FreeCommandView'
 import { Rail } from './components/Rail'
 import { Settings } from './components/Settings'
 import { StatusBar } from './components/StatusBar'
@@ -26,7 +27,8 @@ const catalog = rawCatalog as unknown as Catalog
 export default function App() {
   const runner = useRunner({ api: adb })
   // Formulário Novo/Editar comando aberto no lugar da área principal (key força recomeçar do zero).
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  // Telas que não são um comando do catálogo: Configurações e Comando livre.
+  const [screen, setScreen] = useState<'config' | 'livre' | null>(null)
   const [adbVersion, setAdbVersion] = useState<string | null>(null)
   const [form, setForm] = useState<{ initial: CommandFormData; editingId: string | null; key: number } | null>(null)
   // Só a escolha do técnico volta a saída para "aguardando" (e para o que estiver rodando).
@@ -34,7 +36,7 @@ export default function App() {
   const s = useAppState({ listDevices: adb.listDevices, store: tauriConfigStore, onUserSelect: () => {
       runner.reset()
       setForm(null)
-      setSettingsOpen(false)
+      setScreen(null)
     },
   })
   const [packages, setPackages] = useState<string[]>([])
@@ -130,7 +132,7 @@ export default function App() {
 
   const openForm = (initial: Partial<CommandFormData>, editingId: string | null = null) => {
     const categoria = FORM_CATEGORIES.includes(s.rail) ? s.rail : MY_CATEGORY
-    setSettingsOpen(false)
+    setScreen(null)
     setForm({ initial: { ...EMPTY_FORM, categoria, ...initial }, editingId, key: Date.now() })
   }
 
@@ -154,13 +156,20 @@ export default function App() {
         <Rail
           active={s.rail}
           searching={s.searching}
-          settingsActive={settingsOpen}
+          settingsActive={screen === 'config'}
           onSettings={() => {
             setForm(null)
-            setSettingsOpen(true)
+            setScreen('config')
+          }}
+          freeActive={screen === 'livre'}
+          onFree={() => {
+            if (screen === 'livre') return
+            runner.reset() // a saída da tela livre é só dela (e para o que estiver rodando, como qualquer troca)
+            setForm(null)
+            setScreen('livre')
           }}
           onSelect={(key) => {
-            setSettingsOpen(false)
+            setScreen(null)
             s.setRail(key)
             if (key === 'Fixados') s.selectCommand(null) // "Início" volta para a visão geral
           }}
@@ -188,7 +197,7 @@ export default function App() {
               </button>
             </div>
           )}
-          {settingsOpen ? (
+          {screen === 'config' ? (
             <Settings
               windowSize={s.windowSize}
               onWindowSize={(id) => {
@@ -202,7 +211,23 @@ export default function App() {
               }}
               onOpenBase={() => void openFolder(s.baseDir)}
               adbVersion={adbVersion}
-              onClose={() => setSettingsOpen(false)}
+              onClose={() => setScreen(null)}
+            />
+          ) : screen === 'livre' ? (
+            <FreeCommandView
+              device={device}
+              run={runner.view}
+              onRunFree={(input) => {
+                if (!device) return
+                runName.current = 'Comando livre'
+                runner.startFree(input, { device, baseDir: s.baseDir })
+              }}
+              onStop={() => void runner.stop()}
+              onSaveAsCommand={(comando) => openForm({ comando, categoria: MY_CATEGORY })}
+              onOpenFolder={() => void openFolder(s.currentDeviceDir)}
+              onSaveOutput={(text) => void saveOutput(text)}
+              onRestartServer={() => void restartServer()}
+              flash={s.flash}
             />
           ) : form ? (
             <CommandForm
@@ -229,11 +254,6 @@ export default function App() {
                 runName.current = cmd.nome
                 runner.start(cmd, { device, value, baseDir: s.baseDir, allowEmptyValue })
               }}
-              onRunFree={(input) => {
-                if (!device) return
-                runName.current = 'Comando livre'
-                runner.startFree(input, { device, baseDir: s.baseDir })
-              }}
               onStop={() => void runner.stop()}
               onReset={runner.reset}
               onOpenFolder={() => void openFolder(s.currentDeviceDir)}
@@ -246,7 +266,6 @@ export default function App() {
                 s.flash('Comando excluído.')
               }}
               loadPackages={loadPackages}
-              onSaveAsCommand={(comando) => openForm({ comando, categoria: MY_CATEGORY })}
             />
           ) : (
             <DeviceOverview

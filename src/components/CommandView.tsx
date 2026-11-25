@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { PackageKind } from '../lib/adb'
 import { confirmationText, deviceName, initialValue, type DeviceInfo } from '../lib/appLogic'
 import type { Command, ParamKind } from '../lib/catalogTypes'
-import { buildCommand, buildFreeCommand } from '../lib/commandBuilder'
-import { stripSerial } from '../lib/commandForm'
+import { buildCommand } from '../lib/commandBuilder'
 import { suggestedInstalled } from '../lib/packages'
 import { PackagePicker } from './PackagePicker'
 import type { RunView } from '../state/useRunner'
@@ -21,7 +20,6 @@ export interface CommandViewProps {
   onTogglePin: () => void
   run: RunView
   onRun: (value: string, allowEmpty: boolean) => void
-  onRunFree: (input: string) => void
   onStop: () => void
   onReset: () => void
   onOpenFolder: () => void
@@ -30,8 +28,6 @@ export interface CommandViewProps {
   flash: (msg: string) => void
   onEdit: () => void
   onDelete: () => void
-  /** "Salvar como comando": recebe o comando livre normalizado, sem `-s`. */
-  onSaveAsCommand: (comando: string) => void
   /** Lista os apps do aparelho selecionado (painel "Ver apps do aparelho"). */
   loadPackages: (kind: PackageKind) => Promise<string[]>
 }
@@ -61,7 +57,6 @@ export function CommandView(p: CommandViewProps) {
   const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [picking, setPicking] = useState(false)
   const [showCommand, setShowCommand] = useState(true)
-  const [free, setFree] = useState('')
   const copyCmd = useCopied()
 
   // Trocar de comando ou de aparelho volta tudo ao padrão.
@@ -100,29 +95,6 @@ export function CommandView(p: CommandViewProps) {
   const execute = () => {
     if (c.pede_confirmacao) setConfirming(true)
     else p.onRun(value, allowEmpty)
-  }
-
-  const saveFreeAsCommand = () => {
-    if (!free.trim()) {
-      p.flash('Digite um comando no campo livre primeiro.')
-      return
-    }
-    try {
-      const built = buildFreeCommand(free.trim(), { serial: device?.serial ?? 'X', deviceDir: p.deviceDir ?? '{d}', now: new Date() })
-      p.onSaveAsCommand(stripSerial(built.display))
-    } catch (e) {
-      p.flash(e instanceof Error ? e.message : String(e))
-    }
-  }
-
-  const runFree = () => {
-    if (running || !ready) return
-    if (!free.trim()) {
-      p.flash('Digite um comando no campo livre.')
-      return
-    }
-    setConfirming(false)
-    p.onRunFree(free.trim())
   }
 
   const chips =
@@ -302,35 +274,6 @@ export function CommandView(p: CommandViewProps) {
           </button>
         </div>
       )}
-
-      <div className="livre">
-        <label className="rotulo" htmlFor="livre">
-          Comando livre
-        </label>
-        <div className="livre-linha">
-          <div className="livre-caixa terminal">
-            <span className="livre-prefixo">$ adb -s {device?.serial ?? '<aparelho>'}</span>
-            <input
-              id="livre"
-              className="livre-input"
-              value={free}
-              onChange={(e) => setFree(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') runFree()
-              }}
-              placeholder="shell dumpsys battery  (qualquer comando, Enter pra rodar)"
-              spellCheck={false}
-              autoComplete="off"
-            />
-          </div>
-          <button type="button" className="btn btn-primario btn-livre" disabled={!ready || running} onClick={runFree}>
-            ▶ Rodar
-          </button>
-          <button type="button" className="btn btn-livre" onClick={saveFreeAsCommand}>
-            Salvar como comando
-          </button>
-        </div>
-      </div>
 
       <OutputPanel
         run={p.run}
