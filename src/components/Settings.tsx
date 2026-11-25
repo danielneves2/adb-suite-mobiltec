@@ -16,9 +16,11 @@ export interface SettingsProps {
   onUserName: (name: string | null) => void
   /** Tamanhos que cabem nesta tela (os outros ficam desligados). Sem a informação, todos ficam liberados. */
   availableSizes?: string[]
+  /** Abre a janela do Windows para escolher a pasta (null = cancelou). */
+  pickFolder: (defaultPath: string) => Promise<string | null>
 }
 
-export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName, availableSizes }: SettingsProps) {
+export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName, availableSizes, pickFolder }: SettingsProps) {
   const [dir, setDir] = useState(baseDir)
 
   return (
@@ -83,7 +85,7 @@ export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOp
         <h2 className="secao-titulo" id="cfg-pasta">
           Pasta de saída
         </h2>
-        <p className="config-ajuda">Cada aparelho ganha uma subpasta própria dentro dela.</p>
+        <p className="config-ajuda">Cada aparelho ganha uma subpasta própria dentro dela. Escolha na janela do Windows ou cole o caminho e clique em Salvar.</p>
         <form
           className="config-linha"
           onSubmit={(e) => {
@@ -92,7 +94,21 @@ export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOp
           }}
         >
           <input className="campo" aria-label="Pasta de saída" value={dir} onChange={(e) => setDir(e.target.value)} spellCheck={false} />
-          <button type="submit" className="btn btn-primario">
+          <button
+            type="button"
+            className="btn btn-primario"
+            onClick={async () => {
+              const chosen = await pickFolder(dir || baseDir)
+              if (chosen) {
+                setDir(chosen)
+                onChangeBase(chosen)
+              }
+            }}
+          >
+            <Icon name="pasta" size={14} />
+            Escolher pasta…
+          </button>
+          <button type="submit" className="btn">
             Salvar pasta
           </button>
           <button type="button" className="btn" onClick={onOpenBase}>

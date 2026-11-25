@@ -5,7 +5,7 @@ import type { DeviceInfo } from '../lib/appLogic'
 import { StatusBar } from './StatusBar'
 
 const a13: DeviceInfo = { serial: 'RQ8T', state: 'device', brand: 'Samsung', model: 'SM-A135M', android: '14' }
-const base = { deviceDir: 'C:\\Saidas\\Samsung-SM-A135M_RQ8T', baseDir: 'C:\\Saidas', onChangeBase: () => {}, onOpen: () => {}, message: null, deviceCount: 1, device: a13, adbOk: true }
+const base = { pickFolder: async () => null as string | null, deviceDir: 'C:\\Saidas\\Samsung-SM-A135M_RQ8T', baseDir: 'C:\\Saidas', onChangeBase: () => {}, onOpen: () => {}, message: null, deviceCount: 1, device: a13, adbOk: true }
 
 test('estilo IDE: contagem, aparelho, Android, ADB OK e pasta', () => {
   render(<StatusBar {...base} />)
@@ -25,13 +25,20 @@ test('plural, sem aparelho e ADB com erro', () => {
   expect(bar).not.toHaveTextContent('Android')
 })
 
-test('Alterar… troca a pasta base', async () => {
+test('Alterar… abre a janela do Windows pra escolher a pasta', async () => {
   const user = userEvent.setup()
   const onChangeBase = vi.fn()
-  render(<StatusBar {...base} onChangeBase={onChangeBase} />)
+  const pickFolder = vi.fn(async () => 'D:\\Logs')
+  render(<StatusBar {...base} onChangeBase={onChangeBase} pickFolder={pickFolder} />)
   await user.click(screen.getByRole('button', { name: 'Alterar…' }))
-  const input = screen.getByRole('textbox', { name: 'Pasta de saída' })
-  await user.clear(input)
-  await user.type(input, 'D:\\Logs{Enter}')
+  expect(pickFolder).toHaveBeenCalledWith('C:\\Saidas')
   expect(onChangeBase).toHaveBeenCalledWith('D:\\Logs')
+  expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+})
+
+test('cancelar a janela não muda nada', async () => {
+  const onChangeBase = vi.fn()
+  render(<StatusBar {...base} onChangeBase={onChangeBase} pickFolder={async () => null} />)
+  await userEvent.click(screen.getByRole('button', { name: 'Alterar…' }))
+  expect(onChangeBase).not.toHaveBeenCalled()
 })

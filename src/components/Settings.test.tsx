@@ -11,6 +11,7 @@ const props = (over: Partial<SettingsProps> = {}): SettingsProps => ({
   onOpenBase: vi.fn(),
   adbVersion: 'Android Debug Bridge version 1.0.41',
   onClose: vi.fn(),
+  pickFolder: vi.fn(async () => null),
   userName: 'Daniel',
   onUserName: vi.fn(),
   ...over,
@@ -59,4 +60,15 @@ test('tamanho que não cabe na tela fica desligado', () => {
   expect(screen.getByRole('radio', { name: /1280 × 720/ })).toBeEnabled()
   expect(screen.getByRole('radio', { name: /1920 × 1080/ })).toBeDisabled()
   expect(screen.getByRole('radio', { name: /1920 × 1080/ }).closest('label')).toHaveTextContent('Maior que esta tela')
+})
+
+test('Escolher pasta… abre a janela do Windows e salva a escolhida', async () => {
+  const user = userEvent.setup()
+  const pickFolder = vi.fn(async () => 'E:/Saidas')
+  const p = props({ pickFolder })
+  render(<Settings {...p} />)
+  await user.click(screen.getByRole('button', { name: 'Escolher pasta…' }))
+  expect(pickFolder).toHaveBeenCalledWith('C:/ADB-Suite/Saidas')
+  expect(p.onChangeBase).toHaveBeenCalledWith('E:/Saidas')
+  expect(screen.getByRole('textbox', { name: 'Pasta de saída' })).toHaveValue('E:/Saidas')
 })

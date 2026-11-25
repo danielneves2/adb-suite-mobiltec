@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { deviceName, type DeviceInfo } from '../lib/appLogic'
 import { Icon } from './icons'
 
@@ -11,12 +10,12 @@ interface Props {
   deviceCount: number
   device: DeviceInfo | null
   adbOk: boolean
+  /** Abre a janela do Windows para escolher a pasta (null = cancelou). */
+  pickFolder: (defaultPath: string) => Promise<string | null>
 }
 
 /** Barra de status no estilo de IDE: aparelhos, aparelho atual, Android, ADB e pasta de saída. */
-export function StatusBar({ deviceDir, baseDir, onChangeBase, onOpen, message, deviceCount, device, adbOk }: Props) {
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(baseDir)
+export function StatusBar({ deviceDir, baseDir, onChangeBase, onOpen, message, deviceCount, device, adbOk, pickFolder }: Props) {
   const shown = deviceDir ?? baseDir
   const ready = device?.state === 'device'
 
@@ -48,40 +47,23 @@ export function StatusBar({ deviceDir, baseDir, onChangeBase, onOpen, message, d
       <span className="status-item status-pasta-grupo">
         <Icon name="pasta" size={14} />
         <span className="status-rotulo">Pasta de saída:</span>
-        {editing ? (
-          <form
-            className="status-form"
-            onSubmit={(e) => {
-              e.preventDefault()
-              onChangeBase(draft)
-              setEditing(false)
-            }}
-          >
-            <input className="status-input mono" value={draft} onChange={(e) => setDraft(e.target.value)} aria-label="Pasta de saída" autoFocus />
-            <button type="submit" className="btn btn-primario btn-mini">
-              OK
-            </button>
-          </form>
-        ) : (
-          <>
-            <span className="status-pasta mono" title={shown}>
-              {shown}
-            </span>
-            <button
-              type="button"
-              className="btn btn-mini"
-              onClick={() => {
-                setDraft(baseDir)
-                setEditing(true)
-              }}
-            >
-              Alterar…
-            </button>
-            <button type="button" className="btn btn-mini" onClick={onOpen} aria-label="Abrir" title="Abrir a pasta no Explorer">
-              <Icon name="abrir" size={14} />
-            </button>
-          </>
-        )}
+        <span className="status-pasta mono" title={shown}>
+          {shown}
+        </span>
+        <button
+          type="button"
+          className="btn btn-mini"
+          title="Escolher outra pasta"
+          onClick={async () => {
+            const chosen = await pickFolder(baseDir)
+            if (chosen) onChangeBase(chosen)
+          }}
+        >
+          Alterar…
+        </button>
+        <button type="button" className="btn btn-mini" onClick={onOpen} aria-label="Abrir" title="Abrir a pasta no Explorer">
+          <Icon name="abrir" size={14} />
+        </button>
       </span>
     </footer>
   )
