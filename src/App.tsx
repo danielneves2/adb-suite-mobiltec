@@ -10,6 +10,7 @@ import { Rail } from './components/Rail'
 import { Settings } from './components/Settings'
 import { StatusBar } from './components/StatusBar'
 import { TopBar } from './components/TopBar'
+import { Welcome } from './components/Welcome'
 import { adb, type PackageKind } from './lib/adb'
 import type { Catalog } from './lib/catalogTypes'
 import { formatTimestamp } from './lib/commandBuilder'
@@ -138,13 +139,21 @@ export default function App() {
 
   const saveForm = (f: CommandFormData) => {
     const id = form?.editingId ?? `local-${crypto.randomUUID()}`
-    s.saveCommand(formToCommand(f, id, new Date()))
+    s.saveCommand(formToCommand(f, id, new Date(), s.userName))
     setForm(null)
     s.flash('Comando salvo neste computador.')
   }
 
   return (
     <div className="app">
+      {s.userReady && !s.userName && (
+        <Welcome
+          onEnter={(name) => {
+            s.setUserName(name)
+            activity.log('ADB', `Bem-vindo, ${name}.`)
+          }}
+        />
+      )}
       <TopBar
         devices={s.devices}
         selectedSerial={s.selectedSerial}
@@ -158,6 +167,11 @@ export default function App() {
           searching={s.searching}
           settingsActive={screen === 'config'}
           onSettings={() => {
+            setForm(null)
+            setScreen('config')
+          }}
+          userName={s.userName}
+          onProfile={() => {
             setForm(null)
             setScreen('config')
           }}
@@ -212,6 +226,11 @@ export default function App() {
               onOpenBase={() => void openFolder(s.baseDir)}
               adbVersion={adbVersion}
               onClose={() => setScreen(null)}
+              userName={s.userName}
+              onUserName={(name) => {
+                s.setUserName(name)
+                s.flash(name ? `Pronto, ${name}.` : 'Você saiu. Digite seu nome pra entrar de novo.')
+              }}
             />
           ) : screen === 'livre' ? (
             <FreeCommandView

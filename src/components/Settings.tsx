@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { WINDOW_SIZES } from '../lib/settings'
+import { validateUserName } from '../lib/user'
 import { Icon } from './icons'
 
 export interface SettingsProps {
@@ -10,10 +11,15 @@ export interface SettingsProps {
   onOpenBase: () => void
   adbVersion: string | null
   onClose: () => void
+  userName: string | null
+  /** Trocar o nome, ou null para sair (o app pergunta o nome de novo). */
+  onUserName: (name: string | null) => void
 }
 
-export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose }: SettingsProps) {
+export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName }: SettingsProps) {
   const [dir, setDir] = useState(baseDir)
+  const [name, setName] = useState(userName ?? '')
+  const [nameError, setNameError] = useState<string | null>(null)
 
   return (
     <div className="config">
@@ -26,6 +32,45 @@ export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOp
           Fechar
         </button>
       </div>
+
+      <section className="config-secao" aria-labelledby="cfg-nome">
+        <h2 className="secao-titulo" id="cfg-nome">
+          Seu nome
+        </h2>
+        <p className="config-ajuda">Só o nome, sem senha. Aparece nos comandos que você cria.</p>
+        <form
+          className="config-linha"
+          onSubmit={(e) => {
+            e.preventDefault()
+            const problem = validateUserName(name)
+            if (problem) setNameError(problem)
+            else onUserName(name.trim())
+          }}
+        >
+          <input
+            className="campo campo-ui"
+            aria-label="Seu nome"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value)
+              setNameError(null)
+            }}
+            autoComplete="off"
+            spellCheck={false}
+          />
+          <button type="submit" className="btn btn-primario">
+            Salvar nome
+          </button>
+          <button type="button" className="btn" onClick={() => onUserName(null)}>
+            Sair
+          </button>
+        </form>
+        {nameError && (
+          <p className="form-erro" role="alert">
+            {nameError}
+          </p>
+        )}
+      </section>
 
       <section className="config-secao" aria-labelledby="cfg-janela">
         <h2 className="secao-titulo" id="cfg-janela">

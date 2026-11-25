@@ -11,6 +11,8 @@ const props = (over: Partial<SettingsProps> = {}): SettingsProps => ({
   onOpenBase: vi.fn(),
   adbVersion: 'Android Debug Bridge version 1.0.41',
   onClose: vi.fn(),
+  userName: 'Daniel',
+  onUserName: vi.fn(),
   ...over,
 })
 
@@ -42,4 +44,20 @@ test('sobre mostra a versão do adb; fechar avisa', async () => {
   expect(screen.getByText('Android Debug Bridge version 1.0.41')).toBeInTheDocument()
   await userEvent.click(screen.getByRole('button', { name: 'Fechar' }))
   expect(p.onClose).toHaveBeenCalled()
+})
+
+test('seu nome: trocar e sair', async () => {
+  const user = userEvent.setup()
+  const onUserName = vi.fn()
+  render(<Settings {...props({ userName: 'Daniel', onUserName })} />)
+  const input = screen.getByRole('textbox', { name: 'Seu nome' })
+  expect(input).toHaveValue('Daniel')
+  await user.clear(input)
+  await user.click(screen.getByRole('button', { name: 'Salvar nome' }))
+  expect(screen.getByRole('alert')).toHaveTextContent('Digite seu nome.')
+  await user.type(input, 'Daniel Lima')
+  await user.click(screen.getByRole('button', { name: 'Salvar nome' }))
+  expect(onUserName).toHaveBeenCalledWith('Daniel Lima')
+  await user.click(screen.getByRole('button', { name: 'Sair' }))
+  expect(onUserName).toHaveBeenCalledWith(null)
 })

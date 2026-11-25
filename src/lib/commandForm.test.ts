@@ -28,7 +28,7 @@ describe('validateCommandForm', () => {
 describe('formToCommand', () => {
   const now = new Date('2026-11-25T14:00:00Z')
   test('vira comando local do técnico', () => {
-    const c = formToCommand(form({ resumo: ' Abre o Wi-Fi ', pede_confirmacao: true }), 'local-1', now)
+    const c = formToCommand(form({ resumo: ' Abre o Wi-Fi ', pede_confirmacao: true }), 'local-1', now, 'Daniel')
     expect(c).toMatchObject({
       id: 'local-1',
       nome: 'Abrir Wi-Fi',
@@ -42,6 +42,7 @@ describe('formToCommand', () => {
       oficial: false,
       excluido: false,
       atualizado_em: '2026-11-25T14:00:00.000Z',
+      autor: 'Daniel',
     })
   })
   test('tira linhas em branco e marca gera_arquivo quando usa {d}', () => {

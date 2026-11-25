@@ -116,3 +116,23 @@ describe('tamanho da janela', () => {
     await waitFor(() => expect(result.current.windowSize).toBe('1600x900'))
   })
 })
+
+describe('usuário (só nome, fica logado)', () => {
+  test('sem nome salvo: pronto e vazio; entrar persiste', async () => {
+    const store = memoryStore()
+    const { result } = setup(store)
+    await waitFor(() => expect(result.current.userReady).toBe(true))
+    expect(result.current.userName).toBeNull()
+    act(() => result.current.setUserName('  Daniel Lima '))
+    expect(result.current.userName).toBe('Daniel Lima')
+    expect(await store.get('usuario')).toBe('Daniel Lima')
+  })
+  test('carrega o salvo; sair esquece', async () => {
+    const store = memoryStore({ usuario: 'Daniel' })
+    const { result } = setup(store)
+    await waitFor(() => expect(result.current.userName).toBe('Daniel'))
+    act(() => result.current.setUserName(null))
+    expect(result.current.userName).toBeNull()
+    expect(await store.get('usuario')).toBe('')
+  })
+})

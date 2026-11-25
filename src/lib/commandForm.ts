@@ -51,7 +51,7 @@ export function validateCommandForm(f: CommandFormData): string | null {
   return null
 }
 
-export function formToCommand(f: CommandFormData, id: string, now: Date): Command {
+export function formToCommand(f: CommandFormData, id: string, now: Date, autor: string | null = null): Command {
   const comando = lines(f.comando).join('\n')
   return {
     id,
@@ -67,6 +67,7 @@ export function formToCommand(f: CommandFormData, id: string, now: Date): Comman
     oficial: false,
     excluido: false,
     atualizado_em: now.toISOString(),
+    autor,
   }
 }
 

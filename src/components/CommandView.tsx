@@ -121,7 +121,7 @@ export function CommandView(p: CommandViewProps) {
         {c.pede_confirmacao && <span className="selo">PEDE CONFIRMAÇÃO</span>}
         {c.oficial === false && (
           <>
-            <span className="selo selo-local">SEU · SÓ NESTE PC</span>
+            <span className="selo selo-local">{c.autor ? `POR ${c.autor.toUpperCase()} · SÓ NESTE PC` : 'SEU · SÓ NESTE PC'}</span>
             <button type="button" className="btn btn-mini" onClick={p.onEdit}>
               Editar
             </button>

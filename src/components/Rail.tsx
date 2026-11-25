@@ -1,4 +1,5 @@
 import { RAIL } from '../lib/appLogic'
+import { initials } from '../lib/user'
 import { Icon } from './icons'
 
 interface Props {
@@ -9,9 +10,11 @@ interface Props {
   settingsActive: boolean
   onFree: () => void
   freeActive: boolean
+  userName: string | null
+  onProfile: () => void
 }
 
-export function Rail({ active, searching, onSelect, onSettings, settingsActive, onFree, freeActive }: Props) {
+export function Rail({ active, searching, onSelect, onSettings, settingsActive, onFree, freeActive, userName, onProfile }: Props) {
   return (
     <nav className="rail" aria-label="Categorias">
       {RAIL.map((r, i) => {
@@ -46,6 +49,18 @@ export function Rail({ active, searching, onSelect, onSettings, settingsActive, 
           </button>,
         ]
       })}
+      <div className="rail-rodape">
+      {userName && (
+        <button type="button" className="perfil" onClick={onProfile} title="Seu nome (trocar em Configurações)">
+          <span className="perfil-avatar" aria-hidden="true">
+            {initials(userName)}
+          </span>
+          <span className="perfil-texto">
+            <span className="perfil-nome">{userName}</span>
+            <span className="perfil-papel">Técnico</span>
+          </span>
+        </button>
+      )}
       <button
         type="button"
         className={`rail-item rail-config${settingsActive ? ' ativo' : ''}`}
@@ -56,6 +71,7 @@ export function Rail({ active, searching, onSelect, onSettings, settingsActive, 
         <Icon name="config" size={18} />
         <span className="rail-texto">Configurações</span>
       </button>
+      </div>
     </nav>
   )
 }

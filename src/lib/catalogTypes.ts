@@ -31,6 +31,8 @@ export interface Command {
   oficial?: boolean
   excluido?: boolean
   atualizado_em?: string
+  /** Nome de quem criou/editou (comandos do time). */
+  autor?: string | null
 }
 
 export interface Catalog {

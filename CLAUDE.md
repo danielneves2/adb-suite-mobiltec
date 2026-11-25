@@ -34,7 +34,7 @@ Protótipo navegável aprovado: https://claude.ai/artifact/BpNJCkv75v45i1n8RzT1T
 7. Comandos com `escolha` mostram os `atalhos` como cartões de opção (e "Outro…" abre o campo de texto). Sem `escolha`, atalhos são chips embaixo do campo.
 8. **Exclusão é lógica** (`excluido = true`). Ninguém perde comando por engano.
 9. "Copiar pro chamado" monta cabeçalho: aparelho, Android, serial, data/hora, comando, separador, saída.
-10. Dados pessoais: o banco guarda só nome/e-mail de quem editou. Saídas (logs, serial, bugreport) ficam **só na máquina** do técnico, nunca sobem.
+10. Dados pessoais: login é só o nome (sem e-mail, sem senha); o banco guarda só o nome de quem editou. Saídas (logs, serial, bugreport) ficam **só na máquina** do técnico, nunca sobem.
 
 ## Convenções
 - Código e nomes técnicos em inglês; textos de interface e docs em português.

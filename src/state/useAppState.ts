@@ -34,6 +34,8 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
   const [status, setStatus] = useState<string | null>(null)
   const [localCommands, setLocalCommands] = useState<Command[]>([])
   const [windowSize, setWindowSizeState] = useState('livre')
+  const [userName, setUserNameState] = useState<string | null>(null)
+  const [userReady, setUserReady] = useState(false)
   const commands = useMemo(() => [...baseCommands, ...localCommands], [baseCommands, localCommands])
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -44,6 +46,9 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
       if (savedPinned) setPinned(savedPinned)
       const savedDir = await store.get<string>('pastaSaida')
       if (savedDir) setBaseDirState(savedDir)
+      const savedUser = await store.get<string>('usuario')
+      if (savedUser) setUserNameState(savedUser)
+      setUserReady(true)
       const savedSize = await store.get<string>('tamanhoJanela')
       if (savedSize) setWindowSizeState(savedSize)
       const mine = await store.get<Command[]>('meusComandos')
@@ -130,6 +135,16 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     [store],
   )
 
+  /** Entrar/trocar nome (fica salvo, não pede de novo) ou sair (null). */
+  const setUserName = useCallback(
+    (name: string | null) => {
+      const next = name?.trim() || null
+      setUserNameState(next)
+      void store.set('usuario', next ?? '')
+    },
+    [store],
+  )
+
   const setWindowSize = useCallback(
     (id: string) => {
       setWindowSizeState(id)
@@ -197,6 +212,9 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     setBaseDir,
     windowSize,
     setWindowSize,
+    userName,
+    userReady,
+    setUserName,
     currentDeviceDir,
     status,
     flash,
