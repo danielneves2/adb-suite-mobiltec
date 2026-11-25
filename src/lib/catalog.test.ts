@@ -15,7 +15,7 @@ const byId = (id: string): Command => {
   return c
 }
 
-test('46 comandos', () => expect(catalog.comandos).toHaveLength(46))
+test('47 comandos (46 iniciais + vigiar prints)', () => expect(catalog.comandos).toHaveLength(47))
 test('versão 2', () => expect(catalog.versao).toBe(2))
 
 test.each(catalog.comandos)('$id monta sem erro', (c) => {

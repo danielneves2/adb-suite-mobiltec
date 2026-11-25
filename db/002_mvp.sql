@@ -10,10 +10,10 @@ alter table comandos add column if not exists texto_sem_resultado text;
 
 do $$
 begin
-  if not exists (select 1 from pg_constraint where conname = 'comandos_modo_check') then
-    alter table comandos add constraint comandos_modo_check
-      check (modo in ('normal', 'continuo', 'terminal'));
-  end if;
+  -- recriada sempre: a lista de modos cresce (vigiar_prints)
+  alter table comandos drop constraint if exists comandos_modo_check;
+  alter table comandos add constraint comandos_modo_check
+    check (modo in ('normal', 'continuo', 'terminal', 'vigiar_prints'));
   if not exists (select 1 from pg_constraint where conname = 'comandos_acao_extra_check') then
     alter table comandos add constraint comandos_acao_extra_check
       check (acao_extra is null or acao_extra in ('copiar_imagem', 'zipar'));

@@ -34,7 +34,7 @@ export interface RunOptions {
 
 type Api = Pick<
   AdbApi,
-  'runSteps' | 'cancelRun' | 'startStream' | 'stopStream' | 'onStreamOutput' | 'onStreamEnd' | 'copyImageToClipboard' | 'zipFolder' | 'openTerminal'
+  'runSteps' | 'cancelRun' | 'startStream' | 'startWatchPrints' | 'stopStream' | 'onStreamOutput' | 'onStreamEnd' | 'copyImageToClipboard' | 'zipFolder' | 'openTerminal'
 >
 
 const context = (o: RunOptions): BuildContext => ({ serial: o.device.serial, value: o.value, deviceDir: deviceDir(o.baseDir, o.device), now: o.now })
@@ -79,7 +79,7 @@ async function finishNormal(c: Command | null, built: BuildResult, outs: StepOut
 
 const sum = (outs: StepOut[]) => outs.reduce((t, x) => t + x.durationMs, 0)
 
-async function runStream(built: BuildResult, o: RunOptions, api: Api, emit: (e: RunEvent) => void): Promise<void> {
+async function runStream(built: BuildResult, o: RunOptions, api: Api, emit: (e: RunEvent) => void, start: () => Promise<void>): Promise<void> {
   const started = Date.now()
   let resolveEnd: () => void = () => {}
   const ended = new Promise<void>((r) => (resolveEnd = r))
@@ -104,7 +104,7 @@ async function runStream(built: BuildResult, o: RunOptions, api: Api, emit: (e: 
     resolveEnd()
   })
   try {
-    await api.startStream(o.runId, built.steps[0], context(o).deviceDir)
+    await start()
     await ended
   } finally {
     unlistenLines()
@@ -125,7 +125,11 @@ export async function runCommand(c: Command, raw: RunOptions, api: Api, emit: (e
     const built = buildCommand(c.comando, context(o), { requiresValue: c.parametro !== null, allowEmptyValue: o.allowEmptyValue })
     emit({ kind: 'started', display: built.display })
     if (c.modo === 'continuo') {
-      await runStream(built, o, api, emit)
+      await runStream(built, o, api, emit, () => api.startStream(o.runId, built.steps[0], context(o).deviceDir))
+      return
+    }
+    if (c.modo === 'vigiar_prints') {
+      await runStream(built, o, api, emit, () => api.startWatchPrints(o.runId, o.device.serial, context(o).deviceDir))
       return
     }
     const outs = await api.runSteps(o.runId, built.steps, context(o).deviceDir)
@@ -152,7 +156,7 @@ const firstStep = (template: string | null | undefined, ctx: BuildContext): Step
 
 /** Botão Parar: contínuo → para o stream (com comando de parada/depois); normal → cancela. */
 export async function stopCommand(c: Command | null, o: RunOptions, api: Pick<AdbApi, 'stopStream' | 'cancelRun'>): Promise<StepOut | null> {
-  if (c?.modo === 'continuo') {
+  if (c?.modo === 'continuo' || c?.modo === 'vigiar_prints') {
     const ctx = context(o)
     return api.stopStream(o.runId, firstStep(c.comando_parar, ctx), firstStep(c.comando_depois, ctx))
   }

@@ -479,6 +479,17 @@
       "acao_extra": "copiar_imagem"
     },
     {
+      "id": "vigiarprints",
+      "categoria": "Captura",
+      "nome": "Salvar prints do aparelho automaticamente",
+      "resumo": "Deixe rodando: cada print que você tirar no aparelho (botões ou gesto) vem sozinho pra pasta de saída, na subpasta prints. Os prints antigos ficam de fora.",
+      "comando": "adb -s {s} shell ls /sdcard/DCIM/Screenshots /sdcard/Pictures/Screenshots",
+      "parametro": null,
+      "gera_arquivo": true,
+      "modo": "vigiar_prints",
+      "saida_exemplo": "Vigiando os prints do aparelho (12 já existentes ficam de fora). Tire um print no aparelho…\nPrint salvo: C:\\ADB-Suite\\Saidas\\Samsung-SM-A135M_RQ8T502DZEH\\prints\\Screenshot_20261125-151200.jpg"
+    },
+    {
       "id": "gravar",
       "categoria": "Captura",
       "nome": "Gravar tela",

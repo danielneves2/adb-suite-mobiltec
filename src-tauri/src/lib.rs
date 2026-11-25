@@ -4,6 +4,7 @@ mod extras;
 mod process;
 mod runner;
 mod stream;
+mod watch;
 
 use adb_path::app_adb_path;
 use process::hidden_command;
@@ -36,6 +37,7 @@ pub fn run() {
             runner::cancel_run,
             stream::start_stream,
             stream::stop_stream,
+            watch::start_watch_prints,
             devices::list_devices,
             devices::restart_adb_server,
             devices::list_packages,

@@ -35,6 +35,8 @@ export const adb = {
   runSteps: (runId: string, steps: Step[], deviceDir: string | null) => invoke<StepOut[]>('run_steps', { runId, steps, deviceDir }),
   cancelRun: (runId: string) => invoke<void>('cancel_run', { runId }),
   startStream: (runId: string, step: Step, deviceDir: string | null) => invoke<void>('start_stream', { runId, step, deviceDir }),
+  /** Vigia de prints: cada print novo do aparelho vem pra <pasta do aparelho>\\prints. Para com stopStream. */
+  startWatchPrints: (runId: string, serial: string, deviceDir: string) => invoke<void>('start_watch_prints', { runId, serial, deviceDir }),
   stopStream: (runId: string, stopStep: Step | null, afterStep: Step | null) =>
     invoke<StepOut | null>('stop_stream', { runId, stopStep, afterStep }),
   onStreamOutput: (cb: (e: StreamOutputEvent) => void): Promise<UnlistenFn> => listen<StreamOutputEvent>('stream-output', (e) => cb(e.payload)),

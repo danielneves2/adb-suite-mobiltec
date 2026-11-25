@@ -123,18 +123,18 @@ pub async fn stream_with(
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-struct StreamOutput {
-    run_id: String,
-    lines: Vec<String>,
+pub struct StreamOutput {
+    pub run_id: String,
+    pub lines: Vec<String>,
 }
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-struct StreamEnd {
-    run_id: String,
-    exit_code: i32,
-    saved_to: Option<String>,
-    error: Option<String>,
+pub struct StreamEnd {
+    pub run_id: String,
+    pub exit_code: i32,
+    pub saved_to: Option<String>,
+    pub error: Option<String>,
 }
 
 /// Execuções contínuas em andamento, por `run_id`.

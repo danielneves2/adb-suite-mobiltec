@@ -1,7 +1,7 @@
 // Nomes de campo em português: espelham as colunas da tabela `comandos`.
 
 export type ParamKind = 'pkg' | 'apk' | 'file' | 'path' | 'text'
-export type CommandMode = 'normal' | 'continuo' | 'terminal'
+export type CommandMode = 'normal' | 'continuo' | 'terminal' | 'vigiar_prints'
 export type ExtraAction = 'copiar_imagem' | 'zipar'
 
 export interface Shortcut {
