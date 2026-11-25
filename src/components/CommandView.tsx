@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { confirmationText, initialValue, type DeviceInfo } from '../lib/appLogic'
+import type { PackageKind } from '../lib/adb'
+import { confirmationText, deviceName, initialValue, type DeviceInfo } from '../lib/appLogic'
 import type { Command, ParamKind } from '../lib/catalogTypes'
 import { buildCommand, buildFreeCommand } from '../lib/commandBuilder'
 import { stripSerial } from '../lib/commandForm'
+import { suggestedInstalled } from '../lib/packages'
+import { PackagePicker } from './PackagePicker'
 import type { RunView } from '../state/useRunner'
-import { StarIcon } from './icons'
+import { Icon, StarIcon } from './icons'
 import { OutputPanel } from './OutputPanel'
 import { useCopied } from './useCopied'
 
@@ -29,6 +32,8 @@ export interface CommandViewProps {
   onDelete: () => void
   /** "Salvar como comando": recebe o comando livre normalizado, sem `-s`. */
   onSaveAsCommand: (comando: string) => void
+  /** Lista os apps do aparelho selecionado (painel "Ver apps do aparelho"). */
+  loadPackages: (kind: PackageKind) => Promise<string[]>
 }
 
 const DEFAULT_LABEL: Record<ParamKind, string> = {
@@ -54,6 +59,7 @@ export function CommandView(p: CommandViewProps) {
   const [fromShortcut, setFromShortcut] = useState(() => !!c.atalhos?.length)
   const [confirming, setConfirming] = useState(false)
   const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [picking, setPicking] = useState(false)
   const [showCommand, setShowCommand] = useState(true)
   const [free, setFree] = useState('')
   const copyCmd = useCopied()
@@ -65,6 +71,7 @@ export function CommandView(p: CommandViewProps) {
     setFromShortcut(!!c.atalhos?.length)
     setConfirming(false)
     setConfirmingDelete(false)
+    setPicking(false)
   }, [c, device?.serial])
 
   const ready = !!device && device.state === 'device'
@@ -118,8 +125,16 @@ export function CommandView(p: CommandViewProps) {
     p.onRunFree(free.trim())
   }
 
-  const chips = !hasChoice && c.parametro ? (c.atalhos?.length ? c.atalhos : c.parametro === 'pkg' ? p.suggestedPackages.map((x) => ({ rotulo: x, valor: x })) : []) : []
-  const chipsLabel = c.atalhos?.length ? 'Atalhos:' : 'Instalados:'
+  const chips =
+    !hasChoice && c.parametro
+      ? c.atalhos?.length
+        ? c.atalhos
+        : c.parametro === 'pkg'
+          ? suggestedInstalled(p.suggestedPackages, p.packages).map((x) => ({ rotulo: x, valor: x }))
+          : []
+      : []
+  const chipsLabel = c.atalhos?.length ? 'Atalhos:' : 'Sugeridos neste aparelho:'
+  const pickPackages = c.parametro === 'pkg' && (!hasChoice || otherMode)
 
   return (
     <div className="comando">
@@ -205,6 +220,12 @@ export function CommandView(p: CommandViewProps) {
             spellCheck={false}
             autoComplete="off"
           />
+          {pickPackages && (
+            <button type="button" className="btn btn-apps" disabled={!ready} aria-expanded={picking} onClick={() => setPicking((v) => !v)}>
+              <Icon name="Apps" size={15} />
+              Ver apps do aparelho
+            </button>
+          )}
           {c.parametro === 'pkg' && (
             <datalist id="pacotes-instalados">
               {p.packages.map((x) => (
@@ -213,6 +234,21 @@ export function CommandView(p: CommandViewProps) {
             </datalist>
           )}
         </div>
+      )}
+
+      {picking && device && ready && (
+        <PackagePicker
+          key={device.serial}
+          serial={device.serial}
+          deviceName={deviceName(device)}
+          selected={value}
+          load={p.loadPackages}
+          onPick={(pkg) => {
+            changeValue(pkg, false)
+            setPicking(false)
+          }}
+          onClose={() => setPicking(false)}
+        />
       )}
 
       <div className="acoes">

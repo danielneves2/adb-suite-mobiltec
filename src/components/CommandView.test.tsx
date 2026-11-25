@@ -33,6 +33,7 @@ function props(over: Partial<CommandViewProps> = {}): CommandViewProps {
     onEdit: vi.fn(),
     onDelete: vi.fn(),
     onSaveAsCommand: vi.fn(),
+    loadPackages: vi.fn(async () => []),
     ...over,
   }
 }
@@ -168,4 +169,29 @@ test('Salvar como comando leva o comando livre sem o -s', async () => {
   await user.type(screen.getByLabelText('Comando livre'), 'adb -s OUTRO shell dumpsys battery')
   await user.click(screen.getByRole('button', { name: 'Salvar como comando' }))
   expect(onSaveAsCommand).toHaveBeenCalledWith('adb shell dumpsys battery')
+})
+
+describe('comando que pede pacote', () => {
+  test('sugeridos só os instalados no aparelho; botão abre os apps do aparelho e escolher preenche o campo', async () => {
+    const user = userEvent.setup()
+    const loadPackages = vi.fn(async () => ['com.whatsapp', 'com.android.chrome'])
+    render(
+      <CommandView
+        {...props({
+          command: byId('extrair'),
+          packages: ['br.com.mobiltec.c4m.android.agent', 'com.whatsapp'],
+          suggestedPackages: ['br.com.mobiltec.c4m.android.agent', 'com.android.chrome'],
+          loadPackages,
+        })}
+      />,
+    )
+    expect(screen.getByText('Sugeridos neste aparelho:')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'br.com.mobiltec.c4m.android.agent' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'com.android.chrome' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Ver apps do aparelho' }))
+    await user.click(await screen.findByRole('option', { name: 'com.whatsapp' }))
+    expect(screen.getByLabelText(/pacote/i)).toHaveValue('com.whatsapp')
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+    expect(screen.getByText(/\$ adb -s R58N12ABCDE shell pm path com\.whatsapp/)).toBeInTheDocument()
+  })
 })

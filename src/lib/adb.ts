@@ -4,6 +4,8 @@ import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import type { DeviceInfo } from './appLogic'
 import type { Step } from './commandBuilder'
 
+export type PackageKind = 'user' | 'system' | 'all'
+
 export interface StepOut {
   stdout: string
   stderr: string
@@ -28,7 +30,8 @@ export const adb = {
   adbVersion: () => invoke<string>('adb_version'),
   listDevices: () => invoke<DeviceInfo[]>('list_devices'),
   restartAdbServer: () => invoke<void>('restart_adb_server'),
-  listPackages: (serial: string) => invoke<string[]>('list_packages', { serial }),
+  /** Pacotes instalados: 'user' (apps do usuário), 'system' (do sistema) ou 'all'. */
+  listPackages: (serial: string, kind: PackageKind = 'user') => invoke<string[]>('list_packages', { serial, kind }),
   runSteps: (runId: string, steps: Step[], deviceDir: string | null) => invoke<StepOut[]>('run_steps', { runId, steps, deviceDir }),
   cancelRun: (runId: string) => invoke<void>('cancel_run', { runId }),
   startStream: (runId: string, step: Step, deviceDir: string | null) => invoke<void>('start_stream', { runId, step, deviceDir }),

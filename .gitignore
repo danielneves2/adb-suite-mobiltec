@@ -10,3 +10,4 @@ src-tauri/binaries/*
 Saidas/
 .superpowers/
 .playwright-mcp/
+src-tauri/target-test/

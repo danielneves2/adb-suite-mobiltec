@@ -1389,3 +1389,108 @@ select.campo {
 .config-sobre dd {
   margin: 0;
 }
+
+/* ---------- apps do aparelho (seletor de pacote) ---------- */
+.btn-apps {
+  height: 36px;
+}
+.apps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--divisor-forte);
+  border-radius: var(--raio-card);
+  background: var(--card);
+}
+.apps-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.apps-contagem {
+  font-size: 11px;
+  color: var(--texto-2);
+}
+.apps-espaco {
+  flex: 1;
+}
+.apps-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.segmentos {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--divisor);
+  border-radius: var(--raio);
+  background: var(--painel);
+}
+.segmento {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 3px;
+  color: var(--texto-2);
+  font-weight: 500;
+  cursor: pointer;
+}
+.segmento input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.segmento:hover {
+  color: var(--texto);
+}
+.segmento.ativo {
+  background: var(--card-hover);
+  color: var(--texto);
+  box-shadow: inset 0 -2px 0 var(--roxo-claro);
+}
+.segmento:focus-within {
+  outline: 1px solid var(--roxo-claro);
+}
+.apps-busca {
+  flex: 1 1 260px;
+  height: 34px;
+  background: var(--painel);
+}
+.apps-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2px 8px;
+  max-height: 260px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  font-size: 12px;
+}
+.apps-item {
+  padding: 7px 10px;
+  border-radius: var(--raio);
+  color: var(--texto-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.apps-item:hover,
+.apps-item:focus-visible {
+  background: var(--card-hover);
+  color: var(--texto);
+  outline: none;
+}
+.apps-item.selecionado {
+  background: var(--roxo-fundo);
+  color: var(--texto);
+  box-shadow: inset 2px 0 0 var(--roxo);
+}
+.apps-carregando {
+  margin: 4px 0;
+  color: var(--texto-2);
+}

@@ -1,5 +1,5 @@
 import { openPath } from '@tauri-apps/plugin-opener'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import rawCatalog from '../data/catalog.json'
 import { CommandForm } from './components/CommandForm'
 import { CommandList } from './components/CommandList'
@@ -9,7 +9,7 @@ import { Rail } from './components/Rail'
 import { Settings } from './components/Settings'
 import { StatusBar } from './components/StatusBar'
 import { TopBar } from './components/TopBar'
-import { adb } from './lib/adb'
+import { adb, type PackageKind } from './lib/adb'
 import type { Catalog } from './lib/catalogTypes'
 import { formatTimestamp } from './lib/commandBuilder'
 import { EMPTY_FORM, FORM_CATEGORIES, MY_CATEGORY, commandToForm, formToCommand, type CommandFormData } from './lib/commandForm'
@@ -86,13 +86,17 @@ export default function App() {
     if (!ready || !device) return
     let alive = true
     adb
-      .listPackages(device.serial)
+      .listPackages(device.serial, 'all')
       .then((list) => alive && setPackages(list))
       .catch(() => {})
     return () => {
       alive = false
     }
   }, [device?.serial, ready])
+
+  // Painel "Ver apps do aparelho": lista por tipo, sempre do aparelho selecionado agora.
+  const serial = device?.serial
+  const loadPackages = useCallback((kind: PackageKind) => (serial ? adb.listPackages(serial, kind) : Promise.resolve([])), [serial])
 
   const openFolder = async (path: string | null) => {
     if (!path) return
@@ -241,6 +245,7 @@ export default function App() {
                 s.deleteCommand(cmd.id)
                 s.flash('Comando excluído.')
               }}
+              loadPackages={loadPackages}
               onSaveAsCommand={(comando) => openForm({ comando, categoria: MY_CATEGORY })}
             />
           ) : (

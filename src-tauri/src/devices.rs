@@ -76,6 +76,17 @@ pub fn parse_packages(output: &str) -> Vec<String> {
     pkgs
 }
 
+/// Argumentos do `pm list packages`: "user" (-3, padrão), "system" (-s) ou "all" (sem filtro).
+pub fn packages_args<'a>(serial: &'a str, kind: &str) -> Vec<&'a str> {
+    let mut args = vec!["-s", serial, "shell", "pm", "list", "packages"];
+    match kind {
+        "system" => args.push("-s"),
+        "all" => {}
+        _ => args.push("-3"),
+    }
+    args
+}
+
 /// Cache de marca/modelo/Android por serial (getprop só roda uma vez por aparelho).
 #[derive(Default)]
 pub struct DeviceCache(pub Mutex<HashMap<String, (Option<String>, Option<String>, Option<String>)>>);
@@ -125,9 +136,9 @@ pub async fn restart_adb_server(app: tauri::AppHandle, cache: tauri::State<'_, D
 }
 
 #[tauri::command]
-pub async fn list_packages(app: tauri::AppHandle, serial: String) -> Result<Vec<String>, String> {
+pub async fn list_packages(app: tauri::AppHandle, serial: String, kind: Option<String>) -> Result<Vec<String>, String> {
     let adb = crate::adb_path::app_adb_path(&app)?;
-    let (stdout, _) = adb_output(&adb, &["-s", &serial, "shell", "pm", "list", "packages", "-3"]).await?;
+    let (stdout, _) = adb_output(&adb, &packages_args(&serial, kind.as_deref().unwrap_or("user"))).await?;
     Ok(parse_packages(&stdout))
 }
 
@@ -169,6 +180,14 @@ mod tests {
     fn detecta_conflito_de_versao_do_servidor() {
         assert!(adb_server_conflict("adb server version (40) doesn't match this client (41); killing..."));
         assert!(!adb_server_conflict("error: no devices/emulators found"));
+    }
+
+    #[test]
+    fn argumentos_do_pm_por_tipo() {
+        assert_eq!(packages_args("R58N", "user"), vec!["-s", "R58N", "shell", "pm", "list", "packages", "-3"]);
+        assert_eq!(packages_args("R58N", "system"), vec!["-s", "R58N", "shell", "pm", "list", "packages", "-s"]);
+        assert_eq!(packages_args("R58N", "all"), vec!["-s", "R58N", "shell", "pm", "list", "packages"]);
+        assert_eq!(packages_args("R58N", "qualquer"), vec!["-s", "R58N", "shell", "pm", "list", "packages", "-3"]);
     }
 
     #[test]
