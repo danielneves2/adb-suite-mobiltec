@@ -19,6 +19,10 @@ export function Welcome({ onEnter, knownUsers = [], onForget }: WelcomeProps) {
   return (
     <div className="boas-vindas">
       <div className="boas-vindas-card">
+        {/* Topo laranja com os cantos cortados na diagonal (como na referência) */}
+        <span className="bv-topo" aria-hidden="true" />
+        <span className="bv-canto bv-canto-esq" aria-hidden="true" />
+        <span className="bv-canto bv-canto-dir" aria-hidden="true" />
         <form
           className="boas-vindas-form"
           onSubmit={(e) => {
@@ -97,6 +101,10 @@ export function Welcome({ onEnter, knownUsers = [], onForget }: WelcomeProps) {
           </p>
         </form>
         <div className="boas-vindas-arte">
+          {/* Divisória com degrau diagonal */}
+          <svg className="bv-divisoria" viewBox="0 0 44 100" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M43 0 V36 L3 46 V100" vectorEffect="non-scaling-stroke" />
+          </svg>
           <div className="boas-vindas-chao" aria-hidden="true" />
           <img src={android} alt="" />
           <div className="boas-vindas-marca">

@@ -1617,11 +1617,39 @@ select.campo {
   grid-template-columns: minmax(0, 1fr) 380px;
   width: min(1000px, 100%);
   border: 1px solid #2e1b2a;
-  border-top: 2px solid var(--laranja);
-  border-radius: 12px;
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
   background: linear-gradient(180deg, #120c12, #0a070b);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.75);
-  overflow: hidden;
+  /* cantos de cima cortados na diagonal */
+  clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%, 0 22px);
+}
+.bv-topo {
+  position: absolute;
+  top: 0;
+  left: 21px;
+  right: 21px;
+  height: 2px;
+  background: var(--laranja);
+  z-index: 2;
+}
+.bv-canto {
+  position: absolute;
+  top: 0;
+  width: 32px;
+  height: 2px;
+  background: var(--laranja);
+  z-index: 2;
+}
+.bv-canto-esq {
+  left: 0;
+  transform-origin: 0 0;
+  transform: translate(0, 22px) rotate(-45deg);
+}
+.bv-canto-dir {
+  right: 0;
+  transform-origin: 100% 0;
+  transform: translate(0, 22px) rotate(45deg);
 }
 .boas-vindas-form {
   display: flex;
@@ -1635,8 +1663,29 @@ select.campo {
 }
 .boas-vindas-marca {
   position: relative;
-  margin-top: 18px;
-  transform: scale(1.3);
+  flex: none;
+  margin-top: 22px;
+}
+/* Marca maior nesta tela (tamanho de verdade, sem zoom, pra não quebrar). */
+.boas-vindas-marca .marca {
+  gap: 12px;
+}
+.boas-vindas-marca .marca-icone {
+  width: 40px;
+  height: 40px;
+}
+.boas-vindas-marca .marca-colchete {
+  width: 8px;
+  height: 38px;
+}
+.boas-vindas-marca .marca-nome {
+  font-size: 18px;
+}
+.boas-vindas-marca .marca-sub {
+  font-size: 9px;
+}
+.boas-vindas-marca .marca-barras {
+  font-size: 17px;
 }
 .boas-vindas-titulo {
   margin: 0;
@@ -1723,9 +1772,20 @@ select.campo {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-left: 1px solid #241a26;
-  background: radial-gradient(circle at 50% 45%, rgba(121, 10, 92, 0.18), transparent 65%);
+  padding-left: 30px;
+  background: radial-gradient(circle at 55% 45%, rgba(121, 10, 92, 0.18), transparent 65%);
   overflow: hidden;
+}
+.bv-divisoria {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 44px;
+  height: 100%;
+  fill: none;
+  stroke: #3a2338;
+  stroke-width: 1px;
+  z-index: 1;
 }
 .boas-vindas-arte img {
   position: relative;
