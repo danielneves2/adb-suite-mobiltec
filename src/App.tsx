@@ -16,9 +16,10 @@ import type { Catalog } from './lib/catalogTypes'
 import { formatTimestamp } from './lib/commandBuilder'
 import { EMPTY_FORM, FORM_CATEGORIES, MY_CATEGORY, commandToForm, formToCommand, type CommandFormData } from './lib/commandForm'
 import { tauriConfigStore } from './lib/configStore'
-import { applyWindowSize } from './lib/window'
-import { formatDuration } from './lib/appLogic'
+import { fitWindowSizes } from './lib/settings'
+import { applyWindowSize, workAreaSize } from './lib/window'
 import { useActivity } from './state/useActivity'
+import { useRunLog } from './state/useRunLog'
 import { useAppState } from './state/useAppState'
 import { useRunner } from './state/useRunner'
 import './styles/app.css'
@@ -31,16 +32,27 @@ export default function App() {
   // Telas que não são um comando do catálogo: Configurações e Comando livre.
   const [screen, setScreen] = useState<'config' | 'livre' | null>(null)
   const [adbVersion, setAdbVersion] = useState<string | null>(null)
+  const [availableSizes, setAvailableSizes] = useState<string[] | undefined>(undefined)
   const [form, setForm] = useState<{ initial: CommandFormData; editingId: string | null; key: number } | null>(null)
   // Só a escolha do técnico volta a saída para "aguardando" (e para o que estiver rodando).
   // Se o aparelho some sozinho, a mensagem de erro fica na tela.
-  const s = useAppState({ listDevices: adb.listDevices, store: tauriConfigStore, onUserSelect: () => {
-      runner.reset()
-      setForm(null)
-      setScreen(null)
+  const s = useAppState({ listDevices: adb.listDevices, store: tauriConfigStore, onUserSelect: (kind) => {
+      runner.reset() // a saída era de outro comando/aparelho (e para o que estiver rodando)
+      // Trocar de aparelho mantém a tela atual (Comando livre, Configurações, formulário) e só muda o alvo.
+      if (kind === 'command') {
+        setForm(null)
+        setScreen(null)
+      }
     },
   })
   const [packages, setPackages] = useState<string[]>([])
+
+  // Sair do Comando livre (por qualquer caminho) para o que ele rodava: a saída dele é só dele.
+  const previousScreen = useRef(screen)
+  useEffect(() => {
+    if (previousScreen.current === 'livre' && screen !== 'livre') runner.reset()
+    previousScreen.current = screen
+  }, [screen, runner.reset])
   const activity = useActivity()
 
   // Versão do adb embutido (tela Configurações → Sobre).
@@ -51,35 +63,38 @@ export default function App() {
       .catch(() => setAdbVersion(null))
   }, [])
 
-  // Tamanho da janela escolhido em Configurações (vale também ao abrir o app).
+  // Tamanhos que cabem nesta tela (lido ao abrir Configurações: o monitor pode ter mudado).
   useEffect(() => {
-    applyWindowSize(s.windowSize).catch(() => {})
+    if (screen !== 'config') return
+    workAreaSize()
+      .then((work) => setAvailableSizes(work ? fitWindowSizes(work) : undefined))
+      .catch(() => setAvailableSizes(undefined))
+  }, [screen])
+
+  // Tamanho da janela escolhido em Configurações (vale também ao abrir o app).
+  // Um tamanho salvo que não cabe mais nesta tela (outro monitor, escala maior) volta para "livre".
+  useEffect(() => {
+    void (async () => {
+      let id = s.windowSize
+      try {
+        const work = await workAreaSize()
+        if (work && !fitWindowSizes(work).includes(id)) id = 'livre'
+      } catch {
+        // sem informação do monitor: aplica o que foi escolhido
+      }
+      await applyWindowSize(id)
+    })()
   }, [s.windowSize])
   // Nome do que está rodando, pro log de atividade ("Comando livre" ou o nome do comando).
   const runName = useRef('')
-  const loggedRun = useRef<unknown>(null)
 
   // Log de atividade: entrada/saída de aparelhos.
   useEffect(() => {
     activity.trackDevices(s.devices)
   }, [s.devices, activity.trackDevices])
 
-  // Log de atividade: resultado de cada execução (uma vez por resultado).
-  useEffect(() => {
-    const v = runner.view
-    const key = v.phase === 'done' ? v.result : v.phase === 'error' ? v.error : null
-    if (!key || loggedRun.current === key) return
-    loggedRun.current = key
-    if (v.phase === 'done' && v.result) {
-      const ok = v.result.exitCode === 0
-      activity.log(
-        ok ? 'CMD' : 'ERRO',
-        ok ? `${runName.current} — concluído em ${formatDuration(v.result.durationMs)}` : `${runName.current} — erro (código ${v.result.exitCode})`,
-      )
-    } else if (v.phase === 'error' && v.error) {
-      activity.log('ERRO', `${runName.current} — ${v.error.split('\n')[0]}`)
-    }
-  }, [runner.view, activity.log])
+  // Log de atividade: resultado de cada execução (uma vez por execução).
+  useRunLog(runner.view, runName.current, activity.log)
   const device = s.selectedDevice
   const ready = device?.state === 'device'
 
@@ -226,6 +241,7 @@ export default function App() {
               onOpenBase={() => void openFolder(s.baseDir)}
               adbVersion={adbVersion}
               onClose={() => setScreen(null)}
+              availableSizes={availableSizes}
               userName={s.userName}
               onUserName={(name) => {
                 s.setUserName(name)

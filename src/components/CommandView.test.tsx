@@ -10,7 +10,7 @@ import { CommandView, type CommandViewProps } from './CommandView'
 const catalog = rawCatalog as unknown as Catalog
 const byId = (id: string) => catalog.comandos.find((c) => c.id === id) as Command
 const a54: DeviceInfo = { serial: 'R58N12ABCDE', state: 'device', brand: 'Samsung', model: 'Galaxy A54', android: '14' }
-const idle: RunView = { phase: 'idle', display: null, lines: [], result: null, error: null, extra: '' }
+const idle: RunView = { runId: null, phase: 'idle', display: null, lines: [], result: null, error: null, extra: '' }
 
 function props(over: Partial<CommandViewProps> = {}): CommandViewProps {
   return {

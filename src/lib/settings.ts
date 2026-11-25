@@ -25,3 +25,14 @@ export function parseWindowSize(id: string): { width: number; height: number } |
   if (width < MIN.width || height < MIN.height) return null
   return { width, height }
 }
+
+/** Altura aproximada da barra de título do Windows (o tamanho fixo é o da área interna). */
+const TITLE_BAR = 40
+
+/** Tamanhos que cabem na área útil da tela (em pixels lógicos, já sem a barra de tarefas). "livre" sempre cabe. */
+export function fitWindowSizes(work: { width: number; height: number }): string[] {
+  return WINDOW_SIZES.filter((o) => {
+    const size = parseWindowSize(o.id)
+    return !size || (size.width <= work.width && size.height + TITLE_BAR <= work.height)
+  }).map((o) => o.id)
+}

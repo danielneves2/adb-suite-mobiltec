@@ -125,3 +125,16 @@ test('depois de Parar, o fim do stream não roda o passo final de novo, e Parar 
   await act(async () => emits[0](done('')))
   expect(stopFn).toHaveBeenCalledTimes(1)
 })
+
+test('view expõe o runId e não muda de identidade entre renders sem mudança (saída extra mesclada)', async () => {
+  const { hook, emits, stopFn } = setup()
+  stopFn.mockResolvedValueOnce({ stdout: '1 file pulled\n', stderr: '', exitCode: 0, durationMs: 10, savedTo: null } as never)
+  act(() => hook.result.current.start(byId('gravar'), base))
+  const id = hook.result.current.view.runId
+  expect(id).toEqual(expect.any(String))
+  await act(async () => emits[0](done('')))
+  const v1 = hook.result.current.view
+  hook.rerender()
+  expect(hook.result.current.view).toBe(v1)
+  expect(v1.runId).toBe(id)
+})

@@ -61,3 +61,10 @@ test('seu nome: trocar e sair', async () => {
   await user.click(screen.getByRole('button', { name: 'Sair' }))
   expect(onUserName).toHaveBeenCalledWith(null)
 })
+
+test('tamanho que não cabe na tela fica desligado', () => {
+  render(<Settings {...props({ availableSizes: ['livre', '1280x720'] })} />)
+  expect(screen.getByRole('radio', { name: /1280 × 720/ })).toBeEnabled()
+  expect(screen.getByRole('radio', { name: /1920 × 1080/ })).toBeDisabled()
+  expect(screen.getByRole('radio', { name: /1920 × 1080/ }).closest('label')).toHaveTextContent('Maior que esta tela')
+})

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import type { AdbApi, StepOut } from '../lib/adb'
 import type { DeviceInfo } from '../lib/appLogic'
 import type { Command } from '../lib/catalogTypes'
@@ -10,6 +10,8 @@ export const MAX_LINES = 5000
 export type RunPhase = 'idle' | 'running' | 'done' | 'error'
 
 export interface RunView {
+  /** Identifica a execução (estável até a próxima); null quando ocioso. */
+  runId: string | null
   phase: RunPhase
   display: string | null
   lines: string[]
@@ -19,7 +21,7 @@ export interface RunView {
   extra: string
 }
 
-const IDLE: RunView = { phase: 'idle', display: null, lines: [], result: null, error: null, extra: '' }
+const IDLE: RunView = { runId: null, phase: 'idle', display: null, lines: [], result: null, error: null, extra: '' }
 
 export interface StartOptions {
   device: DeviceInfo
@@ -96,7 +98,7 @@ export function useRunner({ api, runFn = runCommand, freeFn = runFreeCommand, st
     abandon()
     const opts: RunOptions = { ...o, now: new Date(), runId: newRunId() }
     current.current = { runId: opts.runId, command, opts, active: true, stopping: false }
-    setView({ ...IDLE, phase: 'running' })
+    setView({ ...IDLE, runId: opts.runId, phase: 'running' })
     return opts
   }
 
@@ -129,8 +131,11 @@ export function useRunner({ api, runFn = runCommand, freeFn = runFreeCommand, st
   }, [halt])
 
   // A saída extra (passo depois de Parar) entra no fim da saída do resultado.
-  const merged: RunView =
-    view.result && view.extra ? { ...view, result: { ...view.result, output: view.result.output + view.extra } } : view
+  // Memorizado: um objeto novo a cada render faria efeitos que dependem da view rodarem sem parar.
+  const merged: RunView = useMemo(
+    () => (view.result && view.extra ? { ...view, result: { ...view.result, output: view.result.output + view.extra } } : view),
+    [view],
+  )
 
   return { view: merged, start, startFree, stop, reset }
 }

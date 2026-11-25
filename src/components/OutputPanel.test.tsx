@@ -7,8 +7,9 @@ import { OutputPanel, type OutputPanelProps } from './OutputPanel'
 
 const a54: DeviceInfo = { serial: 'R58N', state: 'device', brand: 'Samsung', model: 'Galaxy A54', android: '14' }
 const at = new Date(2026, 10, 24, 14, 32)
-const idle: RunView = { phase: 'idle', display: null, lines: [], result: null, error: null, extra: '' }
+const idle: RunView = { runId: null, phase: 'idle', display: null, lines: [], result: null, error: null, extra: '' }
 const done: RunView = {
+  runId: 'r1',
   phase: 'done',
   display: 'adb -s R58N shell wm size',
   lines: [],

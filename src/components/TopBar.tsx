@@ -29,13 +29,36 @@ function DeviceText({ d }: { d: DeviceInfo }) {
 export function TopBar({ devices, selectedSerial, onSelect, onDiagnose, onCollect }: Props) {
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
+  const button = useRef<HTMLButtonElement>(null)
+  const list = useRef<HTMLUListElement>(null)
+
+  const close = (refocus: boolean) => {
+    setOpen(false)
+    if (refocus) button.current?.focus()
+  }
+
+  const choose = (serial: string) => {
+    if (serial !== selectedSerial) onSelect(serial) // o mesmo aparelho: só fecha (não reinicia nada)
+    close(true)
+  }
+
+  const options = () => Array.from(list.current?.querySelectorAll<HTMLElement>('[role="option"]') ?? [])
+
+  // Ao abrir, o foco vai para o aparelho selecionado (ou o primeiro).
+  useEffect(() => {
+    if (!open) return
+    const opts = options()
+    ;(opts.find((o) => o.getAttribute('aria-selected') === 'true') ?? opts[0])?.focus()
+  }, [open])
   const selected = devices.find((d) => d.serial === selectedSerial) ?? null
   const status = deviceStatus(selected)
 
   // Fecha com Esc ou clique fora.
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close(true)
+    }
     const onDown = (e: MouseEvent) => {
       if (box.current && !box.current.contains(e.target as Node)) setOpen(false)
     }
@@ -57,6 +80,7 @@ export function TopBar({ devices, selectedSerial, onSelect, onDiagnose, onCollec
           className="seletor-botao"
           aria-haspopup="listbox"
           aria-expanded={open}
+          ref={button}
           disabled={devices.length === 0}
           onClick={() => setOpen((v) => !v)}
         >
@@ -66,7 +90,20 @@ export function TopBar({ devices, selectedSerial, onSelect, onDiagnose, onCollec
           {devices.length > 0 && <Icon name="chevron" size={16} />}
         </button>
         {open && (
-          <ul className="seletor-lista" role="listbox" aria-label="Aparelhos">
+          <ul
+            className="seletor-lista"
+            role="listbox"
+            aria-label="Aparelhos"
+            ref={list}
+            onKeyDown={(e) => {
+              if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+              e.preventDefault()
+              const opts = options()
+              const i = opts.indexOf(document.activeElement as HTMLElement)
+              const next = e.key === 'ArrowDown' ? Math.min(i + 1, opts.length - 1) : Math.max(i - 1, 0)
+              opts[next]?.focus()
+            }}
+          >
             {devices.map((d) => {
               const isSel = d.serial === selectedSerial
               return (
@@ -75,9 +112,13 @@ export function TopBar({ devices, selectedSerial, onSelect, onDiagnose, onCollec
                   role="option"
                   aria-selected={isSel}
                   className={`seletor-opcao${isSel ? ' selecionada' : ''}`}
-                  onClick={() => {
-                    onSelect(d.serial)
-                    setOpen(false)
+                  tabIndex={-1}
+                  onClick={() => choose(d.serial)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      choose(d.serial)
+                    }
                   }}
                 >
                   <span className={`ponto ponto-${deviceStatus(d).tone}`} aria-hidden="true" />

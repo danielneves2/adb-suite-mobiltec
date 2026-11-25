@@ -136,3 +136,12 @@ describe('usuário (só nome, fica logado)', () => {
     expect(await store.get('usuario')).toBe('')
   })
 })
+
+test('onUserSelect diz se foi troca de aparelho ou de comando', async () => {
+  const onUserSelect = vi.fn()
+  const { result } = renderHook(() => useAppState({ listDevices: async () => [a54], store: memoryStore(), pollMs: 60_000, onUserSelect }))
+  await waitFor(() => expect(result.current.selectedSerial).toBe('R58N'))
+  act(() => result.current.selectSerial('R58N'))
+  act(() => result.current.selectCommand('foco'))
+  expect(onUserSelect.mock.calls).toEqual([['device'], ['command']])
+})

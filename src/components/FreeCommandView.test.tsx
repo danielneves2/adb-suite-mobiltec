@@ -6,7 +6,7 @@ import type { RunView } from '../state/useRunner'
 import { FreeCommandView, type FreeCommandViewProps } from './FreeCommandView'
 
 const a13: DeviceInfo = { serial: 'RQ8T', state: 'device', brand: 'Samsung', model: 'SM-A135M', android: '14' }
-const idle: RunView = { phase: 'idle', display: null, lines: [], result: null, error: null, extra: '' }
+const idle: RunView = { runId: null, phase: 'idle', display: null, lines: [], result: null, error: null, extra: '' }
 
 const props = (over: Partial<FreeCommandViewProps> = {}): FreeCommandViewProps => ({
   device: a13,

@@ -14,9 +14,11 @@ export interface SettingsProps {
   userName: string | null
   /** Trocar o nome, ou null para sair (o app pergunta o nome de novo). */
   onUserName: (name: string | null) => void
+  /** Tamanhos que cabem nesta tela (os outros ficam desligados). Sem a informação, todos ficam liberados. */
+  availableSizes?: string[]
 }
 
-export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName }: SettingsProps) {
+export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName, availableSizes }: SettingsProps) {
   const [dir, setDir] = useState(baseDir)
   const [name, setName] = useState(userName ?? '')
   const [nameError, setNameError] = useState<string | null>(null)
@@ -80,13 +82,14 @@ export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOp
         <div className="config-opcoes" role="radiogroup" aria-labelledby="cfg-janela">
           {WINDOW_SIZES.map((o) => {
             const checked = o.id === windowSize
+            const fits = !availableSizes || availableSizes.includes(o.id)
             return (
-              <label key={o.id} className={`config-opcao${checked ? ' selecionada' : ''}`}>
-                <input type="radio" name="tamanho-janela" value={o.id} checked={checked} onChange={() => onWindowSize(o.id)} />
+              <label key={o.id} className={`config-opcao${checked ? ' selecionada' : ''}${fits ? '' : ' desligada'}`}>
+                <input type="radio" name="tamanho-janela" value={o.id} checked={checked} disabled={!fits} onChange={() => onWindowSize(o.id)} />
                 <span className={`marcador${checked ? ' cheio' : ''}`} aria-hidden="true" />
                 <span>
                   <strong className={o.id === 'livre' ? '' : 'mono'}>{o.label}</strong>
-                  <span className="config-detalhe">{o.detail}</span>
+                  <span className="config-detalhe">{fits ? o.detail : 'Maior que esta tela'}</span>
                 </span>
               </label>
             )

@@ -1355,6 +1355,10 @@ select.campo {
 .config-opcao:hover {
   border-color: var(--divisor-forte);
 }
+.config-opcao.desligada {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 .config-opcao.selecionada {
   border-color: var(--roxo);
   background: var(--roxo-fundo);

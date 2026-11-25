@@ -17,7 +17,7 @@ export interface AppStateDeps {
   pollMs?: number
   commands?: Command[]
   /** Chamado quando o técnico escolhe aparelho ou comando (não na seleção automática do polling). */
-  onUserSelect?: () => void
+  onUserSelect?: (kind: 'device' | 'command') => void
 }
 
 const FLASH_MS = 3500
@@ -165,11 +165,11 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
   const userSelect = useRef(onUserSelect)
   userSelect.current = onUserSelect
   const selectSerial = useCallback((serial: string | null) => {
-    userSelect.current?.()
+    userSelect.current?.('device')
     setSelectedSerial(serial)
   }, [])
   const selectCommand = useCallback((id: string | null) => {
-    userSelect.current?.()
+    userSelect.current?.('command')
     setSelectedCommandId(id)
   }, [])
 
