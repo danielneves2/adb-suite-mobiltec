@@ -1,3 +1,4 @@
+import { getVersion } from '@tauri-apps/api/app'
 import { openPath } from '@tauri-apps/plugin-opener'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import rawCatalog from '../data/catalog.json'
@@ -33,6 +34,7 @@ export default function App() {
   // Telas que não são um comando do catálogo: Configurações e Comando livre.
   const [screen, setScreen] = useState<'config' | 'livre' | null>(null)
   const [adbVersion, setAdbVersion] = useState<string | null>(null)
+  const [appVersion, setAppVersion] = useState<string | null>(null)
   const [availableSizes, setAvailableSizes] = useState<string[] | undefined>(undefined)
   const [form, setForm] = useState<{ initial: CommandFormData; editingId: string | null; key: number } | null>(null)
   // Só a escolha do técnico volta a saída para "aguardando" (e para o que estiver rodando).
@@ -56,8 +58,11 @@ export default function App() {
   }, [screen, runner.reset])
   const activity = useActivity()
 
-  // Versão do adb embutido (tela Configurações → Sobre).
+  // Versões do app e do adb embutido (tela Configurações → Sobre).
   useEffect(() => {
+    getVersion()
+      .then(setAppVersion)
+      .catch(() => setAppVersion(null))
     adb
       .adbVersion()
       .then(setAdbVersion)
@@ -267,6 +272,7 @@ export default function App() {
               }}
               onOpenBase={() => void openFolder(s.baseDir)}
               adbVersion={adbVersion}
+              appVersion={appVersion}
               onClose={() => setScreen(null)}
               availableSizes={availableSizes}
               pickFolder={pickFolder}

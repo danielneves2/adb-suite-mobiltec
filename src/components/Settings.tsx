@@ -18,9 +18,11 @@ export interface SettingsProps {
   availableSizes?: string[]
   /** Abre a janela do Windows para escolher a pasta (null = cancelou). */
   pickFolder: (defaultPath: string) => Promise<string | null>
+  /** Versão do app instalado (Tauri getVersion). */
+  appVersion?: string | null
 }
 
-export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName, availableSizes, pickFolder }: SettingsProps) {
+export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName, availableSizes, pickFolder, appVersion }: SettingsProps) {
   const [dir, setDir] = useState(baseDir)
 
   return (
@@ -124,7 +126,7 @@ export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOp
         </h2>
         <dl className="config-sobre">
           <dt>Versão do app</dt>
-          <dd className="mono">0.1.0</dd>
+          <dd className="mono">{appVersion ?? '—'}</dd>
           <dt>adb embutido</dt>
           <dd className="mono">{adbVersion ?? '—'}</dd>
         </dl>

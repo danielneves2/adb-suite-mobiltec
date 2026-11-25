@@ -72,3 +72,8 @@ test('Escolher pasta… abre a janela do Windows e salva a escolhida', async () 
   expect(p.onChangeBase).toHaveBeenCalledWith('E:/Saidas')
   expect(screen.getByRole('textbox', { name: 'Pasta de saída' })).toHaveValue('E:/Saidas')
 })
+
+test('Sobre mostra a versão real do app', () => {
+  render(<Settings {...props({ appVersion: '0.2.0' })} />)
+  expect(screen.getByText('0.2.0')).toBeInTheDocument()
+})
