@@ -77,3 +77,10 @@ test('Sobre mostra a versão real do app', () => {
   render(<Settings {...props({ appVersion: '0.2.0' })} />)
   expect(screen.getByText('0.2.0')).toBeInTheDocument()
 })
+
+test('campo da pasta acompanha a pasta atual (outro usuário, ou mudada pela barra de baixo)', () => {
+  const { rerender } = render(<Settings {...props({ baseDir: 'D:/Ana' })} />)
+  expect(screen.getByRole('textbox', { name: 'Pasta de saída' })).toHaveValue('D:/Ana')
+  rerender(<Settings {...props({ baseDir: 'E:/Bruno' })} />)
+  expect(screen.getByRole('textbox', { name: 'Pasta de saída' })).toHaveValue('E:/Bruno')
+})

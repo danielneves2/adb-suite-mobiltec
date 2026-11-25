@@ -218,7 +218,7 @@ test('categorias criadas pelo técnico (fora das fixas) viram itens do menu', as
   const { result } = setup(memoryStore({ meusComandos: [mk('a', 'Rede'), mk('b', 'Apps'), mk('c', 'Meus comandos'), mk('d', 'Zebra', true), mk('e', 'rede')] }))
   await waitFor(() => expect(result.current.customCategories).toEqual(['Rede']))
   act(() => result.current.setRail('Rede'))
-  expect(result.current.listCommands.map((c) => c.id)).toEqual(['a'])
+  expect(result.current.listCommands.map((c) => c.id)).toEqual(['a', 'e']) // 'rede' e 'Rede' são a mesma categoria
   expect(result.current.listTitle).toBe('Rede')
 })
 
@@ -245,5 +245,43 @@ describe('gerenciar categorias criadas', () => {
       ['a', 'Meus comandos'],
       ['b', 'Meus comandos'],
     ])
+  })
+})
+
+describe('3ª revisão', () => {
+  test('dados de antes dos perfis continuam lá na segunda abertura (migração grava nas chaves do perfil)', async () => {
+    const meu = { id: 'local-1', categoria: 'Meus comandos', nome: 'Meu', resumo: '', comando: 'adb shell ls', parametro: null, oficial: false, excluido: false }
+    const store = memoryStore({ usuario: 'Daniel', fixados: ['foco'], pastaSaida: 'E:/Logs', meusComandos: [meu] })
+    const first = setup(store)
+    await waitFor(() => expect(first.result.current.baseDir).toBe('E:/Logs'))
+    first.unmount()
+    const second = setup(store)
+    await waitFor(() => expect(second.result.current.userName).toBe('Daniel'))
+    await waitFor(() => expect(second.result.current.baseDir).toBe('E:/Logs'))
+    expect(second.result.current.pinned).toEqual(['foco'])
+    expect(second.result.current.commands.some((c) => c.id === 'local-1')).toBe(true)
+  })
+
+  test('renomear para um nome que já existe (outra caixa) usa a grafia existente', async () => {
+    const mk = (id: string, categoria: string) => ({ id, categoria, nome: id, resumo: '', comando: 'adb shell ls', parametro: null, oficial: false, excluido: false })
+    const { result } = setup(memoryStore({ meusComandos: [mk('a', 'Wifi'), mk('b', 'Rede')] }))
+    await waitFor(() => expect(result.current.customCategories).toEqual(['Wifi', 'Rede']))
+    act(() => result.current.renameCategory('Wifi', 'rede'))
+    expect(result.current.customCategories).toEqual(['Rede'])
+    act(() => result.current.setRail('Rede'))
+    expect(result.current.listCommands.map((c) => c.id)).toEqual(['a', 'b'])
+  })
+
+  test('trocar de usuário volta pro Início, sem comando aberto', async () => {
+    const store = memoryStore()
+    const { result } = setup(store)
+    await waitFor(() => expect(result.current.userReady).toBe(true))
+    await act(async () => result.current.setUserName('Ana'))
+    act(() => result.current.setRail('Logs'))
+    act(() => result.current.selectCommand('foco'))
+    await act(async () => result.current.setUserName(null))
+    await act(async () => result.current.setUserName('Bruno'))
+    expect(result.current.rail).toBe('Fixados')
+    expect(result.current.selectedCommandId).toBeNull()
   })
 })

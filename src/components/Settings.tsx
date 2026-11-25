@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { WINDOW_SIZES } from '../lib/settings'
 import { initials } from '../lib/user'
 import { Icon } from './icons'
@@ -24,6 +24,8 @@ export interface SettingsProps {
 
 export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName, availableSizes, pickFolder, appVersion }: SettingsProps) {
   const [dir, setDir] = useState(baseDir)
+  // A pasta muda por fora (outro usuário, barra de baixo): o campo acompanha.
+  useEffect(() => setDir(baseDir), [baseDir])
 
   return (
     <div className="config">

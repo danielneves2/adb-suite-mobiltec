@@ -19,7 +19,7 @@ const SETTLE: Duration = Duration::from_millis(800);
 /// Script de shell que lista o caminho completo de cada arquivo das pastas de print (pastas que não existem são ignoradas).
 pub fn listing_script() -> String {
     format!(
-        "for d in {}; do [ -d \"$d\" ] && ls -1 \"$d\" | while read f; do echo \"$d/$f\"; done; done",
+        "for d in {}; do if [ -d \"$d\" ]; then ls -1 \"$d\" | while read f; do echo \"$d/$f\"; done; fi; done",
         SCREENSHOT_DIRS.join(" ")
     )
 }
@@ -48,6 +48,30 @@ pub fn local_target(device_dir: &Path, remote: &str) -> PathBuf {
     unique_path(&device_dir.join("prints").join(name))
 }
 
+/// Resultado da listagem: só é erro quando o adb reclamou (stderr). Nenhuma pasta/arquivo ainda = lista vazia.
+pub fn interpret_listing(success: bool, stdout: &str, stderr: &str) -> Result<Vec<String>, String> {
+    if !success && stdout.trim().is_empty() && !stderr.trim().is_empty() {
+        return Err(stderr.trim().to_string());
+    }
+    Ok(parse_listing(stdout))
+}
+
+/// Linha de status do vigia: um erro só aparece quando muda, e avisa uma vez quando volta a funcionar.
+pub fn status_line(last_error: &mut Option<String>, now: Result<(), &str>) -> Option<String> {
+    match now {
+        Err(e) if last_error.as_deref() == Some(e) => None,
+        Err(e) => {
+            *last_error = Some(e.to_string());
+            Some(format!("Não deu pra ler os prints: {e}"))
+        }
+        Ok(()) if last_error.is_some() => {
+            *last_error = None;
+            Some("Aparelho de volta: vigiando os prints de novo.".to_string())
+        }
+        Ok(()) => None,
+    }
+}
+
 async fn list(adb: &Path, serial: &str) -> Result<Vec<String>, String> {
     let out = hidden_command(adb)
         .args(["-s", serial, "shell", &listing_script()])
@@ -55,10 +79,7 @@ async fn list(adb: &Path, serial: &str) -> Result<Vec<String>, String> {
         .output()
         .await
         .map_err(|e| format!("Não deu pra rodar o adb: {e}"))?;
-    if !out.status.success() && out.stdout.is_empty() {
-        return Err(String::from_utf8_lossy(&out.stderr).trim().to_string());
-    }
-    Ok(parse_listing(&String::from_utf8_lossy(&out.stdout)))
+    interpret_listing(out.status.success(), &String::from_utf8_lossy(&out.stdout), &String::from_utf8_lossy(&out.stderr))
 }
 
 async fn pull(adb: &Path, serial: &str, remote: &str, local: &Path) -> Result<(), String> {
@@ -85,15 +106,24 @@ pub async fn watch_with(adb: &Path, serial: &str, device_dir: &Path, mut on_line
         "Vigiando os prints do aparelho ({} já existentes ficam de fora). Tire um print no aparelho…",
         known.len()
     )]);
+    let mut last_error: Option<String> = None;
     loop {
         tokio::select! {
             _ = cancel.cancelled() => return Ok(()),
             _ = tokio::time::sleep(POLL) => {}
         }
         let current = match list(adb, serial).await {
-            Ok(c) => c,
+            Ok(c) => {
+                if let Some(line) = status_line(&mut last_error, Ok(())) {
+                    on_lines(vec![line]);
+                }
+                c
+            }
             Err(e) => {
-                on_lines(vec![format!("Não deu pra ler os prints: {e}")]);
+                // Aparelho desplugado: avisa uma vez (não a cada 1,5 s) e continua tentando.
+                if let Some(line) = status_line(&mut last_error, Err(&e)) {
+                    on_lines(vec![line]);
+                }
                 continue;
             }
         };
@@ -103,12 +133,18 @@ pub async fn watch_with(adb: &Path, serial: &str, device_dir: &Path, mut on_line
         }
         tokio::time::sleep(SETTLE).await;
         for remote in fresh {
+            if cancel.is_cancelled() {
+                return Ok(()); // Parar não espera puxar uma fila grande de prints
+            }
             let local = local_target(device_dir, &remote);
             match pull(adb, serial, &remote, &local).await {
-                Ok(()) => on_lines(vec![format!("Print salvo: {}", local.display())]),
-                Err(e) => on_lines(vec![format!("Não deu pra puxar {remote}: {e}")]),
+                Ok(()) => {
+                    on_lines(vec![format!("Print salvo: {}", local.display())]);
+                    known.insert(remote);
+                }
+                // Não marca como conhecido: tenta de novo na próxima volta.
+                Err(e) => on_lines(vec![format!("Não deu pra puxar {remote}: {e} (tentando de novo)")]),
             }
-            known.insert(remote);
         }
     }
 }
@@ -166,6 +202,30 @@ mod tests {
         let known: HashSet<String> = ["/a/1.png".to_string()].into_iter().collect();
         let current = vec!["/a/1.png".to_string(), "/a/2.png".to_string()];
         assert_eq!(new_files(&known, &current), vec!["/a/2.png".to_string()]);
+    }
+
+    #[test]
+    fn script_nao_falha_quando_a_ultima_pasta_nao_existe() {
+        // `[ -d x ] && …` como último comando devolve 1 quando a pasta não existe: precisa ser if/then/fi.
+        let s = listing_script();
+        assert!(s.contains("if [ -d \"$d\" ]; then"));
+        assert!(s.trim_end().ends_with("fi; done"));
+    }
+
+    #[test]
+    fn listagem_vazia_sem_erro_e_ok() {
+        assert_eq!(interpret_listing(false, "", ""), Ok(vec![]));
+        assert_eq!(interpret_listing(true, "/sdcard/DCIM/Screenshots/a.png\n", ""), Ok(vec!["/sdcard/DCIM/Screenshots/a.png".to_string()]));
+        assert_eq!(interpret_listing(false, "", "error: device 'X' not found\n"), Err("error: device 'X' not found".to_string()));
+    }
+
+    #[test]
+    fn erro_repetido_aparece_uma_vez_e_avisa_quando_volta() {
+        let mut last: Option<String> = None;
+        assert_eq!(status_line(&mut last, Err("device not found")), Some("Não deu pra ler os prints: device not found".to_string()));
+        assert_eq!(status_line(&mut last, Err("device not found")), None);
+        assert_eq!(status_line(&mut last, Ok(())), Some("Aparelho de volta: vigiando os prints de novo.".to_string()));
+        assert_eq!(status_line(&mut last, Ok(())), None);
     }
 
     #[test]

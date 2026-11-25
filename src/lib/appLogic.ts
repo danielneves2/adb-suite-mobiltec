@@ -55,7 +55,8 @@ export function filterCommands(cmds: Command[], o: { search: string; rail: strin
     return o.pinned.map((id) => visible.find((c) => c.id === id)).filter((c): c is Command => !!c)
   }
   if (o.rail === 'Meus') return visible.filter((c) => !isOfficial(c))
-  return visible.filter((c) => c.categoria === o.rail)
+  const rail = o.rail.toLowerCase()
+  return visible.filter((c) => c.categoria.toLowerCase() === rail)
 }
 
 export function togglePinned(pinned: string[], id: string): string[] {

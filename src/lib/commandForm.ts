@@ -18,6 +18,9 @@ export const FORM_CATEGORIES = [MY_CATEGORY, 'Apps', 'Pacotes', 'Telas', 'Contro
 
 export const OTHER_CATEGORY = 'Outros'
 
+/** Nomes que o menu já usa para outra coisa (Início = "Fixados", "Meus" = Meus comandos). */
+const RESERVED_CATEGORIES = new Set(['fixados', 'meus', 'início', 'inicio'])
+
 /** Marcadores que o formulário oferece como botões, com o tipo de valor que cada um pede. */
 export const PLACEHOLDERS: { token: string; kind: ParamKind | null; hint: string }[] = [
   { token: '{pacote}', kind: 'pkg', hint: 'pacote do app' },
@@ -86,6 +89,7 @@ export function validateCommandForm(f: CommandFormData): string | null {
   if (!f.nome.trim()) return 'Dá um nome pro comando.'
   if (!f.categoria.trim()) return 'Dá um nome pra categoria.'
   if (f.categoria.trim().length > 24) return 'Nome da categoria com no máximo 24 caracteres.'
+  if (RESERVED_CATEGORIES.has(f.categoria.trim().toLowerCase())) return 'Esse nome é reservado. Escolha outro pra categoria.'
   const ls = lines(f.comando)
   if (ls.length === 0) return 'Escreve o comando adb.'
   if (!ls.every((l) => /^adb(\.exe)?\s/i.test(l))) return 'Cada linha precisa começar com adb.'

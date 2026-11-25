@@ -278,6 +278,9 @@ export default function App() {
               pickFolder={pickFolder}
               userName={s.userName}
               onUserName={(name) => {
+                // Trocar de usuário: nada da tela anterior (formulário aberto, Configurações) passa pro próximo perfil.
+                setForm(null)
+                setScreen(null)
                 void s.setUserName(name)
                 s.flash(name ? `Pronto, ${name}.` : 'Escolha o usuário pra entrar.')
               }}

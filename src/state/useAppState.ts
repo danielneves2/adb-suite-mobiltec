@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import rawCatalog from '../../data/catalog.json'
 import { DEFAULT_OUTPUT_DIR, deviceDir, filterCommands, RAIL, togglePinned, type DeviceInfo } from '../lib/appLogic'
 import type { Catalog, Command } from '../lib/catalogTypes'
+import { normalizeCategory } from '../lib/commandForm'
 
 const catalog = rawCatalog as unknown as Catalog
 
@@ -54,7 +55,12 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
         try {
           const v = await store.get<T>(scoped(key))
           if (v !== undefined && v !== null && v !== '') return v
-          if (user && user === legacyOwner.current) return (await store.get<T>(key)) ?? undefined
+          if (user && user === legacyOwner.current) {
+            // Dados de antes dos perfis: copia uma vez para a chave do perfil (na próxima abertura já está lá).
+            const legacy = (await store.get<T>(key)) ?? undefined
+            if (legacy !== undefined && legacy !== null && legacy !== '') void store.set(scoped(key), legacy)
+            return legacy
+          }
         } catch {
           // fica o padrão
         }
@@ -161,7 +167,9 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
   /** Renomeia uma categoria criada (todos os comandos dela) e o menu acompanha. */
   const renameCategory = useCallback(
     (from: string, to: string) => {
-      const target = to.trim()
+      // Nome igual a uma categoria que já existe (fixa ou criada, sem diferenciar maiúsculas) junta com ela.
+      const others = localCommands.map((c) => c.categoria).filter((c) => c.toLowerCase() !== from.toLowerCase())
+      const target = normalizeCategory(to, others)
       if (!target) return
       const now = new Date().toISOString()
       setLocalCommands((current) => {
@@ -171,7 +179,7 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
       })
       setRailState((r) => (r.toLowerCase() === from.toLowerCase() ? target : r))
     },
-    [store],
+    [store, localCommands],
   )
 
   /** Exclui uma categoria criada: os comandos dela vão para "Meus comandos" (nada é apagado). */
@@ -227,6 +235,10 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
       userRef.current = user
       setUserNameState(user)
       setKnownUsers(list)
+      // Outro perfil: começa do Início, sem comando aberto.
+      setRailState('Fixados')
+      setSearch('')
+      setSelectedCommandId(null)
       void store.set('usuario', user)
       void store.set('usuarios', list)
       await loadProfile(user)
