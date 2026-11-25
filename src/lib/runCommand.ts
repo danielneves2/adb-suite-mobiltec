@@ -5,6 +5,7 @@ import { deviceDir, type DeviceInfo } from './appLogic'
 import type { Command } from './catalogTypes'
 import { buildCommand, buildFreeCommand, type BuildContext, type BuildResult, type Step } from './commandBuilder'
 import { BuildError } from './tokenize'
+import { cleanValue } from './valueClean'
 
 export interface RunResult {
   output: string
@@ -107,7 +108,8 @@ async function runStream(built: BuildResult, o: RunOptions, api: Api, emit: (e: 
 }
 
 /** Roda um comando do catálogo/time no aparelho de `o.device`. */
-export async function runCommand(c: Command, o: RunOptions, api: Api, emit: (e: RunEvent) => void): Promise<void> {
+export async function runCommand(c: Command, raw: RunOptions, api: Api, emit: (e: RunEvent) => void): Promise<void> {
+  const o: RunOptions = { ...raw, value: cleanValue(c.parametro, raw.value) }
   try {
     if (c.modo === 'terminal') {
       emit({ kind: 'started', display: `adb -s ${o.device.serial} shell` })

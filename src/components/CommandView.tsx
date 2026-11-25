@@ -4,6 +4,7 @@ import { confirmationText, deviceName, initialValue, type DeviceInfo } from '../
 import type { Command, ParamKind } from '../lib/catalogTypes'
 import { buildCommand } from '../lib/commandBuilder'
 import { suggestedInstalled } from '../lib/packages'
+import { cleanValue } from '../lib/valueClean'
 import { PackagePicker } from './PackagePicker'
 import type { RunView } from '../state/useRunner'
 import { Icon, StarIcon } from './icons'
@@ -30,6 +31,8 @@ export interface CommandViewProps {
   onDelete: () => void
   /** Lista os apps do aparelho selecionado (painel "Ver apps do aparelho"). */
   loadPackages: (kind: PackageKind) => Promise<string[]>
+  /** Abre a janela do Windows para escolher um arquivo do computador (null = cancelou). */
+  pickFile: (kind: 'apk' | 'file') => Promise<string | null>
 }
 
 const DEFAULT_LABEL: Record<ParamKind, string> = {
@@ -79,7 +82,7 @@ export function CommandView(p: CommandViewProps) {
   const preview = useMemo(() => {
     if (!device) return c.comando
     try {
-      return buildCommand(c.comando, { serial: device.serial, value, deviceDir: p.deviceDir ?? '{d}', now: new Date() }, { allowEmptyValue: true }).display
+      return buildCommand(c.comando, { serial: device.serial, value: cleanValue(c.parametro, value), deviceDir: p.deviceDir ?? '{d}', now: new Date() }, { allowEmptyValue: true }).display
     } catch {
       return c.comando
     }
@@ -192,6 +195,19 @@ export function CommandView(p: CommandViewProps) {
             spellCheck={false}
             autoComplete="off"
           />
+          {(c.parametro === 'apk' || c.parametro === 'file') && (
+            <button
+              type="button"
+              className="btn btn-apps"
+              onClick={async () => {
+                const chosen = await p.pickFile(c.parametro as 'apk' | 'file')
+                if (chosen) changeValue(chosen, false)
+              }}
+            >
+              <Icon name="pasta" size={15} />
+              Escolher arquivo…
+            </button>
+          )}
           {pickPackages && (
             <button type="button" className="btn btn-apps" disabled={!ready} aria-expanded={picking} onClick={() => setPicking((v) => !v)}>
               <Icon name="Apps" size={15} />

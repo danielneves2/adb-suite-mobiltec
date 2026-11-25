@@ -32,6 +32,7 @@ function props(over: Partial<CommandViewProps> = {}): CommandViewProps {
     onEdit: vi.fn(),
     onDelete: vi.fn(),
     loadPackages: vi.fn(async () => []),
+    pickFile: vi.fn(async () => null),
     ...over,
   }
 }
@@ -172,4 +173,19 @@ test('a tela de um comando não tem mais o comando livre (ele tem menu próprio)
   render(<CommandView {...props()} />)
   expect(screen.queryByLabelText('Comando livre')).not.toBeInTheDocument()
   expect(screen.queryByRole('button', { name: '▶ Rodar' })).not.toBeInTheDocument()
+})
+
+test('comando que pede APK tem Escolher arquivo… e o escolhido vai pro campo', async () => {
+  const user = userEvent.setup()
+  const pickFile = vi.fn(async () => 'C:/apps/app.apk')
+  render(<CommandView {...props({ command: byId('instalar'), pickFile })} />)
+  await user.click(screen.getByRole('button', { name: 'Escolher arquivo…' }))
+  expect(pickFile).toHaveBeenCalledWith('apk')
+  expect(screen.getByLabelText(/APK/i)).toHaveValue('C:/apps/app.apk')
+  expect(screen.getByText(/install -r C:\/apps\/app\.apk/)).toBeInTheDocument()
+})
+
+test('comando de pacote não tem Escolher arquivo…', () => {
+  render(<CommandView {...props({ command: byId('extrair') })} />)
+  expect(screen.queryByRole('button', { name: 'Escolher arquivo…' })).not.toBeInTheDocument()
 })

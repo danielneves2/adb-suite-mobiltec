@@ -16,7 +16,7 @@ import type { Catalog } from './lib/catalogTypes'
 import { formatTimestamp } from './lib/commandBuilder'
 import { EMPTY_FORM, FORM_CATEGORIES, MY_CATEGORY, commandToForm, formToCommand, type CommandFormData } from './lib/commandForm'
 import { tauriConfigStore } from './lib/configStore'
-import { pickFolder } from './lib/pickFolder'
+import { pickFile, pickFolder } from './lib/pickFolder'
 import { fitWindowSizes } from './lib/settings'
 import { applyWindowSize, workAreaSize } from './lib/window'
 import { useActivity } from './state/useActivity'
@@ -305,6 +305,7 @@ export default function App() {
                 s.flash('Comando excluído.')
               }}
               loadPackages={loadPackages}
+              pickFile={pickFile}
             />
           ) : (
             <DeviceOverview
