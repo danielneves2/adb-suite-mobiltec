@@ -106,7 +106,7 @@ export function Welcome({ onEnter, knownUsers = [], onForget }: WelcomeProps) {
             <path d="M43 0 V36 L3 46 V100" vectorEffect="non-scaling-stroke" />
           </svg>
           <div className="boas-vindas-chao" aria-hidden="true" />
-          <img src={android} alt="" />
+          <img className="boas-vindas-android" src={android} alt="" />
           <div className="boas-vindas-marca">
             <Brand />
           </div>

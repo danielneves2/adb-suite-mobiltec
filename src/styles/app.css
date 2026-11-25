@@ -1671,8 +1671,9 @@ select.campo {
   gap: 12px;
 }
 .boas-vindas-marca .marca-icone {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
+  margin: 0;
 }
 .boas-vindas-marca .marca-colchete {
   width: 8px;
@@ -1787,7 +1788,7 @@ select.campo {
   stroke-width: 1px;
   z-index: 1;
 }
-.boas-vindas-arte img {
+.boas-vindas-android {
   position: relative;
   width: 88%;
   margin-top: -30px;
