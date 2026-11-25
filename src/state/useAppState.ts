@@ -22,7 +22,7 @@ export interface AppStateDeps {
 
 const FLASH_MS = 3500
 
-export function useAppState({ listDevices, store, pollMs = 2000, commands = catalog.comandos, onUserSelect }: AppStateDeps) {
+export function useAppState({ listDevices, store, pollMs = 2000, commands: baseCommands = catalog.comandos, onUserSelect }: AppStateDeps) {
   const [devices, setDevices] = useState<DeviceInfo[]>([])
   const [devicesError, setDevicesError] = useState<string | null>(null)
   const [selectedSerial, setSelectedSerial] = useState<string | null>(null)
@@ -32,6 +32,8 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands = cata
   const [pinned, setPinned] = useState<string[]>(catalog.fixados_padrao)
   const [baseDir, setBaseDirState] = useState(DEFAULT_OUTPUT_DIR)
   const [status, setStatus] = useState<string | null>(null)
+  const [localCommands, setLocalCommands] = useState<Command[]>([])
+  const commands = useMemo(() => [...baseCommands, ...localCommands], [baseCommands, localCommands])
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Configuração salva.
@@ -41,6 +43,8 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands = cata
       if (savedPinned) setPinned(savedPinned)
       const savedDir = await store.get<string>('pastaSaida')
       if (savedDir) setBaseDirState(savedDir)
+      const mine = await store.get<Command[]>('meusComandos')
+      if (mine) setLocalCommands(mine)
     })()
   }, [store])
 
@@ -87,6 +91,38 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands = cata
         void store.set('fixados', next)
         return next
       })
+    },
+    [store],
+  )
+
+  /** Cria ou substitui um comando do técnico, guarda neste computador e abre ele. */
+  const saveCommand = useCallback(
+    (c: Command) => {
+      setLocalCommands((current) => {
+        const next = current.some((x) => x.id === c.id) ? current.map((x) => (x.id === c.id ? c : x)) : [...current, c]
+        void store.set('meusComandos', next)
+        return next
+      })
+      setSelectedCommandId(c.id)
+    },
+    [store],
+  )
+
+  /** Exclusão lógica: marca excluido e tira dos fixados. */
+  const deleteCommand = useCallback(
+    (id: string) => {
+      setLocalCommands((current) => {
+        const next = current.map((x) => (x.id === id ? { ...x, excluido: true, atualizado_em: new Date().toISOString() } : x))
+        void store.set('meusComandos', next)
+        return next
+      })
+      setPinned((current) => {
+        if (!current.includes(id)) return current
+        const next = current.filter((p) => p !== id)
+        void store.set('fixados', next)
+        return next
+      })
+      setSelectedCommandId((current) => (current === id ? null : current))
     },
     [store],
   )
@@ -144,6 +180,8 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands = cata
     selectedCommand,
     pinned,
     togglePin,
+    saveCommand,
+    deleteCommand,
     baseDir,
     setBaseDir,
     currentDeviceDir,

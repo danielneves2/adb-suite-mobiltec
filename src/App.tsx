@@ -1,6 +1,7 @@
 import { openPath } from '@tauri-apps/plugin-opener'
 import { useEffect, useState } from 'react'
 import rawCatalog from '../data/catalog.json'
+import { CommandForm } from './components/CommandForm'
 import { CommandList } from './components/CommandList'
 import { CommandView } from './components/CommandView'
 import { Rail } from './components/Rail'
@@ -9,6 +10,7 @@ import { TopBar } from './components/TopBar'
 import { adb } from './lib/adb'
 import type { Catalog } from './lib/catalogTypes'
 import { formatTimestamp } from './lib/commandBuilder'
+import { EMPTY_FORM, FORM_CATEGORIES, MY_CATEGORY, commandToForm, formToCommand, type CommandFormData } from './lib/commandForm'
 import { tauriConfigStore } from './lib/configStore'
 import { useAppState } from './state/useAppState'
 import { useRunner } from './state/useRunner'
@@ -18,9 +20,15 @@ const catalog = rawCatalog as unknown as Catalog
 
 export default function App() {
   const runner = useRunner({ api: adb })
+  // Formulário Novo/Editar comando aberto no lugar da área principal (key força recomeçar do zero).
+  const [form, setForm] = useState<{ initial: CommandFormData; editingId: string | null; key: number } | null>(null)
   // Só a escolha do técnico volta a saída para "aguardando" (e para o que estiver rodando).
   // Se o aparelho some sozinho, a mensagem de erro fica na tela.
-  const s = useAppState({ listDevices: adb.listDevices, store: tauriConfigStore, onUserSelect: runner.reset })
+  const s = useAppState({ listDevices: adb.listDevices, store: tauriConfigStore, onUserSelect: () => {
+      runner.reset()
+      setForm(null)
+    },
+  })
   const [packages, setPackages] = useState<string[]>([])
   const device = s.selectedDevice
   const ready = device?.state === 'device'
@@ -69,6 +77,18 @@ export default function App() {
 
   const cmd = s.selectedCommand
 
+  const openForm = (initial: Partial<CommandFormData>, editingId: string | null = null) => {
+    const categoria = FORM_CATEGORIES.includes(s.rail) ? s.rail : MY_CATEGORY
+    setForm({ initial: { ...EMPTY_FORM, categoria, ...initial }, editingId, key: Date.now() })
+  }
+
+  const saveForm = (f: CommandFormData) => {
+    const id = form?.editingId ?? `local-${crypto.randomUUID()}`
+    s.saveCommand(formToCommand(f, id, new Date()))
+    setForm(null)
+    s.flash('Comando salvo neste computador.')
+  }
+
   return (
     <div className="app">
       <TopBar
@@ -89,6 +109,7 @@ export default function App() {
           search={s.search}
           onSearch={s.setSearch}
           onSelect={s.selectCommand}
+          onNew={() => openForm({})}
         />
         <main className="principal">
           {s.devicesError && (
@@ -100,7 +121,17 @@ export default function App() {
               </button>
             </div>
           )}
-          {cmd ? (
+          {form ? (
+            <CommandForm
+              key={form.key}
+              initial={form.initial}
+              editing={!!form.editingId}
+              device={device}
+              deviceDir={s.currentDeviceDir}
+              onSave={saveForm}
+              onCancel={() => setForm(null)}
+            />
+          ) : cmd ? (
             <CommandView
               command={cmd}
               device={device}
@@ -118,6 +149,12 @@ export default function App() {
               onSaveOutput={(text) => void saveOutput(text)}
               onRestartServer={() => void restartServer()}
               flash={s.flash}
+              onEdit={() => openForm(commandToForm(cmd), cmd.id)}
+              onDelete={() => {
+                s.deleteCommand(cmd.id)
+                s.flash('Comando excluído.')
+              }}
+              onSaveAsCommand={(comando) => openForm({ comando, categoria: MY_CATEGORY })}
             />
           ) : (
             <p className="lista-vazia">Escolha um comando na lista.</p>

@@ -69,3 +69,35 @@ test('só a escolha do técnico avisa onUserSelect; a seleção automática do p
   act(() => result.current.selectSerial('R58N'))
   expect(onUserSelect).toHaveBeenCalledTimes(2)
 })
+
+describe('comandos do técnico (salvos neste computador)', () => {
+  const meu = { id: 'local-1', categoria: 'Meus comandos', nome: 'Abrir Wi-Fi', resumo: '', comando: 'adb shell am start -a android.settings.WIFI_SETTINGS', parametro: null, oficial: false, excluido: false }
+
+  test('comandos salvos aparecem em Meus', async () => {
+    const { result } = setup(memoryStore({ meusComandos: [meu] }))
+    await waitFor(() => expect(result.current.commands.some((c) => c.id === 'local-1')).toBe(true))
+    act(() => result.current.setRail('Meus'))
+    expect(result.current.listCommands.map((c) => c.id)).toEqual(['local-1'])
+  })
+
+  test('salvar novo persiste e seleciona; salvar de novo substitui', async () => {
+    const store = memoryStore()
+    const { result } = setup(store)
+    act(() => result.current.saveCommand(meu))
+    expect(result.current.selectedCommandId).toBe('local-1')
+    act(() => result.current.saveCommand({ ...meu, nome: 'Wi-Fi' }))
+    expect(result.current.commands.filter((c) => c.id === 'local-1').map((c) => c.nome)).toEqual(['Wi-Fi'])
+    expect(await store.get('meusComandos')).toEqual([{ ...meu, nome: 'Wi-Fi' }])
+  })
+
+  test('excluir é lógico: some da lista e dos fixados, mas fica guardado com excluido', async () => {
+    const store = memoryStore({ meusComandos: [meu], fixados: ['local-1', 'foco'] })
+    const { result } = setup(store)
+    await waitFor(() => expect(result.current.pinned).toContain('local-1'))
+    act(() => result.current.deleteCommand('local-1'))
+    act(() => result.current.setRail('Meus'))
+    expect(result.current.listCommands).toEqual([])
+    expect(result.current.pinned).toEqual(['foco'])
+    expect(await store.get('meusComandos')).toEqual([expect.objectContaining({ id: 'local-1', excluido: true })])
+  })
+})

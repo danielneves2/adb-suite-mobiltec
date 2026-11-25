@@ -17,6 +17,7 @@ const base = {
   search: '',
   onSearch: () => {},
   onSelect: () => {},
+  onNew: () => {},
 }
 
 test('título, contagem e [!] em comando com confirmação', () => {
@@ -53,4 +54,11 @@ test('digitar na busca chama onSearch e clicar chama onSelect', async () => {
   expect(onSearch).toHaveBeenCalledWith('a')
   await userEvent.click(screen.getByRole('button', { name: /Extrair APK/ }))
   expect(onSelect).toHaveBeenCalledWith('extrair')
+})
+
+test('“+ Novo comando” fica sempre no rodapé da lista, mesmo vazia', async () => {
+  const onNew = vi.fn()
+  render(<CommandList {...base} commands={[]} onNew={onNew} />)
+  await userEvent.click(screen.getByRole('button', { name: '+ Novo comando' }))
+  expect(onNew).toHaveBeenCalled()
 })

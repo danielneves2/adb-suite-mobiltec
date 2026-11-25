@@ -30,6 +30,9 @@ function props(over: Partial<CommandViewProps> = {}): CommandViewProps {
     onSaveOutput: vi.fn(),
     onRestartServer: vi.fn(),
     flash: vi.fn(),
+    onEdit: vi.fn(),
+    onDelete: vi.fn(),
+    onSaveAsCommand: vi.fn(),
     ...over,
   }
 }
@@ -133,4 +136,36 @@ test('com algo rodando, Rodar fica desligado, Enter não roda e digitar não apa
   expect(p.onRunFree).not.toHaveBeenCalled()
   await user.type(screen.getByLabelText(/pacote/i), 'x')
   expect(p.onReset).not.toHaveBeenCalled()
+})
+
+describe('comando do técnico', () => {
+  const meu: Command = { id: 'local-1', categoria: 'Meus comandos', nome: 'Abrir Wi-Fi', resumo: '', comando: 'adb shell ls', parametro: null, oficial: false }
+
+  test('tem Editar e Excluir (com confirmação); comando oficial não tem', async () => {
+    const user = userEvent.setup()
+    const onEdit = vi.fn()
+    const onDelete = vi.fn()
+    const { unmount } = render(<CommandView {...props({ command: meu, onEdit, onDelete })} />)
+    await user.click(screen.getByRole('button', { name: 'Editar' }))
+    expect(onEdit).toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Excluir' }))
+    expect(onDelete).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Sim, excluir' }))
+    expect(onDelete).toHaveBeenCalled()
+    unmount()
+    render(<CommandView {...props()} />)
+    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument()
+  })
+})
+
+test('Salvar como comando leva o comando livre sem o -s', async () => {
+  const user = userEvent.setup()
+  const onSaveAsCommand = vi.fn()
+  const p = props({ onSaveAsCommand })
+  render(<CommandView {...p} />)
+  await user.click(screen.getByRole('button', { name: 'Salvar como comando' }))
+  expect(p.flash).toHaveBeenCalledWith('Digite um comando no campo livre primeiro.')
+  await user.type(screen.getByLabelText('Comando livre'), 'adb -s OUTRO shell dumpsys battery')
+  await user.click(screen.getByRole('button', { name: 'Salvar como comando' }))
+  expect(onSaveAsCommand).toHaveBeenCalledWith('adb shell dumpsys battery')
 })

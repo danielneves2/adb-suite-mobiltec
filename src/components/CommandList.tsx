@@ -9,9 +9,10 @@ interface Props {
   search: string
   onSearch: (q: string) => void
   onSelect: (id: string) => void
+  onNew: () => void
 }
 
-export function CommandList({ title, commands, selectedId, showCategory, emptyText, search, onSearch, onSelect }: Props) {
+export function CommandList({ title, commands, selectedId, showCategory, emptyText, search, onSearch, onSelect, onNew }: Props) {
   return (
     <aside className="lista" aria-label="Comandos">
       <label className="sr-only" htmlFor="busca">
@@ -58,6 +59,11 @@ export function CommandList({ title, commands, selectedId, showCategory, emptyTe
           })}
         </ul>
       )}
+      <div className="lista-rodape">
+        <button type="button" className="btn btn-primario btn-novo" onClick={onNew}>
+          + Novo comando
+        </button>
+      </div>
     </aside>
   )
 }

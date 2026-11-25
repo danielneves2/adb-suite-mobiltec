@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { confirmationText, initialValue, type DeviceInfo } from '../lib/appLogic'
 import type { Command, ParamKind } from '../lib/catalogTypes'
-import { buildCommand } from '../lib/commandBuilder'
+import { buildCommand, buildFreeCommand } from '../lib/commandBuilder'
+import { stripSerial } from '../lib/commandForm'
 import type { RunView } from '../state/useRunner'
 import { StarIcon } from './icons'
 import { OutputPanel } from './OutputPanel'
@@ -24,6 +25,10 @@ export interface CommandViewProps {
   onSaveOutput: (text: string) => void
   onRestartServer: () => void
   flash: (msg: string) => void
+  onEdit: () => void
+  onDelete: () => void
+  /** "Salvar como comando": recebe o comando livre normalizado, sem `-s`. */
+  onSaveAsCommand: (comando: string) => void
 }
 
 const DEFAULT_LABEL: Record<ParamKind, string> = {
@@ -48,6 +53,7 @@ export function CommandView(p: CommandViewProps) {
   const [otherMode, setOtherMode] = useState(false)
   const [fromShortcut, setFromShortcut] = useState(() => !!c.atalhos?.length)
   const [confirming, setConfirming] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
   const [showCommand, setShowCommand] = useState(true)
   const [free, setFree] = useState('')
   const copyCmd = useCopied()
@@ -58,6 +64,7 @@ export function CommandView(p: CommandViewProps) {
     setOtherMode(false)
     setFromShortcut(!!c.atalhos?.length)
     setConfirming(false)
+    setConfirmingDelete(false)
   }, [c, device?.serial])
 
   const ready = !!device && device.state === 'device'
@@ -88,6 +95,19 @@ export function CommandView(p: CommandViewProps) {
     else p.onRun(value, allowEmpty)
   }
 
+  const saveFreeAsCommand = () => {
+    if (!free.trim()) {
+      p.flash('Digite um comando no campo livre primeiro.')
+      return
+    }
+    try {
+      const built = buildFreeCommand(free.trim(), { serial: device?.serial ?? 'X', deviceDir: p.deviceDir ?? '{d}', now: new Date() })
+      p.onSaveAsCommand(stripSerial(built.display))
+    } catch (e) {
+      p.flash(e instanceof Error ? e.message : String(e))
+    }
+  }
+
   const runFree = () => {
     if (running || !ready) return
     if (!free.trim()) {
@@ -112,7 +132,33 @@ export function CommandView(p: CommandViewProps) {
           {p.pinned ? 'Fixado' : 'Fixar'}
         </button>
         {c.pede_confirmacao && <span className="selo">PEDE CONFIRMAÇÃO</span>}
+        {c.oficial === false && (
+          <>
+            <span className="selo selo-local">SEU · SÓ NESTE PC</span>
+            <button type="button" className="btn btn-mini" onClick={p.onEdit}>
+              Editar
+            </button>
+            <button type="button" className="btn btn-mini" onClick={() => setConfirmingDelete(true)}>
+              Excluir
+            </button>
+          </>
+        )}
       </div>
+      {confirmingDelete && (
+        <div className="faixa" role="alertdialog" aria-label="Confirmar exclusão">
+          <strong className="faixa-atencao">EXCLUIR</strong>
+          <span className="faixa-texto">Excluir o comando “{c.nome}”? Ele some da lista e dos fixados.</span>
+          <button type="button" className="btn btn-faixa" onClick={() => setConfirmingDelete(false)}>
+            Cancelar
+          </button>
+          <button type="button" className="btn btn-primario btn-faixa" onClick={() => {
+            setConfirmingDelete(false)
+            p.onDelete()
+          }}>
+            Sim, excluir
+          </button>
+        </div>
+      )}
       <h1 className="comando-nome">{c.nome}</h1>
       <p className="comando-resumo">{c.resumo}</p>
 
@@ -243,6 +289,9 @@ export function CommandView(p: CommandViewProps) {
           </div>
           <button type="button" className="btn btn-primario btn-livre" disabled={!ready || running} onClick={runFree}>
             ▶ Rodar
+          </button>
+          <button type="button" className="btn btn-livre" onClick={saveFreeAsCommand}>
+            Salvar como comando
           </button>
         </div>
       </div>
