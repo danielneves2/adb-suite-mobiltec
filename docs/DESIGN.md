@@ -1,34 +1,42 @@
-# Visual – ADB Suite
+# Visual – ADB Suite ("Industrial Retro-Tech")
 
-Estilo: retrô de terminal, compacto, escuro. Cantos retos (radius 0), bordas simples de 1–2 px, **sem** sombras deslocadas, faixas listradas ou linhas duplicadas.
+Ferramenta de engenharia com personalidade de terminal retrofuturista. A proporção fica em ~90% neutro, ~7% roxo e ~3% laranja; os indicadores de status não entram nessa conta. Detalhes em `docs/superpowers/specs/2026-11-25-layout-novo-design.md`.
 
-## Tipografia
-- Interface: **Space Mono** (400/700), 12 px base; títulos 20 px bold; rótulos 10 px bold, caixa alta, `letter-spacing: .08em`.
-- Terminal (comando, comando livre, saída): **VT323**, 18–19 px.
-
-## Cores
+## Cores (`src/styles/tokens.css`)
 | Token | Hex | Uso |
 |---|---|---|
-| bg | `#131215` | fundo principal |
-| bg-topo | `#0E0D10` | topo |
-| bg-lista | `#111013` | coluna da lista |
-| bg-rail / status | `#0B0A0D` | barra de ícones e rodapé |
-| superfície | `#1F1D22` | botões secundários |
-| superfície-selecionada | `#2E2B33` | item/aparelho selecionado |
-| campo | `#0A090C` | inputs |
-| terminal | `#070609` | painel de saída, caixa do comando |
-| barra do terminal | `#211F25` | cabeçalho SAIDA.LOG |
-| borda | `#322F37` / `#403C46` | bordas de botão / campo |
-| texto | `#EDEAEE` | texto principal |
-| texto-2 | `#B9B3BD` / `#ADA7B2` / `#A9A4AE` | resumo, secundário, rótulos |
-| **roxo (marca, versão forte)** | `#7B0A5D` | botões primários, categoria ativa, linha do topo, "Copiar pro chamado", opção selecionada (texto branco) |
-| roxo-claro | `#EA86CF` | marcadores pequenos: bolinha do aparelho, `[!]`, estrela de fixado |
-| roxo-fundo | `#2A0921` | faixa de confirmação, opção selecionada |
-| roxo-texto | `#F8D8F0` | texto sobre roxo-fundo |
-| **laranja terminal** | `#C85F00` | texto do comando, `$`, "executando…" |
-| laranja saída | `#E0832A` | texto da saída |
+| `--fundo` | `#000000` | fundo principal |
+| `--painel` | `#0D0D0D` | topo, menu, lista, barra de status |
+| `--card` | `#151515` | cards, botões secundários, campos |
+| `--card-hover` | `#1C1C1C` | hover e item selecionado |
+| `--divisor` | `#252525` | bordas e divisores (1 px) |
+| `--roxo` | `#790A5C` | roxo institucional: botão primário, barra do item ativo, selos |
+| `--roxo-claro` | `#C0339A` | `//` dos títulos, ícone ativo, `[!]` |
+| `--laranja` | `#FF8800` | colchetes da marca, `>>_`, estrela fixada, texto do comando, linha do topo |
+| `--texto` | `#F2F2F2` | texto principal |
+| `--texto-2` | `#929299` | texto secundário, rótulos |
+| `--saida` | `#D4D4D8` | texto da saída dos comandos |
+| `--ok` / `--alerta` / `--erro` | `#00C982` / `#FFB020` / `#FF5C5C` | status |
 
-Logo original: roxo `#7E2065`, laranja `#F37804` (`assets/logo-mobiltec.png`).
+## Tipografia
+- **Interface**: Inter (400–700), 13 px base, títulos 20–22 px em 600.
+- **Técnica**: JetBrains Mono (400/600), para comandos, saída, serial, caminhos e o log de atividade.
+- **Marca**: Space Mono 700, só no logotipo `[ ADB SUITE / M O B I L T E C ]`.
+- Todas as fontes são locais (@fontsource) e funcionam offline.
+
+## Forma
+- Bordas de 1 px (`--divisor`).
+- Cantos de 4 px em controles e 6 px em cards e painéis.
+- Sem brilho, sem sombra colorida e sem neon.
+- A arte do Android (`assets/android-neon.png`) aparece só na visão geral, com opacidade reduzida.
+
+## Assinaturas
+- `//` roxo antes dos títulos de seção (`.secao-titulo`).
+- `[ ]` laranja em volta do logotipo e `///` roxo depois dele.
+- Ícone do app `[>>_]` (`assets/icone-app.svg`).
+- Grade retrô com opacidade muito baixa no card da visão geral.
 
 ## Layout
-Topo (1 linha, 3 px de borda inferior roxa) → linha com barra de ícones (72 px) + lista (220–250 px) + área principal (fluida) → barra de status. Tudo quebra em coluna em telas estreitas.
+- **Topo** (56 px): marca, seletor de aparelho e ações, com uma linha laranja de 1 px embaixo.
+- **Faixa central**: menu lateral (200 px, só ícones abaixo de 1100 px), lista de comandos (~300 px) e área principal fluida.
+- **Barra de status** (28 px), no estilo de IDE.

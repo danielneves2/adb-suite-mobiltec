@@ -1,39 +1,38 @@
-/* Tokens de docs/DESIGN.md + extras da referência de UI (marcados). */
+/* Sistema "Industrial Retro-Tech" — docs/DESIGN.md e docs/superpowers/specs/2026-11-25-layout-novo-design.md.
+   ~90% neutro, ~7% roxo, ~3% laranja (sem contar os indicadores de status). */
 :root {
-  --bg: #131215;
-  --bg-topo: #0e0d10;
-  --bg-lista: #111013;
-  --bg-rail: #0b0a0d;
-  --superficie: #1f1d22;
-  --superficie-sel: #2e2b33;
-  --campo: #0a090c;
-  --terminal: #070609;
-  --barra-terminal: #211f25;
-  --borda: #322f37;
-  --borda-campo: #403c46;
-  --texto: #edeaee;
-  --texto-2: #b9b3bd;
-  --texto-2b: #ada7b2;
-  --rotulo: #a9a4ae;
-  --roxo: #7b0a5d;
-  --roxo-claro: #ea86cf;
-  --roxo-fundo: #2a0921;
-  --roxo-texto: #f8d8f0;
-  --laranja: #c85f00;
-  --laranja-saida: #e0832a;
+  /* superfícies */
+  --fundo: #000000;
+  --painel: #0d0d0d;
+  --card: #151515;
+  --card-hover: #1c1c1c;
+  --divisor: #252525;
+  --divisor-forte: #333338;
 
-  /* extras (referência de UI §10.8) */
-  --borda-sel: #46414c;
-  --marcador-vazio: #8a8590;
-  --texto-3: #c9c4cc;
-  --texto-lista: #dcd7df;
-  --roxo-claro-sel: #f4c2e7;
-  --chip: #1b191f;
-  --btn-copiar: #19161c;
-  --btn-copiar-texto: #f2eff5;
-  --meta: #a9a2b2;
-  --ocioso: #b3acbb;
+  /* marca */
+  --roxo: #790a5c;
+  --roxo-claro: #c0339a;
+  --roxo-fundo: #1d0a17;
+  --roxo-texto: #f3d2ea;
+  --laranja: #ff8800;
 
-  --fonte-ui: 'Space Mono', monospace;
-  --fonte-terminal: 'VT323', monospace;
+  /* texto */
+  --texto: #f2f2f2;
+  --texto-2: #929299;
+  --texto-3: #c4c4c9;
+  --saida: #d4d4d8;
+
+  /* status */
+  --ok: #00c982;
+  --alerta: #ffb020;
+  --erro: #ff5c5c;
+
+  /* forma */
+  --raio: 4px;
+  --raio-card: 6px;
+
+  /* fontes */
+  --fonte-ui: 'Inter', system-ui, sans-serif;
+  --fonte-tecnica: 'JetBrains Mono', ui-monospace, monospace;
+  --fonte-marca: 'Space Mono', monospace;
 }

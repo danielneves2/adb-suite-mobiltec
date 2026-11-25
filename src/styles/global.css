@@ -1,13 +1,16 @@
-@import '@fontsource/space-mono/400.css';
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/600.css';
 @import '@fontsource/space-mono/700.css';
-@import '@fontsource/vt323/400.css';
 @import './tokens.css';
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
-  border-radius: 0;
 }
 
 html,
@@ -18,10 +21,12 @@ body,
 }
 
 body {
-  background: var(--bg);
+  background: var(--fundo);
   color: var(--texto);
   font-family: var(--fonte-ui);
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -32,30 +37,78 @@ textarea {
   color: inherit;
 }
 
-.terminal {
-  font-family: var(--fonte-terminal);
+:focus-visible {
+  outline: 1px solid var(--roxo-claro);
+  outline-offset: 1px;
 }
 
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--divisor);
+  border: 2px solid var(--painel);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.terminal,
+.mono {
+  font-family: var(--fonte-tecnica);
+}
+
+/* Rótulo pequeno em caixa alta (campos, grupos). */
 .rotulo {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--texto-2);
+}
+
+/* Título de seção com as barras roxas: // TÍTULO */
+.secao-titulo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--rotulo);
+  color: var(--texto);
+}
+.secao-titulo::before {
+  content: '//';
+  color: var(--roxo-claro);
+  font-family: var(--fonte-tecnica);
+  font-weight: 600;
 }
 
 .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   height: 32px;
-  padding: 0 10px;
-  border: 2px solid var(--borda);
-  background: var(--superficie);
+  padding: 0 12px;
+  border: 1px solid var(--divisor);
+  border-radius: var(--raio);
+  background: var(--card);
   color: var(--texto);
-  font-weight: 700;
+  font-weight: 500;
+  white-space: nowrap;
   cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
 }
-
+.btn:hover:not(:disabled) {
+  background: var(--card-hover);
+  border-color: var(--divisor-forte);
+}
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -63,4 +116,18 @@ textarea {
   border-color: var(--roxo);
   background: var(--roxo);
   color: #fff;
+}
+.btn-primario:hover:not(:disabled) {
+  background: #8c0d6b;
+  border-color: #8c0d6b;
+}
+
+kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--divisor);
+  border-radius: 3px;
+  background: var(--painel);
+  color: var(--texto-2);
+  font-family: var(--fonte-tecnica);
+  font-size: 10px;
 }
