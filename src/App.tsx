@@ -99,17 +99,26 @@ export default function App() {
         onCollect={() => s.selectCommand('diag')}
       />
       <div className="app-corpo">
-        <Rail active={s.rail} searching={s.searching} onSelect={s.setRail} />
+        <Rail
+          active={s.rail}
+          searching={s.searching}
+          onSelect={(key) => {
+            s.setRail(key)
+            if (key === 'Fixados') s.selectCommand(null) // "Início" volta para a visão geral
+          }}
+        />
         <CommandList
           title={s.listTitle}
           commands={s.listCommands}
           selectedId={s.selectedCommandId}
-          showCategory={s.searching || s.rail === 'Fixados'}
+          showCategory={s.searching || s.rail === 'Fixados' || s.rail === 'Meus'}
           emptyText={s.emptyText}
           search={s.search}
           onSearch={s.setSearch}
           onSelect={s.selectCommand}
           onNew={() => openForm({})}
+          pinned={s.pinned}
+          onTogglePin={s.togglePin}
         />
         <main className="principal">
           {s.devicesError && (

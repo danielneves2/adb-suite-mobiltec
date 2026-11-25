@@ -15,7 +15,7 @@ export const DEFAULT_OUTPUT_DIR = 'C:\\ADB-Suite\\Saidas'
 
 /** Barra de ícones, na ordem do protótipo. `key` = categoria do catálogo, 'Fixados' ou 'Meus'. */
 export const RAIL: readonly { key: string; label: string; title: string }[] = [
-  { key: 'Fixados', label: 'Fixados', title: 'Fixados' },
+  { key: 'Fixados', label: 'Início', title: 'Comandos fixados' },
   { key: 'Apps', label: 'Apps', title: 'Apps' },
   { key: 'Pacotes', label: 'Pacotes', title: 'Pacotes' },
   { key: 'Telas', label: 'Telas', title: 'Telas' },
@@ -25,7 +25,7 @@ export const RAIL: readonly { key: string; label: string; title: string }[] = [
   { key: 'Aparelho', label: 'Aparelho', title: 'Aparelho' },
   { key: 'Arquivos', label: 'Arquivos', title: 'Arquivos' },
   { key: 'Conexão', label: 'Conexão', title: 'Conexão' },
-  { key: 'Meus', label: 'Meus', title: 'Meus comandos' },
+  { key: 'Meus', label: 'Meus comandos', title: 'Meus comandos' },
 ]
 
 const INVALID_PATH_CHARS = /[<>:"/\\|?*]/g

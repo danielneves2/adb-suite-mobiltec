@@ -18,26 +18,28 @@ const base = {
   onSearch: () => {},
   onSelect: () => {},
   onNew: () => {},
+  pinned: ['extrair'] as string[],
+  onTogglePin: () => {},
 }
 
 test('título, contagem e [!] em comando com confirmação', () => {
   render(<CommandList {...base} />)
   expect(screen.getByRole('heading', { name: 'Apps' })).toBeInTheDocument()
-  expect(screen.getByText('2')).toBeInTheDocument()
-  const item = screen.getByRole('button', { name: /Remover app/ })
+  expect(screen.getByText('02')).toBeInTheDocument()
+  const item = screen.getByRole('button', { name: /^Remover app/ })
   expect(item).toHaveTextContent('[!]')
-  expect(screen.getByRole('button', { name: /Extrair APK/ })).not.toHaveTextContent('[!]')
+  expect(screen.getByRole('button', { name: /^Extrair APK/ })).not.toHaveTextContent('[!]')
 })
 
 test('resultados de busca mostram a categoria', () => {
   render(<CommandList {...base} title="Resultados" showCategory search="apk" />)
-  expect(screen.getByRole('button', { name: /Extrair APK/ })).toHaveTextContent('Apps')
+  expect(screen.getByRole('button', { name: /^Extrair APK/ })).toHaveTextContent('Apps')
 })
 
-test('selecionado ganha "> " e resumo vai no title', () => {
+test('selecionado fica marcado e resumo vai no title', () => {
   render(<CommandList {...base} selectedId="extrair" />)
-  const item = screen.getByRole('button', { name: /Extrair APK/ })
-  expect(item).toHaveTextContent('> Extrair APK')
+  const item = screen.getByRole('button', { name: /^Extrair APK/ })
+  expect(item).toHaveAttribute('aria-current', 'true')
   expect(item).toHaveAttribute('title', byId('extrair').resumo)
 })
 
@@ -52,7 +54,7 @@ test('digitar na busca chama onSearch e clicar chama onSelect', async () => {
   render(<CommandList {...base} onSearch={onSearch} onSelect={onSelect} />)
   await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar em todos os comandos' }), 'a')
   expect(onSearch).toHaveBeenCalledWith('a')
-  await userEvent.click(screen.getByRole('button', { name: /Extrair APK/ }))
+  await userEvent.click(screen.getByRole('button', { name: /^Extrair APK/ }))
   expect(onSelect).toHaveBeenCalledWith('extrair')
 })
 
@@ -61,4 +63,30 @@ test('“+ Novo comando” fica sempre no rodapé da lista, mesmo vazia', async 
   render(<CommandList {...base} commands={[]} onNew={onNew} />)
   await userEvent.click(screen.getByRole('button', { name: '+ Novo comando' }))
   expect(onNew).toHaveBeenCalled()
+})
+
+test('estrela fixa/desafixa sem abrir o comando', async () => {
+  const onTogglePin = vi.fn()
+  const onSelect = vi.fn()
+  render(<CommandList {...base} onTogglePin={onTogglePin} onSelect={onSelect} />)
+  const fixada = screen.getByRole('button', { name: 'Desafixar Extrair APK' })
+  expect(fixada).toHaveAttribute('aria-pressed', 'true')
+  expect(screen.getByRole('button', { name: 'Fixar Remover app' })).toHaveAttribute('aria-pressed', 'false')
+  await userEvent.click(fixada)
+  expect(onTogglePin).toHaveBeenCalledWith('extrair')
+  expect(onSelect).not.toHaveBeenCalled()
+})
+
+test('Ctrl+K foca a busca de qualquer lugar', async () => {
+  const user = userEvent.setup()
+  render(
+    <>
+      <textarea aria-label="outro campo" />
+      <CommandList {...base} />
+    </>,
+  )
+  await user.click(screen.getByLabelText('outro campo'))
+  await user.keyboard('{Control>}k{/Control}')
+  expect(screen.getByRole('searchbox')).toHaveFocus()
+  expect(screen.getByLabelText('outro campo')).toHaveValue('')
 })
