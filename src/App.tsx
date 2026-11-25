@@ -1,9 +1,10 @@
 import { openPath } from '@tauri-apps/plugin-opener'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import rawCatalog from '../data/catalog.json'
 import { CommandForm } from './components/CommandForm'
 import { CommandList } from './components/CommandList'
 import { CommandView } from './components/CommandView'
+import { DeviceOverview } from './components/DeviceOverview'
 import { Rail } from './components/Rail'
 import { StatusBar } from './components/StatusBar'
 import { TopBar } from './components/TopBar'
@@ -12,6 +13,8 @@ import type { Catalog } from './lib/catalogTypes'
 import { formatTimestamp } from './lib/commandBuilder'
 import { EMPTY_FORM, FORM_CATEGORIES, MY_CATEGORY, commandToForm, formToCommand, type CommandFormData } from './lib/commandForm'
 import { tauriConfigStore } from './lib/configStore'
+import { formatDuration } from './lib/appLogic'
+import { useActivity } from './state/useActivity'
 import { useAppState } from './state/useAppState'
 import { useRunner } from './state/useRunner'
 import './styles/app.css'
@@ -30,6 +33,32 @@ export default function App() {
     },
   })
   const [packages, setPackages] = useState<string[]>([])
+  const activity = useActivity()
+  // Nome do que está rodando, pro log de atividade ("Comando livre" ou o nome do comando).
+  const runName = useRef('')
+  const loggedRun = useRef<unknown>(null)
+
+  // Log de atividade: entrada/saída de aparelhos.
+  useEffect(() => {
+    activity.trackDevices(s.devices)
+  }, [s.devices, activity.trackDevices])
+
+  // Log de atividade: resultado de cada execução (uma vez por resultado).
+  useEffect(() => {
+    const v = runner.view
+    const key = v.phase === 'done' ? v.result : v.phase === 'error' ? v.error : null
+    if (!key || loggedRun.current === key) return
+    loggedRun.current = key
+    if (v.phase === 'done' && v.result) {
+      const ok = v.result.exitCode === 0
+      activity.log(
+        ok ? 'CMD' : 'ERRO',
+        ok ? `${runName.current} — concluído em ${formatDuration(v.result.durationMs)}` : `${runName.current} — erro (código ${v.result.exitCode})`,
+      )
+    } else if (v.phase === 'error' && v.error) {
+      activity.log('ERRO', `${runName.current} — ${v.error.split('\n')[0]}`)
+    }
+  }, [runner.view, activity.log])
   const device = s.selectedDevice
   const ready = device?.state === 'device'
 
@@ -150,8 +179,16 @@ export default function App() {
               pinned={s.pinned.includes(cmd.id)}
               onTogglePin={() => s.togglePin(cmd.id)}
               run={runner.view}
-              onRun={(value, allowEmptyValue) => device && runner.start(cmd, { device, value, baseDir: s.baseDir, allowEmptyValue })}
-              onRunFree={(input) => device && runner.startFree(input, { device, baseDir: s.baseDir })}
+              onRun={(value, allowEmptyValue) => {
+                if (!device) return
+                runName.current = cmd.nome
+                runner.start(cmd, { device, value, baseDir: s.baseDir, allowEmptyValue })
+              }}
+              onRunFree={(input) => {
+                if (!device) return
+                runName.current = 'Comando livre'
+                runner.startFree(input, { device, baseDir: s.baseDir })
+              }}
               onStop={() => void runner.stop()}
               onReset={runner.reset}
               onOpenFolder={() => void openFolder(s.currentDeviceDir)}
@@ -166,7 +203,15 @@ export default function App() {
               onSaveAsCommand={(comando) => openForm({ comando, categoria: MY_CATEGORY })}
             />
           ) : (
-            <p className="lista-vazia">Escolha um comando na lista.</p>
+            <DeviceOverview
+              device={device}
+              entries={activity.entries}
+              onDiagnose={() => s.selectCommand('conexao')}
+              onCollect={() => s.selectCommand('diag')}
+              onInfo={() => s.selectCommand('info')}
+              onOpenFolder={() => void openFolder(s.currentDeviceDir ?? s.baseDir)}
+              flash={s.flash}
+            />
           )}
         </main>
       </div>
