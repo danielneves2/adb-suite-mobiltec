@@ -225,6 +225,8 @@ export default function App() {
         onOpen={() => void openFolder(s.currentDeviceDir ?? s.baseDir)}
         message={s.status}
         deviceCount={s.devices.filter((d) => d.state === 'device').length}
+        device={device}
+        adbOk={!s.devicesError}
       />
     </div>
   )

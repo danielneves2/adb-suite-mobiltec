@@ -44,7 +44,7 @@ export function OutputPanel({ run, device, generatesFile, onOpenFolder, onSave, 
   return (
     <section className="saida" aria-label="Saída do comando">
       <div className="saida-barra">
-        <strong className="saida-titulo">SAIDA.LOG</strong>
+        <strong className="secao-titulo saida-titulo">saida.log</strong>
         <span className="saida-status">{statusText(run)}</span>
         <span className="saida-espaco" />
         {generatesFile && run.phase === 'done' && (
