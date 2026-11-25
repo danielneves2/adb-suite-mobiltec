@@ -523,6 +523,7 @@
       "nome": "Logcat de um app",
       "resumo": "Mostra só o log do app escolhido, sem o ruído do resto do sistema.",
       "comando": "adb -s {s} shell \"logcat -v threadtime --pid=$(pidof {p})\"",
+      "modo": "continuo",
       "parametro": "pkg",
       "saida_exemplo": "11-24 14:31:58.204  8812  8812 I MainActivity: onResume\n11-24 14:31:59.032  8812  8870 W SyncWorker: timeout ao conectar, tentando de novo (1/3)\n11-24 14:32:01.448  8812  8870 I SyncWorker: sync concluído em 2.8s"
     },

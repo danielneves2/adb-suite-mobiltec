@@ -17,8 +17,10 @@ import './styles/app.css'
 const catalog = rawCatalog as unknown as Catalog
 
 export default function App() {
-  const s = useAppState({ listDevices: adb.listDevices, store: tauriConfigStore })
   const runner = useRunner({ api: adb })
+  // Só a escolha do técnico volta a saída para "aguardando" (e para o que estiver rodando).
+  // Se o aparelho some sozinho, a mensagem de erro fica na tela.
+  const s = useAppState({ listDevices: adb.listDevices, store: tauriConfigStore, onUserSelect: runner.reset })
   const [packages, setPackages] = useState<string[]>([])
   const device = s.selectedDevice
   const ready = device?.state === 'device'
@@ -36,11 +38,6 @@ export default function App() {
       alive = false
     }
   }, [device?.serial, ready])
-
-  // Trocar de comando ou de aparelho volta a saída para "aguardando".
-  useEffect(() => {
-    runner.reset()
-  }, [s.selectedCommandId, s.selectedSerial])
 
   const openFolder = async (path: string | null) => {
     if (!path) return

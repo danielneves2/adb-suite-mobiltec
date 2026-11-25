@@ -63,3 +63,14 @@ test('conflito de servidor adb oferece reiniciar', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Reiniciar servidor adb' }))
   expect(onRestartServer).toHaveBeenCalled()
 })
+
+test('conflito de servidor na saída de Diagnosticar conexão oferece reiniciar', () => {
+  const run: RunView = {
+    ...idle,
+    phase: 'done',
+    display: 'adb devices -l',
+    result: { output: "adb server version (40) doesn't match this client (41); killing...\n", exitCode: 0, durationMs: 10, display: 'adb devices -l', at: new Date() },
+  }
+  render(<OutputPanel {...props({ run })} />)
+  expect(screen.getByRole('button', { name: 'Reiniciar servidor adb' })).toBeInTheDocument()
+})

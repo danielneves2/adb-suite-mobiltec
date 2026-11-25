@@ -96,6 +96,8 @@ pub async fn stream_with(
         let _ = child.kill().await;
     }
     let code = child.wait().await.map(|s| s.code().unwrap_or(-1)).unwrap_or(-1);
+    // Parado pelo técnico: o kill dá código 1 no Windows, mas não é erro.
+    let code = if cancelled { 0 } else { code };
     // Um neto do processo (ex.: servidor adb iniciado agora) pode herdar o pipe e nunca fechá-lo:
     // depois de cancelar, não espera o stderr mais que 1 s.
     let stderr_bytes = if cancelled {
@@ -175,6 +177,15 @@ pub async fn start_stream(
     Ok(())
 }
 
+/// Com comando de parada, dá até `STOP_GRACE` pro processo sair sozinho; sem ele, cancela na hora.
+async fn wait_or_cancel(token: CancellationToken, mut handle: JoinHandle<()>, graceful: bool) {
+    if graceful && tokio::time::timeout(STOP_GRACE, &mut handle).await.is_ok() {
+        return;
+    }
+    token.cancel();
+    let _ = handle.await;
+}
+
 /// Para: roda `stop_step` (ex.: pkill -INT screenrecord), espera até 3 s o processo sair sozinho,
 /// senão mata; depois roda `after_step` (ex.: puxar o vídeo).
 #[tauri::command]
@@ -192,10 +203,7 @@ pub async fn stop_stream(
         if let Some(step) = &stop_step {
             run_one(&adb, step, None, &none).await?;
         }
-        if tokio::time::timeout(STOP_GRACE, &mut handle).await.is_err() {
-            token.cancel();
-            let _ = handle.await;
-        }
+        wait_or_cancel(token, handle, stop_step.is_some()).await;
     }
     match &after_step {
         Some(step) => Ok(Some(run_one(&adb, step, None, &none).await?)),
@@ -249,7 +257,18 @@ mod tests {
             t2.cancel();
         });
         let started = std::time::Instant::now();
-        let _ = stream_with(&cmd_exe(), step(&["/C", "ping", "-n", "30", "127.0.0.1"]), |_| {}, token).await;
+        let (code, _) = stream_with(&cmd_exe(), step(&["/C", "ping", "-n", "30", "127.0.0.1"]), |_| {}, token).await.unwrap();
         assert!(started.elapsed().as_secs() < 10);
+        assert_eq!(code, 0, "parado pelo técnico não é erro");
+    }
+
+    #[tokio::test]
+    async fn parar_sem_comando_de_parada_nao_espera_a_carencia() {
+        let token = CancellationToken::new();
+        let t2 = token.clone();
+        let handle = tokio::spawn(async move { t2.cancelled().await });
+        let started = std::time::Instant::now();
+        wait_or_cancel(token, handle, false).await;
+        assert!(started.elapsed() < STOP_GRACE / 2);
     }
 }

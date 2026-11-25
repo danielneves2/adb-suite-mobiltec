@@ -34,7 +34,8 @@ export function OutputPanel({ run, device, generatesFile, onOpenFolder, onSave, 
   const body = useRef<HTMLDivElement>(null)
   const text = outputText(run)
   const hasOutput = run.phase === 'done' || run.phase === 'error' || run.lines.length > 0
-  const serverConflict = run.error?.includes("doesn't match this client") || run.error?.includes('Outro adb de versão diferente')
+  // O conflito aparece no erro ou, no "Diagnosticar conexão" (adb devices), no stderr da saída.
+  const serverConflict = text.includes("doesn't match this client") || text.includes('Outro adb de versão diferente')
 
   useEffect(() => {
     if (run.phase === 'running' && body.current) body.current.scrollTop = body.current.scrollHeight

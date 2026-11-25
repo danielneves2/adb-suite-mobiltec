@@ -39,11 +39,41 @@ const newRunId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto 
 
 export function useRunner({ api, runFn = runCommand, freeFn = runFreeCommand, stopFn = stopCommand }: Deps) {
   const [view, setView] = useState<RunView>(IDLE)
-  const current = useRef<{ runId: string; command: Command | null; opts: RunOptions } | null>(null)
+  const current = useRef<{ runId: string; command: Command | null; opts: RunOptions; active: boolean; stopping: boolean } | null>(null)
+
+  /** Para (ou roda o passo final de) uma execução e anexa a saída desse passo, se ainda for a atual. */
+  const halt = useCallback(
+    async (run: NonNullable<typeof current.current>) => {
+      if (run.stopping) return
+      run.stopping = true
+      try {
+        const out: StepOut | null = await stopFn(run.command, run.opts, api)
+        if (out && current.current?.runId === run.runId) {
+          const text = out.stdout + out.stderr
+          setView((v) => ({ ...v, extra: v.extra + text }))
+        }
+      } catch (e) {
+        if (current.current?.runId === run.runId) setView((v) => ({ ...v, phase: 'error', error: String(e) }))
+      }
+    },
+    [api, stopFn],
+  )
+
+  /** Execução abandonada (trocou de comando, rodou outro, reset): não pode ficar rodando sozinha. */
+  const abandon = () => {
+    const prev = current.current
+    if (prev?.active) void halt(prev)
+  }
 
   const handlerFor = useCallback(
     (runId: string) => (e: RunEvent) => {
-      if (current.current?.runId !== runId) return // execução antiga: ignora
+      const run = current.current
+      if (run?.runId !== runId) return // execução antiga: ignora
+      if (e.kind === 'done' || e.kind === 'error') {
+        run.active = false
+        // Contínuo que terminou sozinho (ex.: gravação chegou ao limite): roda o passo final mesmo assim.
+        if (e.kind === 'done' && run.command?.comando_depois) void halt(run)
+      }
       setView((v) => {
         switch (e.kind) {
           case 'started':
@@ -59,12 +89,13 @@ export function useRunner({ api, runFn = runCommand, freeFn = runFreeCommand, st
         }
       })
     },
-    [],
+    [halt],
   )
 
   const begin = (command: Command | null, o: StartOptions): RunOptions => {
+    abandon()
     const opts: RunOptions = { ...o, now: new Date(), runId: newRunId() }
-    current.current = { runId: opts.runId, command, opts }
+    current.current = { runId: opts.runId, command, opts, active: true, stopping: false }
     setView({ ...IDLE, phase: 'running' })
     return opts
   }
@@ -87,22 +118,15 @@ export function useRunner({ api, runFn = runCommand, freeFn = runFreeCommand, st
 
   const stop = useCallback(async () => {
     const run = current.current
-    if (!run) return
-    try {
-      const out: StepOut | null = await stopFn(run.command, run.opts, api)
-      if (out && current.current?.runId === run.runId) {
-        const text = out.stdout + out.stderr
-        setView((v) => ({ ...v, extra: v.extra + text }))
-      }
-    } catch (e) {
-      if (current.current?.runId === run.runId) setView((v) => ({ ...v, phase: 'error', error: String(e) }))
-    }
-  }, [api, stopFn])
+    if (run) await halt(run)
+  }, [halt])
 
   const reset = useCallback(() => {
+    abandon()
     current.current = null
     setView(IDLE)
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- abandon só usa refs e halt
+  }, [halt])
 
   // A saída extra (passo depois de Parar) entra no fim da saída do resultado.
   const merged: RunView =

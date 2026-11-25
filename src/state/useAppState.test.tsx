@@ -59,3 +59,13 @@ test('texto vazio da lista conforme o contexto', async () => {
   act(() => result.current.setSearch('zzzz'))
   expect(result.current.emptyText).toBe('Nenhum comando encontrado.')
 })
+
+test('só a escolha do técnico avisa onUserSelect; a seleção automática do polling não', async () => {
+  const onUserSelect = vi.fn()
+  const { result } = renderHook(() => useAppState({ listDevices: async () => [a54], store: memoryStore(), pollMs: 60_000, onUserSelect }))
+  await waitFor(() => expect(result.current.selectedSerial).toBe('R58N'))
+  expect(onUserSelect).not.toHaveBeenCalled()
+  act(() => result.current.selectCommand('foco'))
+  act(() => result.current.selectSerial('R58N'))
+  expect(onUserSelect).toHaveBeenCalledTimes(2)
+})

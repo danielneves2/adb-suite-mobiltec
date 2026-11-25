@@ -123,3 +123,14 @@ test('Fixar alterna', async () => {
   await userEvent.click(screen.getByRole('button', { name: /Fixar/ }))
   expect(onTogglePin).toHaveBeenCalled()
 })
+
+test('com algo rodando, Rodar fica desligado, Enter não roda e digitar não apaga a saída', async () => {
+  const user = userEvent.setup()
+  const p = props({ command: byId('desinstalar'), run: { ...idle, phase: 'running' } })
+  render(<CommandView {...p} />)
+  expect(screen.getByRole('button', { name: '▶ Rodar' })).toBeDisabled()
+  await user.type(screen.getByLabelText('Comando livre'), 'shell ls{Enter}')
+  expect(p.onRunFree).not.toHaveBeenCalled()
+  await user.type(screen.getByLabelText(/pacote/i), 'x')
+  expect(p.onReset).not.toHaveBeenCalled()
+})

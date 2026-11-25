@@ -80,7 +80,7 @@ export function CommandView(p: CommandViewProps) {
     setValue(v)
     setFromShortcut(viaShortcut)
     setConfirming(false)
-    p.onReset()
+    if (!running) p.onReset() // não apaga a saída de algo que ainda está rodando
   }
 
   const execute = () => {
@@ -89,6 +89,7 @@ export function CommandView(p: CommandViewProps) {
   }
 
   const runFree = () => {
+    if (running || !ready) return
     if (!free.trim()) {
       p.flash('Digite um comando no campo livre.')
       return
@@ -240,7 +241,7 @@ export function CommandView(p: CommandViewProps) {
               autoComplete="off"
             />
           </div>
-          <button type="button" className="btn btn-primario btn-livre" disabled={!ready} onClick={runFree}>
+          <button type="button" className="btn btn-primario btn-livre" disabled={!ready || running} onClick={runFree}>
             ▶ Rodar
           </button>
         </div>

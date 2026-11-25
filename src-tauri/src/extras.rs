@@ -63,22 +63,49 @@ pub fn write_text_file(path: String, contents: String) -> Result<String, String>
 #[tauri::command]
 pub fn open_terminal(app: tauri::AppHandle, serial: String) -> Result<(), String> {
     let adb = crate::adb_path::app_adb_path(&app)?;
-    let adb_dir = adb.parent().map(Path::to_path_buf).unwrap_or_default();
-    let path = format!("{};{}", adb_dir.display(), std::env::var("PATH").unwrap_or_default());
-    let mut cmd = std::process::Command::new("cmd.exe");
-    cmd.args(["/K", "title", "ADB Shell", "&&", "adb", "-s", &serial, "shell"]).env("PATH", path);
+    // Tenta sair do job do app (o terminal continua aberto se o app fechar); se não puder, abre assim mesmo.
+    const CREATE_NEW_CONSOLE: u32 = 0x0000_0010;
+    const CREATE_BREAKAWAY_FROM_JOB: u32 = 0x0100_0000;
     #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        cmd.creation_flags(0x0000_0010); // CREATE_NEW_CONSOLE
+    use std::os::windows::process::CommandExt;
+    let first = terminal_command(&adb, &serial)?.creation_flags(CREATE_NEW_CONSOLE | CREATE_BREAKAWAY_FROM_JOB).spawn();
+    if first.is_err() {
+        terminal_command(&adb, &serial)?
+            .creation_flags(CREATE_NEW_CONSOLE)
+            .spawn()
+            .map_err(|e| format!("Não deu pra abrir o terminal: {e}"))?;
     }
-    cmd.spawn().map_err(|e| format!("Não deu pra abrir o terminal: {e}"))?;
     Ok(())
+}
+
+/// `adb -s <serial> shell` direto, sem passar pelo cmd.exe (que interpretaria `&`, `|`…).
+pub fn terminal_command(adb: &Path, serial: &str) -> Result<std::process::Command, String> {
+    let valid = !serial.is_empty() && serial.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | ':' | '-'));
+    if !valid {
+        return Err(format!("Serial do aparelho inválido: {serial}"));
+    }
+    let mut cmd = std::process::Command::new(adb);
+    cmd.args(["-s", serial, "shell"]);
+    Ok(cmd)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn terminal_roda_o_adb_direto_sem_cmd() {
+        let cmd = terminal_command(Path::new(r"C:\app\adb\adb.exe"), "R58N12ABCDE").unwrap();
+        assert_eq!(cmd.get_program(), r"C:\app\adb\adb.exe");
+        let args: Vec<_> = cmd.get_args().map(|a| a.to_string_lossy().to_string()).collect();
+        assert_eq!(args, vec!["-s", "R58N12ABCDE", "shell"]);
+    }
+
+    #[test]
+    fn terminal_recusa_serial_com_caracteres_estranhos() {
+        assert!(terminal_command(Path::new("adb.exe"), "X&calc").is_err());
+        assert!(terminal_command(Path::new("adb.exe"), "192.168.0.10:5555").is_ok());
+    }
 
     #[test]
     fn zip_dir_compacta_os_arquivos() {

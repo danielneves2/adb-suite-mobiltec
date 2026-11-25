@@ -82,3 +82,46 @@ test('parar chama stopFn com o comando e o runId atual e anexa a saída do passo
   act(() => emits[0](done('')))
   expect(hook.result.current.view.result?.output).toContain('1 file pulled')
 })
+
+test('iniciar outro comando com um contínuo rodando para o anterior', () => {
+  const { hook, stopFn } = setup()
+  act(() => hook.result.current.start(byId('logcontinuo'), base))
+  act(() => hook.result.current.start(byId('foco'), base))
+  expect(stopFn).toHaveBeenCalledTimes(1)
+  expect(stopFn).toHaveBeenCalledWith(byId('logcontinuo'), expect.anything(), expect.anything())
+})
+
+test('reset com execução em andamento para a anterior', () => {
+  const { hook, stopFn } = setup()
+  act(() => hook.result.current.start(byId('logcontinuo'), base))
+  act(() => hook.result.current.reset())
+  expect(stopFn).toHaveBeenCalledTimes(1)
+})
+
+test('reset depois de concluído não chama parar', () => {
+  const { hook, emits, stopFn } = setup()
+  act(() => hook.result.current.start(byId('foco'), base))
+  act(() => emits[0](done('ok')))
+  act(() => hook.result.current.reset())
+  expect(stopFn).not.toHaveBeenCalled()
+})
+
+test('contínuo com passo final que termina sozinho roda o passo final (puxa o vídeo)', async () => {
+  const { hook, emits, stopFn } = setup()
+  stopFn.mockResolvedValueOnce({ stdout: '1 file pulled\n', stderr: '', exitCode: 0, durationMs: 10, savedTo: null } as never)
+  act(() => hook.result.current.start(byId('gravar'), base))
+  await act(async () => emits[0](done('')))
+  expect(stopFn).toHaveBeenCalledTimes(1)
+  expect(hook.result.current.view.result?.output).toContain('1 file pulled')
+})
+
+test('depois de Parar, o fim do stream não roda o passo final de novo, e Parar duas vezes para uma vez só', async () => {
+  const { hook, emits, stopFn } = setup()
+  act(() => hook.result.current.start(byId('gravar'), base))
+  await act(async () => {
+    void hook.result.current.stop()
+    void hook.result.current.stop()
+  })
+  await act(async () => emits[0](done('')))
+  expect(stopFn).toHaveBeenCalledTimes(1)
+})

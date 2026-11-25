@@ -40,6 +40,7 @@ test('nenhum findstr', () => expect(JSON.stringify(catalog)).not.toMatch(/findst
 test('modos', () => {
   expect(byId('logcontinuo').modo).toBe('continuo')
   expect(byId('gravar').modo).toBe('continuo')
+  expect(byId('logcat').modo).toBe('continuo')
   expect(byId('shell').modo).toBe('terminal')
 })
 test('ações extras', () => {

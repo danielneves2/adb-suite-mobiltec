@@ -16,11 +16,13 @@ export interface AppStateDeps {
   store: ConfigStore
   pollMs?: number
   commands?: Command[]
+  /** Chamado quando o técnico escolhe aparelho ou comando (não na seleção automática do polling). */
+  onUserSelect?: () => void
 }
 
 const FLASH_MS = 3500
 
-export function useAppState({ listDevices, store, pollMs = 2000, commands = catalog.comandos }: AppStateDeps) {
+export function useAppState({ listDevices, store, pollMs = 2000, commands = catalog.comandos, onUserSelect }: AppStateDeps) {
   const [devices, setDevices] = useState<DeviceInfo[]>([])
   const [devicesError, setDevicesError] = useState<string | null>(null)
   const [selectedSerial, setSelectedSerial] = useState<string | null>(null)
@@ -98,6 +100,17 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands = cata
     [store],
   )
 
+  const userSelect = useRef(onUserSelect)
+  userSelect.current = onUserSelect
+  const selectSerial = useCallback((serial: string | null) => {
+    userSelect.current?.()
+    setSelectedSerial(serial)
+  }, [])
+  const selectCommand = useCallback((id: string | null) => {
+    userSelect.current?.()
+    setSelectedCommandId(id)
+  }, [])
+
   const listCommands = useMemo(() => filterCommands(commands, { search, rail, pinned }), [commands, search, rail, pinned])
   const searching = search.trim() !== ''
   const listTitle = searching ? 'Resultados' : (RAIL.find((r) => r.key === rail)?.title ?? rail)
@@ -116,7 +129,7 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands = cata
     devices,
     devicesError,
     selectedSerial,
-    selectSerial: setSelectedSerial,
+    selectSerial,
     selectedDevice,
     rail,
     setRail,
@@ -127,7 +140,7 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands = cata
     listTitle,
     emptyText,
     selectedCommandId,
-    selectCommand: setSelectedCommandId,
+    selectCommand,
     selectedCommand,
     pinned,
     togglePin,
