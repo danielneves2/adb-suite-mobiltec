@@ -5,13 +5,15 @@ interface Props {
   active: string
   searching: boolean
   onSelect: (key: string) => void
+  onSettings: () => void
+  settingsActive: boolean
 }
 
-export function Rail({ active, searching, onSelect }: Props) {
+export function Rail({ active, searching, onSelect, onSettings, settingsActive }: Props) {
   return (
     <nav className="rail" aria-label="Categorias">
       {RAIL.map((r, i) => {
-        const isActive = !searching && r.key === active
+        const isActive = !searching && !settingsActive && r.key === active
         return (
           <button
             key={r.key}
@@ -26,6 +28,16 @@ export function Rail({ active, searching, onSelect }: Props) {
           </button>
         )
       })}
+      <button
+        type="button"
+        className={`rail-item rail-config${settingsActive ? ' ativo' : ''}`}
+        aria-current={settingsActive ? 'page' : undefined}
+        title="Configurações"
+        onClick={onSettings}
+      >
+        <Icon name="config" size={18} />
+        <span className="rail-texto">Configurações</span>
+      </button>
     </nav>
   )
 }

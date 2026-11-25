@@ -33,6 +33,7 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
   const [baseDir, setBaseDirState] = useState(DEFAULT_OUTPUT_DIR)
   const [status, setStatus] = useState<string | null>(null)
   const [localCommands, setLocalCommands] = useState<Command[]>([])
+  const [windowSize, setWindowSizeState] = useState('livre')
   const commands = useMemo(() => [...baseCommands, ...localCommands], [baseCommands, localCommands])
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -43,6 +44,8 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
       if (savedPinned) setPinned(savedPinned)
       const savedDir = await store.get<string>('pastaSaida')
       if (savedDir) setBaseDirState(savedDir)
+      const savedSize = await store.get<string>('tamanhoJanela')
+      if (savedSize) setWindowSizeState(savedSize)
       const mine = await store.get<Command[]>('meusComandos')
       if (mine) setLocalCommands(mine)
     })()
@@ -127,6 +130,14 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     [store],
   )
 
+  const setWindowSize = useCallback(
+    (id: string) => {
+      setWindowSizeState(id)
+      void store.set('tamanhoJanela', id)
+    },
+    [store],
+  )
+
   const setBaseDir = useCallback(
     (dir: string) => {
       const next = dir.trim() || DEFAULT_OUTPUT_DIR
@@ -184,6 +195,8 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     deleteCommand,
     baseDir,
     setBaseDir,
+    windowSize,
+    setWindowSize,
     currentDeviceDir,
     status,
     flash,

@@ -34,5 +34,5 @@
   /* fontes */
   --fonte-ui: 'Inter', system-ui, sans-serif;
   --fonte-tecnica: 'JetBrains Mono', ui-monospace, monospace;
-  --fonte-marca: 'Space Mono', monospace;
+  --fonte-marca: 'JetBrains Mono', ui-monospace, monospace;
 }

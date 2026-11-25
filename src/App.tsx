@@ -6,6 +6,7 @@ import { CommandList } from './components/CommandList'
 import { CommandView } from './components/CommandView'
 import { DeviceOverview } from './components/DeviceOverview'
 import { Rail } from './components/Rail'
+import { Settings } from './components/Settings'
 import { StatusBar } from './components/StatusBar'
 import { TopBar } from './components/TopBar'
 import { adb } from './lib/adb'
@@ -13,6 +14,7 @@ import type { Catalog } from './lib/catalogTypes'
 import { formatTimestamp } from './lib/commandBuilder'
 import { EMPTY_FORM, FORM_CATEGORIES, MY_CATEGORY, commandToForm, formToCommand, type CommandFormData } from './lib/commandForm'
 import { tauriConfigStore } from './lib/configStore'
+import { applyWindowSize } from './lib/window'
 import { formatDuration } from './lib/appLogic'
 import { useActivity } from './state/useActivity'
 import { useAppState } from './state/useAppState'
@@ -24,16 +26,32 @@ const catalog = rawCatalog as unknown as Catalog
 export default function App() {
   const runner = useRunner({ api: adb })
   // Formulário Novo/Editar comando aberto no lugar da área principal (key força recomeçar do zero).
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [adbVersion, setAdbVersion] = useState<string | null>(null)
   const [form, setForm] = useState<{ initial: CommandFormData; editingId: string | null; key: number } | null>(null)
   // Só a escolha do técnico volta a saída para "aguardando" (e para o que estiver rodando).
   // Se o aparelho some sozinho, a mensagem de erro fica na tela.
   const s = useAppState({ listDevices: adb.listDevices, store: tauriConfigStore, onUserSelect: () => {
       runner.reset()
       setForm(null)
+      setSettingsOpen(false)
     },
   })
   const [packages, setPackages] = useState<string[]>([])
   const activity = useActivity()
+
+  // Versão do adb embutido (tela Configurações → Sobre).
+  useEffect(() => {
+    adb
+      .adbVersion()
+      .then(setAdbVersion)
+      .catch(() => setAdbVersion(null))
+  }, [])
+
+  // Tamanho da janela escolhido em Configurações (vale também ao abrir o app).
+  useEffect(() => {
+    applyWindowSize(s.windowSize).catch(() => {})
+  }, [s.windowSize])
   // Nome do que está rodando, pro log de atividade ("Comando livre" ou o nome do comando).
   const runName = useRef('')
   const loggedRun = useRef<unknown>(null)
@@ -108,6 +126,7 @@ export default function App() {
 
   const openForm = (initial: Partial<CommandFormData>, editingId: string | null = null) => {
     const categoria = FORM_CATEGORIES.includes(s.rail) ? s.rail : MY_CATEGORY
+    setSettingsOpen(false)
     setForm({ initial: { ...EMPTY_FORM, categoria, ...initial }, editingId, key: Date.now() })
   }
 
@@ -131,7 +150,13 @@ export default function App() {
         <Rail
           active={s.rail}
           searching={s.searching}
+          settingsActive={settingsOpen}
+          onSettings={() => {
+            setForm(null)
+            setSettingsOpen(true)
+          }}
           onSelect={(key) => {
+            setSettingsOpen(false)
             s.setRail(key)
             if (key === 'Fixados') s.selectCommand(null) // "Início" volta para a visão geral
           }}
@@ -159,7 +184,23 @@ export default function App() {
               </button>
             </div>
           )}
-          {form ? (
+          {settingsOpen ? (
+            <Settings
+              windowSize={s.windowSize}
+              onWindowSize={(id) => {
+                s.setWindowSize(id)
+                s.flash(id === 'livre' ? 'Janela livre: dá pra redimensionar.' : 'Tamanho da janela fixado.')
+              }}
+              baseDir={s.baseDir}
+              onChangeBase={(dir) => {
+                s.setBaseDir(dir)
+                s.flash('Pasta de saída alterada. Cada aparelho ganha uma subpasta própria.')
+              }}
+              onOpenBase={() => void openFolder(s.baseDir)}
+              adbVersion={adbVersion}
+              onClose={() => setSettingsOpen(false)}
+            />
+          ) : form ? (
             <CommandForm
               key={form.key}
               initial={form.initial}

@@ -21,14 +21,14 @@ Ferramenta de engenharia com personalidade de terminal retrofuturista. A propor�
 ## Tipografia
 - **Interface**: Inter (400–700), 13 px base, títulos 20–22 px em 600.
 - **Técnica**: JetBrains Mono (400/600), para comandos, saída, serial, caminhos e o log de atividade.
-- **Marca**: Space Mono 700, só no logotipo `[ ADB SUITE / M O B I L T E C ]`.
+- **Marca**: JetBrains Mono 700 (ADB SUITE) e 400 bem espaçada (M O B I L T E C), entre colchetes laranja finos desenhados em CSS (2 px).
 - Todas as fontes são locais (@fontsource) e funcionam offline.
 
 ## Forma
 - Bordas de 1 px (`--divisor`).
 - Cantos de 4 px em controles e 6 px em cards e painéis.
 - Sem brilho, sem sombra colorida e sem neon.
-- A arte do Android (`assets/android-neon.png`) aparece só na visão geral, com opacidade reduzida.
+- A arte do Android (`assets/android-neon.png`) aparece só na visão geral, encaixada à direita do card do aparelho.
 
 ## Assinaturas
 - `//` roxo antes dos títulos de seção (`.secao-titulo`).

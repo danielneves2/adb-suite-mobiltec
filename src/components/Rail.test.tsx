@@ -5,10 +5,22 @@ import { Rail } from './Rail'
 
 test('menu mostra Início no topo e marca o ativo', async () => {
   const onSelect = vi.fn()
-  render(<Rail active="Fixados" searching={false} onSelect={onSelect} />)
+  render(<Rail active="Fixados" searching={false} onSelect={onSelect} onSettings={() => {}} settingsActive={false} />)
   const items = screen.getAllByRole('button')
   expect(items[0]).toHaveAccessibleName('Início')
   expect(items[0]).toHaveAttribute('aria-current', 'page')
   await userEvent.click(screen.getByRole('button', { name: 'Logs' }))
   expect(onSelect).toHaveBeenCalledWith('Logs')
+})
+
+test('Configurações fica no fim do menu', async () => {
+  const onSettings = vi.fn()
+  render(<Rail active="Fixados" searching={false} onSelect={() => {}} onSettings={onSettings} settingsActive />)
+  const items = screen.getAllByRole('button')
+  const last = items[items.length - 1]
+  expect(last).toHaveAccessibleName('Configurações')
+  expect(last).toHaveAttribute('aria-current', 'page')
+  expect(items[0]).not.toHaveAttribute('aria-current')
+  await userEvent.click(last)
+  expect(onSettings).toHaveBeenCalled()
 })

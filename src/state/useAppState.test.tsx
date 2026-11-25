@@ -101,3 +101,18 @@ describe('comandos do técnico (salvos neste computador)', () => {
     expect(await store.get('meusComandos')).toEqual([expect.objectContaining({ id: 'local-1', excluido: true })])
   })
 })
+
+describe('tamanho da janela', () => {
+  test('padrão é livre; escolher persiste', async () => {
+    const store = memoryStore()
+    const { result } = setup(store)
+    expect(result.current.windowSize).toBe('livre')
+    act(() => result.current.setWindowSize('1440x900'))
+    expect(result.current.windowSize).toBe('1440x900')
+    expect(await store.get('tamanhoJanela')).toBe('1440x900')
+  })
+  test('carrega o salvo', async () => {
+    const { result } = setup(memoryStore({ tamanhoJanela: '1600x900' }))
+    await waitFor(() => expect(result.current.windowSize).toBe('1600x900'))
+  })
+})
