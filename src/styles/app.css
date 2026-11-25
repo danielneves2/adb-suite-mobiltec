@@ -611,6 +611,13 @@
   color: var(--roxo-claro);
   background: var(--painel);
 }
+.visao-nome-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  min-width: 0;
+}
 .visao-nome {
   margin: 0;
   font-size: 22px;
@@ -620,8 +627,11 @@
 .visao-serial {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 2px;
+  gap: 4px;
+  padding: 2px 4px 2px 8px;
+  border: 1px solid var(--divisor);
+  border-radius: var(--raio);
+  background: var(--painel);
   font-size: 12px;
   color: var(--texto-2);
 }

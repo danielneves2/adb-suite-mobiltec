@@ -60,7 +60,7 @@ export function DeviceOverview({ device, entries, onDiagnose, onCollect, onInfo,
                 <span className="visao-icone">
                   <Icon name="Aparelho" size={26} />
                 </span>
-                <div>
+                <div className="visao-nome-linha">
                   <h2 className="visao-nome">{ready ? deviceName(device) : device.serial}</h2>
                   <span className="visao-serial mono">
                     {device.serial}
