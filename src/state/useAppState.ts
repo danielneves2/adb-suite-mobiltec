@@ -244,6 +244,20 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     setSelectedCommandId(id)
   }, [])
 
+  // Categorias criadas pelo técnico (fora das fixas do menu): viram itens do menu também.
+  const customCategories = useMemo(() => {
+    const fixed = new Set([...RAIL.map((r) => r.key.toLowerCase()), 'meus comandos'])
+    const seen = new Set<string>()
+    const out: string[] = []
+    for (const c of localCommands) {
+      const k = c.categoria.trim().toLowerCase()
+      if (c.excluido || !k || fixed.has(k) || seen.has(k)) continue
+      seen.add(k)
+      out.push(c.categoria.trim())
+    }
+    return out
+  }, [localCommands])
+
   const listCommands = useMemo(() => filterCommands(commands, { search, rail, pinned }), [commands, search, rail, pinned])
   const searching = search.trim() !== ''
   const listTitle = searching ? 'Resultados' : (RAIL.find((r) => r.key === rail)?.title ?? rail)
@@ -288,6 +302,7 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     setUserName,
     knownUsers,
     forgetUser,
+    customCategories,
     currentDeviceDir,
     status,
     flash,

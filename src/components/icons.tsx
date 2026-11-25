@@ -129,6 +129,12 @@ const glyphs: Record<string, ReactNode> = {
       <path d="M10.5 11V9.5a1.5 1.5 0 0 1 3 0V11" />
     </>
   ),
+  etiqueta: (
+    <>
+      <path d="M3 12V4h8l10 10-8 8z" />
+      <circle cx="7.5" cy="8.5" r="1.5" />
+    </>
+  ),
   terminal: (
     <>
       <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -145,7 +151,8 @@ const glyphs: Record<string, ReactNode> = {
 
 /** Ícone por nome: categorias do catálogo ou nomes de interface ('chevron', 'pulso', …). */
 export function Icon({ name, size }: { name: string; size?: number }) {
-  return <Svg size={size}>{glyphs[name] ?? glyphs.Apps}</Svg>
+  // Categoria criada pelo técnico (ou nome desconhecido): ícone de etiqueta.
+  return <Svg size={size}>{glyphs[name] ?? glyphs.etiqueta}</Svg>
 }
 
 /** Compatibilidade: ícone do menu lateral. */

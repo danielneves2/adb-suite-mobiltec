@@ -44,3 +44,12 @@ test('cartão do usuário no fim do menu abre o perfil', async () => {
   await userEvent.click(card)
   expect(onProfile).toHaveBeenCalled()
 })
+
+test('categorias criadas aparecem antes de Meus comandos', async () => {
+  const onSelect = vi.fn()
+  render(<Rail active="Fixados" searching={false} onSelect={onSelect} onSettings={() => {}} settingsActive={false} onFree={() => {}} freeActive={false} userName={null} onProfile={() => {}} extraCategories={['Rede']} />)
+  const names = screen.getAllByRole('button').map((b) => b.textContent)
+  expect(names.indexOf('Rede')).toBe(names.indexOf('Meus comandos') - 1)
+  await userEvent.click(screen.getByRole('button', { name: 'Rede' }))
+  expect(onSelect).toHaveBeenCalledWith('Rede')
+})

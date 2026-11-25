@@ -16,6 +16,29 @@ export const MY_CATEGORY = 'Meus comandos'
 /** Ordem do select de categoria (referência de UI, seção 7). */
 export const FORM_CATEGORIES = [MY_CATEGORY, 'Apps', 'Pacotes', 'Telas', 'Controle', 'Aparelho', 'Captura', 'Logs', 'Arquivos', 'Conexão']
 
+export const OTHER_CATEGORY = 'Outros'
+
+/** Fixas, depois as criadas pelo técnico (sem repetir, sem diferenciar maiúsculas) e "Outros" no fim. */
+export function categoryOptions(custom: string[]): string[] {
+  const out = [...FORM_CATEGORIES]
+  const seen = new Set(out.map((c) => c.toLowerCase()))
+  seen.add(OTHER_CATEGORY.toLowerCase())
+  for (const c of custom) {
+    const k = c.trim().toLowerCase()
+    if (k && !seen.has(k)) {
+      seen.add(k)
+      out.push(c.trim())
+    }
+  }
+  return [...out, OTHER_CATEGORY]
+}
+
+/** Categoria digitada: se já existe (sem diferenciar maiúsculas), usa a grafia existente. */
+export function normalizeCategory(typed: string, existing: string[]): string {
+  const t = typed.trim()
+  return categoryOptions(existing).find((c) => c.toLowerCase() === t.toLowerCase()) ?? t
+}
+
 export const PARAM_OPTIONS: { value: ParamKind | null; label: string }[] = [
   { value: null, label: 'Nada, roda direto' },
   { value: 'pkg', label: 'Um pacote de app' },
@@ -40,6 +63,8 @@ const lines = (cmd: string) => cmd.split(/\r?\n/).map((l) => l.trim()).filter(Bo
 /** Primeiro erro do formulário (na ordem da referência), ou null se está tudo certo. */
 export function validateCommandForm(f: CommandFormData): string | null {
   if (!f.nome.trim()) return 'Dá um nome pro comando.'
+  if (!f.categoria.trim()) return 'Dá um nome pra categoria.'
+  if (f.categoria.trim().length > 24) return 'Nome da categoria com no máximo 24 caracteres.'
   const ls = lines(f.comando)
   if (ls.length === 0) return 'Escreve o comando adb.'
   if (!ls.every((l) => /^adb(\.exe)?\s/i.test(l))) return 'Cada linha precisa começar com adb.'
@@ -55,7 +80,7 @@ export function formToCommand(f: CommandFormData, id: string, now: Date, autor: 
   const comando = lines(f.comando).join('\n')
   return {
     id,
-    categoria: f.categoria,
+    categoria: f.categoria.trim(),
     nome: f.nome.trim(),
     resumo: f.resumo.trim(),
     comando,

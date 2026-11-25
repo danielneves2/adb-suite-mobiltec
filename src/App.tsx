@@ -148,7 +148,7 @@ export default function App() {
   const cmd = s.selectedCommand
 
   const openForm = (initial: Partial<CommandFormData>, editingId: string | null = null) => {
-    const categoria = FORM_CATEGORIES.includes(s.rail) ? s.rail : MY_CATEGORY
+    const categoria = FORM_CATEGORIES.includes(s.rail) || s.customCategories.includes(s.rail) ? s.rail : MY_CATEGORY
     setScreen(null)
     setForm({ initial: { ...EMPTY_FORM, categoria, ...initial }, editingId, key: Date.now() })
   }
@@ -189,6 +189,7 @@ export default function App() {
             setScreen('config')
           }}
           userName={s.userName}
+          extraCategories={s.customCategories}
           onProfile={() => {
             setForm(null)
             setScreen('config')
@@ -277,6 +278,7 @@ export default function App() {
               deviceDir={s.currentDeviceDir}
               onSave={saveForm}
               onCancel={() => setForm(null)}
+              customCategories={s.customCategories}
             />
           ) : cmd ? (
             <CommandView

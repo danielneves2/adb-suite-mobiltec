@@ -12,12 +12,16 @@ interface Props {
   freeActive: boolean
   userName: string | null
   onProfile: () => void
+  /** Categorias criadas pelo técnico (entram antes de "Meus comandos"). */
+  extraCategories?: string[]
 }
 
-export function Rail({ active, searching, onSelect, onSettings, settingsActive, onFree, freeActive, userName, onProfile }: Props) {
+export function Rail({ active, searching, onSelect, onSettings, settingsActive, onFree, freeActive, userName, onProfile, extraCategories = [] }: Props) {
+  // Itens do menu: os fixos, com as categorias criadas antes do último ("Meus comandos").
+  const items = [...RAIL.slice(0, -1), ...extraCategories.map((c) => ({ key: c, label: c, title: c })), RAIL[RAIL.length - 1]]
   return (
     <nav className="rail" aria-label="Categorias">
-      {RAIL.map((r, i) => {
+      {items.map((r, i) => {
         const isActive = !searching && !settingsActive && !freeActive && r.key === active
         const item = (
           <button

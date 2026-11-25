@@ -57,3 +57,28 @@ test('editar mostra o título de edição e Cancelar avisa', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
   expect(p.onCancel).toHaveBeenCalled()
 })
+
+test('categoria nova: “+ Nova categoria…” abre o campo e salva com o nome digitado', async () => {
+  const user = userEvent.setup()
+  const p = setup({ customCategories: ['Rede'] })
+  const select = screen.getByLabelText('Categoria')
+  expect(screen.getByRole('option', { name: 'Rede' })).toBeInTheDocument()
+  expect(screen.getByRole('option', { name: 'Outros' })).toBeInTheDocument()
+  await user.selectOptions(select, '+ Nova categoria…')
+  await user.type(screen.getByLabelText('Nome da nova categoria'), 'Wi-Fi')
+  await user.type(screen.getByLabelText('Nome do comando'), 'Abrir Wi-Fi')
+  await user.type(screen.getByLabelText('Comando adb'), 'adb shell am start -a android.settings.WIFI_SETTINGS')
+  await user.click(screen.getByRole('button', { name: 'Salvar comando' }))
+  expect(p.onSave).toHaveBeenCalledWith(expect.objectContaining({ categoria: 'Wi-Fi' }))
+})
+
+test('categoria nova vazia mostra erro', async () => {
+  const user = userEvent.setup()
+  const p = setup()
+  await user.selectOptions(screen.getByLabelText('Categoria'), '+ Nova categoria…')
+  await user.type(screen.getByLabelText('Nome do comando'), 'X')
+  await user.type(screen.getByLabelText('Comando adb'), 'adb shell ls')
+  await user.click(screen.getByRole('button', { name: 'Salvar comando' }))
+  expect(screen.getByRole('alert')).toHaveTextContent('Dá um nome pra categoria.')
+  expect(p.onSave).not.toHaveBeenCalled()
+})

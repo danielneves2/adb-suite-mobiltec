@@ -212,3 +212,12 @@ describe('perfis: cada nome guarda o seu', () => {
     expect(result.current.knownUsers).toEqual(['Daniel'])
   })
 })
+
+test('categorias criadas pelo técnico (fora das fixas) viram itens do menu', async () => {
+  const mk = (id: string, categoria: string, excluido = false) => ({ id, categoria, nome: id, resumo: '', comando: 'adb shell ls', parametro: null, oficial: false, excluido })
+  const { result } = setup(memoryStore({ meusComandos: [mk('a', 'Rede'), mk('b', 'Apps'), mk('c', 'Meus comandos'), mk('d', 'Zebra', true), mk('e', 'rede')] }))
+  await waitFor(() => expect(result.current.customCategories).toEqual(['Rede']))
+  act(() => result.current.setRail('Rede'))
+  expect(result.current.listCommands.map((c) => c.id)).toEqual(['a'])
+  expect(result.current.listTitle).toBe('Rede')
+})

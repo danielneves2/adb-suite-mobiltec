@@ -1,5 +1,5 @@
 import type { Command } from './catalogTypes'
-import { EMPTY_FORM, commandToForm, formToCommand, previewLines, stripSerial, validateCommandForm, type CommandFormData } from './commandForm'
+import { EMPTY_FORM, FORM_CATEGORIES, categoryOptions, commandToForm, formToCommand, normalizeCategory, previewLines, stripSerial, validateCommandForm, type CommandFormData } from './commandForm'
 
 const form = (over: Partial<CommandFormData> = {}): CommandFormData => ({
   ...EMPTY_FORM,
@@ -66,4 +66,19 @@ test('prévia injeta o -s e troca o valor pelo exemplo do tipo', () => {
   ])
   expect(previewLines(form({ comando: '' }), 'R58N', 'C:\\x')).toEqual(['adb -s R58N …'])
   expect(previewLines(form({ comando: 'adb shell "ls' }), 'R58N', 'C:\\x')).toEqual(['adb shell "ls'])
+})
+
+describe('categorias', () => {
+  test('opções: as fixas, depois as criadas pelo técnico (sem repetir), e Outros no fim', () => {
+    expect(categoryOptions(['Rede', 'Apps', 'rede', 'Outros'])).toEqual([...FORM_CATEGORIES, 'Rede', 'Outros'])
+  })
+  test('categoria vazia ou longa demais é erro', () => {
+    expect(validateCommandForm(form({ categoria: '  ' }))).toBe('Dá um nome pra categoria.')
+    expect(validateCommandForm(form({ categoria: 'x'.repeat(25) }))).toBe('Nome da categoria com no máximo 24 caracteres.')
+  })
+  test('categoria digitada igual a uma existente usa a grafia existente', () => {
+    expect(normalizeCategory(' rede ', ['Rede', 'Apps'])).toBe('Rede')
+    expect(normalizeCategory('apps', ['Rede'])).toBe('Apps')
+    expect(normalizeCategory('Wi-Fi', ['Rede'])).toBe('Wi-Fi')
+  })
 })
