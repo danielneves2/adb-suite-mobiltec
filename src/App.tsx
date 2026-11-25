@@ -219,6 +219,29 @@ export default function App() {
           onNew={() => openForm({})}
           pinned={s.pinned}
           onTogglePin={s.togglePin}
+          onEdit={(id) => {
+            const c = s.commands.find((x) => x.id === id)
+            if (c) openForm(commandToForm(c), c.id)
+          }}
+          onDelete={(id) => {
+            s.deleteCommand(id)
+            s.flash('Comando excluído.')
+          }}
+          categoryActions={
+            s.customCategories.includes(s.rail) && !s.searching
+              ? {
+                  name: s.rail,
+                  onRename: (to) => {
+                    s.renameCategory(s.rail, to)
+                    s.flash(`Categoria renomeada para ${to}.`)
+                  },
+                  onDelete: () => {
+                    s.deleteCategory(s.rail)
+                    s.flash('Categoria excluída. Os comandos dela foram para Meus comandos.')
+                  },
+                }
+              : undefined
+          }
         />
         <main className="principal">
           {s.devicesError && (

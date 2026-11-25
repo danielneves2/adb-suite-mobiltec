@@ -90,3 +90,40 @@ test('Ctrl+K foca a busca de qualquer lugar', async () => {
   expect(screen.getByRole('searchbox')).toHaveFocus()
   expect(screen.getByLabelText('outro campo')).toHaveValue('')
 })
+
+describe('gerenciar na lista', () => {
+  const meu: Command = { id: 'local-1', categoria: 'Rede', nome: 'Abrir Wi-Fi', resumo: '', comando: 'adb shell ls', parametro: null, oficial: false }
+
+  test('comando seu tem Editar e Excluir (com confirmação) na própria lista', async () => {
+    const user = userEvent.setup()
+    const onEdit = vi.fn()
+    const onDelete = vi.fn()
+    render(<CommandList {...base} commands={[meu, byId('extrair')]} onEdit={onEdit} onDelete={onDelete} />)
+    expect(screen.queryByRole('button', { name: 'Editar Extrair APK' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Editar Abrir Wi-Fi' }))
+    expect(onEdit).toHaveBeenCalledWith('local-1')
+    await user.click(screen.getByRole('button', { name: 'Excluir Abrir Wi-Fi' }))
+    expect(screen.getByText('Excluir “Abrir Wi-Fi”?')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Não' }))
+    expect(onDelete).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Excluir Abrir Wi-Fi' }))
+    await user.click(screen.getByRole('button', { name: 'Sim, excluir' }))
+    expect(onDelete).toHaveBeenCalledWith('local-1')
+  })
+
+  test('categoria criada: renomear e excluir pelo cabeçalho da lista', async () => {
+    const user = userEvent.setup()
+    const onRenameCategory = vi.fn()
+    const onDeleteCategory = vi.fn()
+    render(<CommandList {...base} title="Rede" commands={[meu]} categoryActions={{ name: 'Rede', onRename: onRenameCategory, onDelete: onDeleteCategory }} />)
+    await user.click(screen.getByRole('button', { name: 'Renomear categoria' }))
+    const input = screen.getByRole('textbox', { name: 'Novo nome da categoria' })
+    await user.clear(input)
+    await user.type(input, 'Wi-Fi{Enter}')
+    expect(onRenameCategory).toHaveBeenCalledWith('Wi-Fi')
+    await user.click(screen.getByRole('button', { name: 'Excluir categoria' }))
+    expect(screen.getByText(/1 comando dela vai para Meus comandos/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Sim, excluir' }))
+    expect(onDeleteCategory).toHaveBeenCalled()
+  })
+})

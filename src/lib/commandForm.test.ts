@@ -1,5 +1,5 @@
 import type { Command } from './catalogTypes'
-import { EMPTY_FORM, FORM_CATEGORIES, categoryOptions, commandToForm, formToCommand, normalizeCategory, previewLines, stripSerial, validateCommandForm, type CommandFormData } from './commandForm'
+import { EMPTY_FORM, FORM_CATEGORIES, categoryOptions, commandToForm, formToCommand, insertAt, normalizeCategory, paramForPlaceholder, previewLines, stripSerial, validateCommandForm, type CommandFormData } from './commandForm'
 
 const form = (over: Partial<CommandFormData> = {}): CommandFormData => ({
   ...EMPTY_FORM,
@@ -80,5 +80,26 @@ describe('categorias', () => {
     expect(normalizeCategory(' rede ', ['Rede', 'Apps'])).toBe('Rede')
     expect(normalizeCategory('apps', ['Rede'])).toBe('Apps')
     expect(normalizeCategory('Wi-Fi', ['Rede'])).toBe('Wi-Fi')
+  })
+})
+
+describe('marcadores no formulário', () => {
+  test('comando que usa marcador de valor precisa dizer o que pede', () => {
+    expect(validateCommandForm(form({ comando: 'adb shell pm clear {pacote}', parametro: null }))).toBe(
+      'O comando usa {pacote}: escolha em “O comando pede” o tipo do valor.',
+    )
+    expect(validateCommandForm(form({ comando: 'adb shell pm clear {pacote}', parametro: 'pkg' }))).toBeNull()
+    expect(validateCommandForm(form({ comando: 'adb pull /sdcard/a "{d}"', parametro: null }))).toBeNull()
+  })
+  test('cada marcador sugere o tipo do valor', () => {
+    expect(paramForPlaceholder('{pacote}')).toBe('pkg')
+    expect(paramForPlaceholder('{arquivo}')).toBe('file')
+    expect(paramForPlaceholder('{caminho}')).toBe('path')
+    expect(paramForPlaceholder('{texto}')).toBe('text')
+    expect(paramForPlaceholder('{d}')).toBeNull()
+  })
+  test('inserir no cursor (troca a seleção) e devolve a nova posição', () => {
+    expect(insertAt('adb shell pm clear ', 19, 19, '{pacote}')).toEqual({ text: 'adb shell pm clear {pacote}', cursor: 27 })
+    expect(insertAt('adb shell XX ls', 10, 12, '{texto}')).toEqual({ text: 'adb shell {texto} ls', cursor: 17 })
   })
 })

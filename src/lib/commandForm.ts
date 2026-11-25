@@ -18,6 +18,27 @@ export const FORM_CATEGORIES = [MY_CATEGORY, 'Apps', 'Pacotes', 'Telas', 'Contro
 
 export const OTHER_CATEGORY = 'Outros'
 
+/** Marcadores que o formulário oferece como botões, com o tipo de valor que cada um pede. */
+export const PLACEHOLDERS: { token: string; kind: ParamKind | null; hint: string }[] = [
+  { token: '{pacote}', kind: 'pkg', hint: 'pacote do app' },
+  { token: '{arquivo}', kind: 'file', hint: 'arquivo do computador' },
+  { token: '{caminho}', kind: 'path', hint: 'caminho no aparelho' },
+  { token: '{texto}', kind: 'text', hint: 'texto livre' },
+  { token: '{d}', kind: null, hint: 'pasta de saída do aparelho' },
+  { token: '{agora}', kind: null, hint: 'data e hora (AAAAMMDD_HHMM)' },
+]
+
+export function paramForPlaceholder(token: string): ParamKind | null {
+  return PLACEHOLDERS.find((p) => p.token === token)?.kind ?? null
+}
+
+/** Insere `insert` no lugar da seleção [start, end) e devolve o texto e a posição do cursor depois. */
+export function insertAt(text: string, start: number, end: number, insert: string): { text: string; cursor: number } {
+  return { text: text.slice(0, start) + insert + text.slice(end), cursor: start + insert.length }
+}
+
+const VALUE_TOKENS = /\{(p|pacote|arquivo|caminho|texto|pasta)\}/
+
 /** Fixas, depois as criadas pelo técnico (sem repetir, sem diferenciar maiúsculas) e "Outros" no fim. */
 export function categoryOptions(custom: string[]): string[] {
   const out = [...FORM_CATEGORIES]
@@ -68,6 +89,8 @@ export function validateCommandForm(f: CommandFormData): string | null {
   const ls = lines(f.comando)
   if (ls.length === 0) return 'Escreve o comando adb.'
   if (!ls.every((l) => /^adb(\.exe)?\s/i.test(l))) return 'Cada linha precisa começar com adb.'
+  const usesValue = VALUE_TOKENS.exec(ls.join('\n'))
+  if (usesValue && f.parametro === null) return `O comando usa ${usesValue[0]}: escolha em “O comando pede” o tipo do valor.`
   try {
     buildCommand(ls.join('\n'), { serial: 'X', value: 'valor', deviceDir: 'C:\\x', now: new Date() }, {})
   } catch (e) {

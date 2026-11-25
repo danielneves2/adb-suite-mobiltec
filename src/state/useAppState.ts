@@ -158,6 +158,36 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     [store],
   )
 
+  /** Renomeia uma categoria criada (todos os comandos dela) e o menu acompanha. */
+  const renameCategory = useCallback(
+    (from: string, to: string) => {
+      const target = to.trim()
+      if (!target) return
+      const now = new Date().toISOString()
+      setLocalCommands((current) => {
+        const next = current.map((c) => (c.categoria.toLowerCase() === from.toLowerCase() ? { ...c, categoria: target, atualizado_em: now } : c))
+        void store.set(keyFor('meusComandos'), next)
+        return next
+      })
+      setRailState((r) => (r.toLowerCase() === from.toLowerCase() ? target : r))
+    },
+    [store],
+  )
+
+  /** Exclui uma categoria criada: os comandos dela vão para "Meus comandos" (nada é apagado). */
+  const deleteCategory = useCallback(
+    (name: string) => {
+      const now = new Date().toISOString()
+      setLocalCommands((current) => {
+        const next = current.map((c) => (c.categoria.toLowerCase() === name.toLowerCase() ? { ...c, categoria: 'Meus comandos', atualizado_em: now } : c))
+        void store.set(keyFor('meusComandos'), next)
+        return next
+      })
+      setRailState((r) => (r.toLowerCase() === name.toLowerCase() ? 'Meus' : r))
+    },
+    [store],
+  )
+
   /** Exclusão lógica: marca excluido e tira dos fixados. */
   const deleteCommand = useCallback(
     (id: string) => {
@@ -303,6 +333,8 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     knownUsers,
     forgetUser,
     customCategories,
+    renameCategory,
+    deleteCategory,
     currentDeviceDir,
     status,
     flash,

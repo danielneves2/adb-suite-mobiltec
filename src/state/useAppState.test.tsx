@@ -221,3 +221,29 @@ test('categorias criadas pelo técnico (fora das fixas) viram itens do menu', as
   expect(result.current.listCommands.map((c) => c.id)).toEqual(['a'])
   expect(result.current.listTitle).toBe('Rede')
 })
+
+describe('gerenciar categorias criadas', () => {
+  const mk = (id: string, categoria: string) => ({ id, categoria, nome: id, resumo: '', comando: 'adb shell ls', parametro: null, oficial: false, excluido: false })
+  test('renomear troca a categoria dos comandos e o menu acompanha', async () => {
+    const store = memoryStore({ meusComandos: [mk('a', 'Rede'), mk('b', 'Rede'), mk('c', 'Apps')] })
+    const { result } = setup(store)
+    await waitFor(() => expect(result.current.customCategories).toEqual(['Rede']))
+    act(() => result.current.setRail('Rede'))
+    act(() => result.current.renameCategory('Rede', 'Wi-Fi'))
+    expect(result.current.customCategories).toEqual(['Wi-Fi'])
+    expect(result.current.rail).toBe('Wi-Fi')
+    expect(result.current.listCommands.map((c) => c.id)).toEqual(['a', 'b'])
+  })
+  test('excluir categoria leva os comandos pra Meus comandos (nada é apagado)', async () => {
+    const { result } = setup(memoryStore({ meusComandos: [mk('a', 'Rede'), mk('b', 'Rede')] }))
+    await waitFor(() => expect(result.current.customCategories).toEqual(['Rede']))
+    act(() => result.current.setRail('Rede'))
+    act(() => result.current.deleteCategory('Rede'))
+    expect(result.current.customCategories).toEqual([])
+    expect(result.current.rail).toBe('Meus')
+    expect(result.current.listCommands.map((c) => [c.id, c.categoria])).toEqual([
+      ['a', 'Meus comandos'],
+      ['b', 'Meus comandos'],
+    ])
+  })
+})

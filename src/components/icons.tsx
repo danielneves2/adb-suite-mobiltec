@@ -129,6 +129,8 @@ const glyphs: Record<string, ReactNode> = {
       <path d="M10.5 11V9.5a1.5 1.5 0 0 1 3 0V11" />
     </>
   ),
+  lapis: <path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" />,
+  lixeira: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />,
   etiqueta: (
     <>
       <path d="M3 12V4h8l10 10-8 8z" />

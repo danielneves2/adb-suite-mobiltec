@@ -1906,3 +1906,186 @@ select.campo {
 .boas-vindas-marca .marca {
   width: max-content;
 }
+
+/* ---------- formulário de comando (v2): duas colunas + barra fixa ---------- */
+.formulario {
+  max-width: 1120px;
+  gap: 18px;
+  min-height: 100%;
+}
+/* Correção: no formulário (coluna), campo não estica; só nas linhas lado a lado. */
+.formulario .form-campo {
+  flex: none;
+}
+.formulario .form-linha > .form-campo {
+  flex: 1 1 220px;
+}
+.form-cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.form-opcional {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+.form-corpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+.form-campos {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.form-lado {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--divisor);
+  border-radius: var(--raio-card);
+  background: var(--card);
+}
+.marcadores {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.marcador-botao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 7px 9px;
+  border: 1px solid var(--divisor);
+  border-radius: var(--raio);
+  background: var(--painel);
+  color: var(--texto-2);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+.marcador-botao code {
+  font-family: var(--fonte-tecnica);
+  font-size: 12px;
+  color: var(--laranja);
+}
+.marcador-botao:hover {
+  border-color: var(--roxo);
+  color: var(--texto);
+}
+.form-previa code {
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+/* Barra fixa no pé da área principal: Salvar sempre à vista. */
+.form-rodape {
+  position: sticky;
+  bottom: -18px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: auto -22px -18px;
+  padding: 12px 22px;
+  border-top: 1px solid var(--divisor);
+  background: var(--painel);
+}
+.form-rodape-erro {
+  flex: 1;
+  margin: 0;
+  color: var(--erro);
+}
+.form-rodape-dica {
+  flex: 1;
+  margin: 0;
+  font-size: 12px;
+  color: var(--texto-2);
+}
+@media (max-width: 1200px) {
+  .form-corpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .form-lado {
+    position: static;
+  }
+  .marcadores {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- lista: editar/excluir e cabeçalho de categoria ---------- */
+.lista-acao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 0;
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--texto-2);
+  cursor: pointer;
+  opacity: 0;
+}
+.lista-linha:hover .lista-acao,
+.lista-linha.selecionado .lista-acao,
+.lista-acao:focus-visible {
+  opacity: 1;
+}
+.lista-acao:hover {
+  background: var(--card-hover);
+  color: var(--texto);
+}
+.lista-acao-perigo:hover {
+  color: var(--erro);
+}
+.lista-linha.confirmando {
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  border-color: var(--erro);
+  border-radius: var(--raio-card);
+  background: color-mix(in srgb, var(--erro) 8%, transparent);
+}
+.confirmar-texto {
+  flex: 1 1 100%;
+  font-size: 12.5px;
+}
+.confirmar-botoes {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+.lista-cabecalho-acoes {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: auto;
+}
+.lista-renomear {
+  align-items: center;
+}
+.lista-renomear .campo {
+  flex: 1;
+  height: 30px;
+  max-width: none;
+}
+.confirmar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--erro);
+  border-radius: var(--raio-card);
+  background: color-mix(in srgb, var(--erro) 8%, transparent);
+  font-size: 12.5px;
+}

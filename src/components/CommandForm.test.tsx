@@ -16,7 +16,7 @@ const setup = (over = {}) => {
 test('novo comando: título, aviso de que fica neste computador e prévia vazia', () => {
   setup()
   expect(screen.getByRole('heading', { name: 'Novo comando' })).toBeInTheDocument()
-  expect(screen.getByText(/Fica salvo só neste computador/)).toBeInTheDocument()
+  expect(screen.getByText(/Fica salvo no seu perfil neste computador/)).toBeInTheDocument()
   expect(screen.getByText('$ adb -s R58N …')).toBeInTheDocument()
 })
 
@@ -81,4 +81,29 @@ test('categoria nova vazia mostra erro', async () => {
   await user.click(screen.getByRole('button', { name: 'Salvar comando' }))
   expect(screen.getByRole('alert')).toHaveTextContent('Dá um nome pra categoria.')
   expect(p.onSave).not.toHaveBeenCalled()
+})
+
+test('marcador clicável entra no comando e já ajusta o que o comando pede', async () => {
+  const user = userEvent.setup()
+  setup()
+  const ta = screen.getByLabelText('Comando adb')
+  await user.type(ta, 'adb shell pm clear ')
+  await user.click(screen.getByRole('button', { name: 'Inserir {pacote}' }))
+  expect(ta).toHaveValue('adb shell pm clear {pacote}')
+  expect(screen.getByLabelText('O comando pede')).toHaveValue('pkg')
+})
+
+test('Ctrl+Enter salva; o erro aparece junto do botão Salvar', async () => {
+  const user = userEvent.setup()
+  const p = setup()
+  await user.type(screen.getByLabelText('Nome do comando'), 'Limpar')
+  await user.type(screen.getByLabelText('Comando adb'), 'shell ls')
+  await user.keyboard('{Control>}{Enter}{/Control}')
+  const alert = screen.getByRole('alert')
+  expect(alert).toHaveTextContent('Cada linha precisa começar com adb.')
+  expect(alert.closest('.form-rodape')).not.toBeNull()
+  await user.clear(screen.getByLabelText('Comando adb'))
+  await user.type(screen.getByLabelText('Comando adb'), 'adb shell ls')
+  await user.keyboard('{Control>}{Enter}{/Control}')
+  expect(p.onSave).toHaveBeenCalled()
 })
