@@ -28,7 +28,9 @@ export function Welcome({ onEnter, knownUsers = [], onForget }: WelcomeProps) {
             else onEnter(name.trim())
           }}
         >
-          <Brand />
+          <div className="boas-vindas-marca-estreita">
+            <Brand />
+          </div>
           <div>
             <h1 className="boas-vindas-titulo">Como você quer ser chamado?</h1>
             <p className="boas-vindas-texto">Informe apenas seu nome. Ele será exibido nos comandos criados e salvo neste computador.</p>
@@ -94,9 +96,12 @@ export function Welcome({ onEnter, knownUsers = [], onForget }: WelcomeProps) {
             <span>Dados salvos somente neste dispositivo</span>
           </p>
         </form>
-        <div className="boas-vindas-arte" aria-hidden="true">
-          <div className="boas-vindas-chao" />
+        <div className="boas-vindas-arte">
+          <div className="boas-vindas-chao" aria-hidden="true" />
           <img src={android} alt="" />
+          <div className="boas-vindas-marca">
+            <Brand />
+          </div>
         </div>
       </div>
     </div>

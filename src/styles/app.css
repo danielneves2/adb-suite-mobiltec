@@ -1629,10 +1629,14 @@ select.campo {
   gap: 22px;
   padding: 40px 44px 34px;
 }
-.boas-vindas-form .marca {
-  transform: scale(1.35);
-  transform-origin: left center;
-  margin-bottom: 6px;
+/* Marca embaixo do Android; em tela estreita (sem a coluna da arte) ela volta pro topo do formulário. */
+.boas-vindas-marca-estreita {
+  display: none;
+}
+.boas-vindas-marca {
+  position: relative;
+  margin-top: 18px;
+  transform: scale(1.3);
 }
 .boas-vindas-titulo {
   margin: 0;
@@ -1716,6 +1720,7 @@ select.campo {
 .boas-vindas-arte {
   position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   border-left: 1px solid #241a26;
@@ -1724,8 +1729,8 @@ select.campo {
 }
 .boas-vindas-arte img {
   position: relative;
-  width: 92%;
-  margin-top: -40px;
+  width: 88%;
+  margin-top: -30px;
 }
 /* Chão de grade em perspectiva (retrô), sumindo para o horizonte. */
 .boas-vindas-chao {
@@ -1747,6 +1752,9 @@ select.campo {
   }
   .boas-vindas-arte {
     display: none;
+  }
+  .boas-vindas-marca-estreita {
+    display: block;
   }
 }
 
@@ -1824,4 +1832,13 @@ select.campo {
 .config-perfil:hover {
   border-color: var(--divisor);
   background: var(--card);
+}
+
+/* A marca nunca quebra linha (ADB SUITE / MOBILTEC). */
+.marca-nome,
+.marca-sub {
+  white-space: nowrap;
+}
+.boas-vindas-marca .marca {
+  width: max-content;
 }
