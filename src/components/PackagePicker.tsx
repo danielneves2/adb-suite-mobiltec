@@ -99,6 +99,7 @@ export function PackagePicker({ serial, deviceName, selected, load, onPick, onCl
               aria-selected={pkg === selected}
               className={`apps-item${pkg === selected ? ' selecionado' : ''}`}
               tabIndex={0}
+              title={pkg}
               onClick={() => onPick(pkg)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -107,7 +108,10 @@ export function PackagePicker({ serial, deviceName, selected, load, onPick, onCl
                 }
               }}
             >
-              {pkg}
+              <span className="apps-pkg">
+                {pkg.slice(0, pkg.lastIndexOf('.') + 1)}
+                <span className="apps-pkg-fim">{pkg.slice(pkg.lastIndexOf('.') + 1)}</span>
+              </span>
             </li>
           ))}
         </ul>
