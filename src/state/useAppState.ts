@@ -41,18 +41,22 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
 
   // Configuração salva.
   useEffect(() => {
+    // Cada item carrega sozinho: um valor corrompido não impede os outros de carregar.
+    const read = async <T,>(key: string, apply: (v: T) => void) => {
+      try {
+        const v = await store.get<T>(key)
+        if (v) apply(v)
+      } catch {
+        // fica o padrão
+      }
+    }
     void (async () => {
-      const savedPinned = await store.get<string[]>('fixados')
-      if (savedPinned) setPinned(savedPinned)
-      const savedDir = await store.get<string>('pastaSaida')
-      if (savedDir) setBaseDirState(savedDir)
-      const savedUser = await store.get<string>('usuario')
-      if (savedUser) setUserNameState(savedUser)
+      await read<string[]>('fixados', setPinned)
+      await read<string>('pastaSaida', setBaseDirState)
+      await read<string>('usuario', setUserNameState)
       setUserReady(true)
-      const savedSize = await store.get<string>('tamanhoJanela')
-      if (savedSize) setWindowSizeState(savedSize)
-      const mine = await store.get<Command[]>('meusComandos')
-      if (mine) setLocalCommands(mine)
+      await read<string>('tamanhoJanela', setWindowSizeState)
+      await read<Command[]>('meusComandos', setLocalCommands)
     })()
   }, [store])
 

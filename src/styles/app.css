@@ -221,6 +221,7 @@
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
+  border: 1px solid transparent;
   border-radius: var(--raio);
   cursor: pointer;
 }
@@ -229,7 +230,7 @@
 }
 .seletor-opcao.selecionada {
   background: var(--card-hover);
-  box-shadow: inset 2px 0 0 var(--roxo);
+  border-color: var(--roxo);
 }
 
 /* ---------- menu lateral ---------- */
@@ -251,7 +252,7 @@
   gap: 12px;
   height: 36px;
   padding: 0 12px;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: var(--raio);
   background: transparent;
   color: var(--texto-2);
@@ -267,7 +268,7 @@
 .rail-item.ativo {
   background: var(--card);
   color: var(--texto);
-  box-shadow: inset 2px 0 0 var(--roxo);
+  border-color: var(--roxo);
 }
 .rail-item.ativo svg {
   color: var(--roxo-claro);
@@ -374,9 +375,8 @@
 }
 .lista-linha.selecionado {
   background: var(--card);
-  border-color: var(--divisor-forte);
+  border-color: var(--roxo);
   border-radius: var(--raio-card);
-  box-shadow: inset 2px 0 0 var(--roxo);
 }
 .lista-item {
   display: flex;
@@ -1489,6 +1489,7 @@ select.campo {
   align-items: center;
   min-width: 0;
   padding: 0 8px;
+  border: 1px solid transparent;
   border-radius: var(--raio);
   color: var(--texto-2);
   white-space: nowrap;
@@ -1505,7 +1506,7 @@ select.campo {
 .apps-item.selecionado {
   background: var(--roxo-fundo);
   color: var(--texto);
-  box-shadow: inset 2px 0 0 var(--roxo);
+  border-color: var(--roxo);
 }
 .apps-carregando {
   margin: 4px 0;

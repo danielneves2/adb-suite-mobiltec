@@ -145,3 +145,16 @@ test('onUserSelect diz se foi troca de aparelho ou de comando', async () => {
   act(() => result.current.selectCommand('foco'))
   expect(onUserSelect.mock.calls).toEqual([['device'], ['command']])
 })
+
+test('se uma configuração falhar ao ler, as outras carregam e o app fica pronto', async () => {
+  const store: ConfigStore = {
+    get: async <T,>(k: string) => {
+      if (k === 'fixados') throw new Error('arquivo corrompido')
+      return (k === 'usuario' ? 'Daniel' : undefined) as T | undefined
+    },
+    set: async () => {},
+  }
+  const { result } = setup(store)
+  await waitFor(() => expect(result.current.userReady).toBe(true))
+  expect(result.current.userName).toBe('Daniel')
+})
