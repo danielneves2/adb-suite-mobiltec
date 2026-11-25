@@ -163,8 +163,10 @@ export default function App() {
     <div className="app">
       {s.userReady && !s.userName && (
         <Welcome
+          knownUsers={s.knownUsers}
+          onForget={s.forgetUser}
           onEnter={(name) => {
-            s.setUserName(name)
+            void s.setUserName(name)
             activity.log('ADB', `Bem-vindo, ${name}.`)
           }}
         />
@@ -244,8 +246,8 @@ export default function App() {
               availableSizes={availableSizes}
               userName={s.userName}
               onUserName={(name) => {
-                s.setUserName(name)
-                s.flash(name ? `Pronto, ${name}.` : 'Você saiu. Digite seu nome pra entrar de novo.')
+                void s.setUserName(name)
+                s.flash(name ? `Pronto, ${name}.` : 'Escolha o usuário pra entrar.')
               }}
             />
           ) : screen === 'livre' ? (

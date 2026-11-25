@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { WINDOW_SIZES } from '../lib/settings'
-import { validateUserName } from '../lib/user'
+import { initials } from '../lib/user'
 import { Icon } from './icons'
 
 export interface SettingsProps {
@@ -12,7 +12,7 @@ export interface SettingsProps {
   adbVersion: string | null
   onClose: () => void
   userName: string | null
-  /** Trocar o nome, ou null para sair (o app pergunta o nome de novo). */
+  /** null = sair (volta para a tela de entrada, com os perfis salvos). */
   onUserName: (name: string | null) => void
   /** Tamanhos que cabem nesta tela (os outros ficam desligados). Sem a informação, todos ficam liberados. */
   availableSizes?: string[]
@@ -20,8 +20,6 @@ export interface SettingsProps {
 
 export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName, availableSizes }: SettingsProps) {
   const [dir, setDir] = useState(baseDir)
-  const [name, setName] = useState(userName ?? '')
-  const [nameError, setNameError] = useState<string | null>(null)
 
   return (
     <div className="config">
@@ -37,41 +35,25 @@ export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOp
 
       <section className="config-secao" aria-labelledby="cfg-nome">
         <h2 className="secao-titulo" id="cfg-nome">
-          Seu nome
+          Usuário
         </h2>
-        <p className="config-ajuda">Só o nome, sem senha. Aparece nos comandos que você cria.</p>
-        <form
-          className="config-linha"
-          onSubmit={(e) => {
-            e.preventDefault()
-            const problem = validateUserName(name)
-            if (problem) setNameError(problem)
-            else onUserName(name.trim())
-          }}
-        >
-          <input
-            className="campo campo-ui"
-            aria-label="Seu nome"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value)
-              setNameError(null)
-            }}
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <button type="submit" className="btn btn-primario">
-            Salvar nome
-          </button>
+        <p className="config-ajuda">Cada nome tem os próprios fixados, pasta, tamanho da janela e comandos neste PC.</p>
+        <div className="config-linha config-usuario">
+          {userName && (
+            <span className="perfil config-perfil">
+              <span className="perfil-avatar" aria-hidden="true">
+                {initials(userName)}
+              </span>
+              <span className="perfil-texto">
+                <span className="perfil-nome">{userName}</span>
+                <span className="perfil-papel">Técnico</span>
+              </span>
+            </span>
+          )}
           <button type="button" className="btn" onClick={() => onUserName(null)}>
-            Sair
+            Trocar de usuário
           </button>
-        </form>
-        {nameError && (
-          <p className="form-erro" role="alert">
-            {nameError}
-          </p>
-        )}
+        </div>
       </section>
 
       <section className="config-secao" aria-labelledby="cfg-janela">

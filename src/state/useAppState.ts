@@ -36,29 +36,67 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
   const [windowSize, setWindowSizeState] = useState('livre')
   const [userName, setUserNameState] = useState<string | null>(null)
   const [userReady, setUserReady] = useState(false)
+  const [knownUsers, setKnownUsers] = useState<string[]>([])
+  // Perfil ativo: as preferências ficam em chaves "<chave>@<nome>" (cada técnico tem as suas neste PC).
+  const userRef = useRef<string | null>(null)
+  // Quem já estava logado antes dos perfis existirem herda as chaves antigas (sem "@").
+  const legacyOwner = useRef<string | null>(null)
+  const keyFor = (key: string) => (userRef.current ? `${key}@${userRef.current.toLowerCase()}` : key)
   const commands = useMemo(() => [...baseCommands, ...localCommands], [baseCommands, localCommands])
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Configuração salva.
-  useEffect(() => {
-    // Cada item carrega sozinho: um valor corrompido não impede os outros de carregar.
-    const read = async <T,>(key: string, apply: (v: T) => void) => {
-      try {
-        const v = await store.get<T>(key)
-        if (v) apply(v)
-      } catch {
-        // fica o padrão
+  /** Carrega as preferências do perfil (ou os padrões, para um nome novo). */
+  const loadProfile = useCallback(
+    async (user: string | null) => {
+      const scoped = (key: string) => (user ? `${key}@${user.toLowerCase()}` : key)
+      // Cada item carrega sozinho: um valor corrompido não impede os outros de carregar.
+      const read = async <T,>(key: string): Promise<T | undefined> => {
+        try {
+          const v = await store.get<T>(scoped(key))
+          if (v !== undefined && v !== null && v !== '') return v
+          if (user && user === legacyOwner.current) return (await store.get<T>(key)) ?? undefined
+        } catch {
+          // fica o padrão
+        }
+        return undefined
       }
-    }
+      const [pins, dir, size, mine] = [await read<string[]>('fixados'), await read<string>('pastaSaida'), await read<string>('tamanhoJanela'), await read<Command[]>('meusComandos')]
+      if (userRef.current !== user) return // trocou de perfil enquanto carregava
+      setPinned(pins ?? catalog.fixados_padrao)
+      setBaseDirState(dir || DEFAULT_OUTPUT_DIR)
+      setWindowSizeState(size || 'livre')
+      setLocalCommands(mine ?? [])
+    },
+    [store],
+  )
+
+  // Configuração salva: quem está logado, os perfis conhecidos e as preferências do perfil.
+  useEffect(() => {
     void (async () => {
-      await read<string[]>('fixados', setPinned)
-      await read<string>('pastaSaida', setBaseDirState)
-      await read<string>('usuario', setUserNameState)
+      let current: string | null = null
+      let list: string[] | undefined
+      try {
+        current = (await store.get<string>('usuario')) || null
+      } catch {
+        current = null
+      }
+      try {
+        list = await store.get<string[]>('usuarios')
+      } catch {
+        list = undefined
+      }
+      if (!list) {
+        list = current ? [current] : []
+        legacyOwner.current = current
+        if (current) void store.set('usuarios', list).catch(() => {})
+      }
+      userRef.current = current
+      setKnownUsers(list)
+      setUserNameState(current)
       setUserReady(true)
-      await read<string>('tamanhoJanela', setWindowSizeState)
-      await read<Command[]>('meusComandos', setLocalCommands)
+      await loadProfile(current)
     })()
-  }, [store])
+  }, [store, loadProfile])
 
   // Aparelhos: polling.
   useEffect(() => {
@@ -100,7 +138,7 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     (id: string) => {
       setPinned((current) => {
         const next = togglePinned(current, id)
-        void store.set('fixados', next)
+        void store.set(keyFor('fixados'), next)
         return next
       })
     },
@@ -112,7 +150,7 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     (c: Command) => {
       setLocalCommands((current) => {
         const next = current.some((x) => x.id === c.id) ? current.map((x) => (x.id === c.id ? c : x)) : [...current, c]
-        void store.set('meusComandos', next)
+        void store.set(keyFor('meusComandos'), next)
         return next
       })
       setSelectedCommandId(c.id)
@@ -125,13 +163,13 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     (id: string) => {
       setLocalCommands((current) => {
         const next = current.map((x) => (x.id === id ? { ...x, excluido: true, atualizado_em: new Date().toISOString() } : x))
-        void store.set('meusComandos', next)
+        void store.set(keyFor('meusComandos'), next)
         return next
       })
       setPinned((current) => {
         if (!current.includes(id)) return current
         const next = current.filter((p) => p !== id)
-        void store.set('fixados', next)
+        void store.set(keyFor('fixados'), next)
         return next
       })
       setSelectedCommandId((current) => (current === id ? null : current))
@@ -139,12 +177,41 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     [store],
   )
 
-  /** Entrar/trocar nome (fica salvo, não pede de novo) ou sair (null). */
+  /**
+   * Entrar com um nome (fica salvo e entra na lista de perfis; volta com as preferências desse nome)
+   * ou sair (null: a lista continua para entrar de novo com um clique).
+   */
   const setUserName = useCallback(
-    (name: string | null) => {
-      const next = name?.trim() || null
-      setUserNameState(next)
-      void store.set('usuario', next ?? '')
+    async (name: string | null) => {
+      const typed = name?.trim() || null
+      if (!typed) {
+        userRef.current = null
+        setUserNameState(null)
+        void store.set('usuario', '')
+        return
+      }
+      // Mesmo nome com outra caixa ("ana" / "Ana") é o mesmo perfil: mantém a grafia salva.
+      const existing = knownUsers.find((u) => u.toLowerCase() === typed.toLowerCase())
+      const user = existing ?? typed
+      const list = [user, ...knownUsers.filter((u) => u.toLowerCase() !== user.toLowerCase())]
+      userRef.current = user
+      setUserNameState(user)
+      setKnownUsers(list)
+      void store.set('usuario', user)
+      void store.set('usuarios', list)
+      await loadProfile(user)
+    },
+    [store, knownUsers, loadProfile],
+  )
+
+  /** Tira um nome da lista de perfis da tela de entrada. */
+  const forgetUser = useCallback(
+    (name: string) => {
+      setKnownUsers((current) => {
+        const next = current.filter((u) => u.toLowerCase() !== name.toLowerCase())
+        void store.set('usuarios', next)
+        return next
+      })
     },
     [store],
   )
@@ -152,7 +219,7 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
   const setWindowSize = useCallback(
     (id: string) => {
       setWindowSizeState(id)
-      void store.set('tamanhoJanela', id)
+      void store.set(keyFor('tamanhoJanela'), id)
     },
     [store],
   )
@@ -161,7 +228,7 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     (dir: string) => {
       const next = dir.trim() || DEFAULT_OUTPUT_DIR
       setBaseDirState(next)
-      void store.set('pastaSaida', next)
+      void store.set(keyFor('pastaSaida'), next)
     },
     [store],
   )
@@ -219,6 +286,8 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     userName,
     userReady,
     setUserName,
+    knownUsers,
+    forgetUser,
     currentDeviceDir,
     status,
     flash,

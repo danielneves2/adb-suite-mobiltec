@@ -46,19 +46,11 @@ test('sobre mostra a versão do adb; fechar avisa', async () => {
   expect(p.onClose).toHaveBeenCalled()
 })
 
-test('seu nome: trocar e sair', async () => {
-  const user = userEvent.setup()
+test('usuário: mostra quem está logado e Trocar de usuário sai', async () => {
   const onUserName = vi.fn()
-  render(<Settings {...props({ userName: 'Daniel', onUserName })} />)
-  const input = screen.getByRole('textbox', { name: 'Seu nome' })
-  expect(input).toHaveValue('Daniel')
-  await user.clear(input)
-  await user.click(screen.getByRole('button', { name: 'Salvar nome' }))
-  expect(screen.getByRole('alert')).toHaveTextContent('Digite seu nome.')
-  await user.type(input, 'Daniel Lima')
-  await user.click(screen.getByRole('button', { name: 'Salvar nome' }))
-  expect(onUserName).toHaveBeenCalledWith('Daniel Lima')
-  await user.click(screen.getByRole('button', { name: 'Sair' }))
+  render(<Settings {...props({ userName: 'Daniel Lima', onUserName })} />)
+  expect(screen.getByText('Daniel Lima')).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Trocar de usuário' }))
   expect(onUserName).toHaveBeenCalledWith(null)
 })
 

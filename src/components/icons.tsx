@@ -116,6 +116,19 @@ const glyphs: Record<string, ReactNode> = {
   pasta: <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H10l2 2h7.5A1.5 1.5 0 0 1 21 8.5v10a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z" />,
   abrir: <path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />,
   mais: <path d="M12 5v14M5 12h14" />,
+  usuario: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+    </>
+  ),
+  escudo: (
+    <>
+      <path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z" />
+      <rect x="9.5" y="11" width="5" height="4.5" rx="0.8" />
+      <path d="M10.5 11V9.5a1.5 1.5 0 0 1 3 0V11" />
+    </>
+  ),
   terminal: (
     <>
       <rect x="3" y="4" width="18" height="16" rx="2" />
