@@ -1604,12 +1604,12 @@ select.campo {
   align-items: center;
   justify-content: center;
   padding: 24px;
+  /* Roxo com grade magenta (referência do usuário), com bordas levemente mais escuras pro card destacar. */
   background:
-    radial-gradient(ellipse 45% 55% at 0% 10%, rgba(121, 10, 92, 0.28), transparent 70%),
-    radial-gradient(ellipse 40% 50% at 100% 100%, rgba(121, 10, 92, 0.22), transparent 70%),
-    linear-gradient(color-mix(in srgb, var(--divisor) 35%, transparent) 1px, transparent 1px) 0 0 / 32px 32px,
-    linear-gradient(90deg, color-mix(in srgb, var(--divisor) 35%, transparent) 1px, transparent 1px) 0 0 / 32px 32px,
-    #050307;
+    radial-gradient(ellipse 75% 70% at 50% 50%, transparent 55%, rgba(18, 0, 16, 0.45) 100%),
+    linear-gradient(rgba(214, 64, 200, 0.55) 1px, transparent 1px) 0 0 / 49px 49px,
+    linear-gradient(90deg, rgba(214, 64, 200, 0.55) 1px, transparent 1px) 0 0 / 49px 49px,
+    #46053f;
 }
 .boas-vindas-card {
   position: relative;
