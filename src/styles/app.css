@@ -71,7 +71,7 @@
 .marca {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex: none;
 }
 .marca-icone {
@@ -79,10 +79,10 @@
 }
 /* Colchetes finos em laranja, desenhados (não são texto). */
 .marca-colchete {
-  width: 7px;
-  height: 36px;
+  width: 6px;
+  height: 28px;
   flex: none;
-  border: 2px solid var(--laranja);
+  border: 1.5px solid var(--laranja);
 }
 .marca-colchete-esq {
   border-right: 0;
@@ -94,12 +94,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   line-height: 1;
 }
 .marca-nome {
   font-family: var(--fonte-marca);
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.14em;
   margin-right: -0.14em;
@@ -107,20 +107,20 @@
 }
 .marca-sub {
   font-family: var(--fonte-marca);
-  font-size: 8.5px;
+  font-size: 7px;
   font-weight: 400;
-  letter-spacing: 0.6em;
-  margin-right: -0.6em;
+  letter-spacing: 0.62em;
+  margin-right: -0.62em;
   color: var(--texto-3);
 }
 .marca-barras {
   font-family: var(--fonte-marca);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   font-style: italic;
   letter-spacing: -0.08em;
   color: var(--roxo-claro);
-  margin-left: 4px;
+  margin-left: 2px;
 }
 
 /* ---------- topo ---------- */
