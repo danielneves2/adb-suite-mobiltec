@@ -37,7 +37,7 @@ describe('pasta do aparelho', () => {
 describe('lista de comandos', () => {
   const opts = { search: '', rail: 'Apps', pinned: [] as string[] }
   test('ordem da barra de ícones', () =>
-    expect(RAIL.map((r) => r.label)).toEqual(['Fixados', 'Apps', 'Pacotes', 'Telas', 'Controle', 'Logs', 'Captura', 'Aparelho', 'Arquivos', 'Conexão', 'Meus']))
+    expect(RAIL.map((r) => r.label)).toEqual(['Início', 'Apps', 'Pacotes', 'Telas', 'Controle', 'Logs', 'Captura', 'Aparelho', 'Arquivos', 'Conexão', 'Meus comandos']))
   test('busca em nome, comando e resumo, em todas as categorias, sem diferenciar maiúsculas', () => {
     const ids = filterCommands(catalog.comandos, { ...opts, search: 'APK' }).map((c) => c.id)
     expect(ids).toContain('extrair')
