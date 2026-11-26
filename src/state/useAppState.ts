@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import rawCatalog from '../../data/catalog.json'
 import { DEFAULT_OUTPUT_DIR, deviceDir, filterCommands, RAIL, togglePinned, type DeviceInfo } from '../lib/appLogic'
 import type { Catalog, Command } from '../lib/catalogTypes'
-import { normalizeCategory } from '../lib/commandForm'
+import { MY_CATEGORY, normalizeCategory } from '../lib/commandForm'
+import type { TeamApi } from '../lib/teamApi'
+import { useTeamSync } from './useTeamSync'
 
 const catalog = rawCatalog as unknown as Catalog
 
@@ -19,11 +21,15 @@ export interface AppStateDeps {
   commands?: Command[]
   /** Chamado quando o técnico escolhe aparelho ou comando (não na seleção automática do polling). */
   onUserSelect?: (kind: 'device' | 'command') => void
+  /** API do time (null/ausente = comandos só neste PC). */
+  teamApi?: TeamApi | null
+  /** Intervalo do sync com o servidor. */
+  syncMs?: number
 }
 
 const FLASH_MS = 3500
 
-export function useAppState({ listDevices, store, pollMs = 2000, commands: baseCommands = catalog.comandos, onUserSelect }: AppStateDeps) {
+export function useAppState({ listDevices, store, pollMs = 2000, commands: baseCommands = catalog.comandos, onUserSelect, teamApi = null, syncMs }: AppStateDeps) {
   const [devices, setDevices] = useState<DeviceInfo[]>([])
   const [devicesError, setDevicesError] = useState<string | null>(null)
   const [selectedSerial, setSelectedSerial] = useState<string | null>(null)
@@ -33,9 +39,11 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
   const [pinned, setPinned] = useState<string[]>(catalog.fixados_padrao)
   const [baseDir, setBaseDirState] = useState(DEFAULT_OUTPUT_DIR)
   const [status, setStatus] = useState<string | null>(null)
-  const [localCommands, setLocalCommands] = useState<Command[]>([])
   const [windowSize, setWindowSizeState] = useState('livre')
   const [userName, setUserNameState] = useState<string | null>(null)
+  // Catálogo do time (embutido + servidor). Sem servidor, os comandos criados ficam neste PC.
+  const team = useTeamSync({ api: teamApi, store, embedded: baseCommands, user: userName, pollMs: syncMs })
+  const commands = team.commands
   const [userReady, setUserReady] = useState(false)
   const [knownUsers, setKnownUsers] = useState<string[]>([])
   // Perfil ativo: as preferências ficam em chaves "<chave>@<nome>" (cada técnico tem as suas neste PC).
@@ -43,7 +51,6 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
   // Quem já estava logado antes dos perfis existirem herda as chaves antigas (sem "@").
   const legacyOwner = useRef<string | null>(null)
   const keyFor = (key: string) => (userRef.current ? `${key}@${userRef.current.toLowerCase()}` : key)
-  const commands = useMemo(() => [...baseCommands, ...localCommands], [baseCommands, localCommands])
   const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   /** Carrega as preferências do perfil (ou os padrões, para um nome novo). */
@@ -66,12 +73,12 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
         }
         return undefined
       }
-      const [pins, dir, size, mine] = [await read<string[]>('fixados'), await read<string>('pastaSaida'), await read<string>('tamanhoJanela'), await read<Command[]>('meusComandos')]
+      // Os comandos não são do perfil: são do time (useTeamSync sobe os antigos "meusComandos" na primeira vez).
+      const [pins, dir, size] = [await read<string[]>('fixados'), await read<string>('pastaSaida'), await read<string>('tamanhoJanela')]
       if (userRef.current !== user) return // trocou de perfil enquanto carregava
       setPinned(pins ?? catalog.fixados_padrao)
       setBaseDirState(dir || DEFAULT_OUTPUT_DIR)
       setWindowSizeState(size || 'livre')
-      setLocalCommands(mine ?? [])
     },
     [store],
   )
@@ -151,59 +158,50 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     [store],
   )
 
-  /** Cria ou substitui um comando do técnico, guarda neste computador e abre ele. */
+  const teamSave = team.save
+  const teamRemove = team.remove
+
+  /** Cria ou substitui um comando do time e abre ele. Sem conexão, rejeita e nada muda. */
   const saveCommand = useCallback(
-    (c: Command) => {
-      setLocalCommands((current) => {
-        const next = current.some((x) => x.id === c.id) ? current.map((x) => (x.id === c.id ? c : x)) : [...current, c]
-        void store.set(keyFor('meusComandos'), next)
-        return next
-      })
+    async (c: Command) => {
+      await teamSave([c])
       setSelectedCommandId(c.id)
     },
-    [store],
+    [teamSave],
+  )
+
+  // Comandos do time (não oficiais) de uma categoria, sem diferenciar maiúsculas.
+  const teamInCategory = useCallback(
+    (name: string) => commands.filter((c) => !c.oficial && !c.excluido && c.categoria.toLowerCase() === name.toLowerCase()),
+    [commands],
   )
 
   /** Renomeia uma categoria criada (todos os comandos dela) e o menu acompanha. */
   const renameCategory = useCallback(
-    (from: string, to: string) => {
+    async (from: string, to: string) => {
       // Nome igual a uma categoria que já existe (fixa ou criada, sem diferenciar maiúsculas) junta com ela.
-      const others = localCommands.map((c) => c.categoria).filter((c) => c.toLowerCase() !== from.toLowerCase())
+      const others = commands.filter((c) => !c.excluido).map((c) => c.categoria).filter((c) => c.toLowerCase() !== from.toLowerCase())
       const target = normalizeCategory(to, others)
       if (!target) return
-      const now = new Date().toISOString()
-      setLocalCommands((current) => {
-        const next = current.map((c) => (c.categoria.toLowerCase() === from.toLowerCase() ? { ...c, categoria: target, atualizado_em: now } : c))
-        void store.set(keyFor('meusComandos'), next)
-        return next
-      })
+      await teamSave(teamInCategory(from).map((c) => ({ ...c, categoria: target })))
       setRailState((r) => (r.toLowerCase() === from.toLowerCase() ? target : r))
     },
-    [store, localCommands],
+    [commands, teamSave, teamInCategory],
   )
 
   /** Exclui uma categoria criada: os comandos dela vão para "Meus comandos" (nada é apagado). */
   const deleteCategory = useCallback(
-    (name: string) => {
-      const now = new Date().toISOString()
-      setLocalCommands((current) => {
-        const next = current.map((c) => (c.categoria.toLowerCase() === name.toLowerCase() ? { ...c, categoria: 'Meus comandos', atualizado_em: now } : c))
-        void store.set(keyFor('meusComandos'), next)
-        return next
-      })
+    async (name: string) => {
+      await teamSave(teamInCategory(name).map((c) => ({ ...c, categoria: MY_CATEGORY })))
       setRailState((r) => (r.toLowerCase() === name.toLowerCase() ? 'Meus' : r))
     },
-    [store],
+    [teamSave, teamInCategory],
   )
 
-  /** Exclusão lógica: marca excluido e tira dos fixados. */
+  /** Exclusão lógica: marca excluido e tira dos fixados. Sem conexão, rejeita e nada muda. */
   const deleteCommand = useCallback(
-    (id: string) => {
-      setLocalCommands((current) => {
-        const next = current.map((x) => (x.id === id ? { ...x, excluido: true, atualizado_em: new Date().toISOString() } : x))
-        void store.set(keyFor('meusComandos'), next)
-        return next
-      })
+    async (id: string) => {
+      await teamRemove(id)
       setPinned((current) => {
         if (!current.includes(id)) return current
         const next = current.filter((p) => p !== id)
@@ -212,7 +210,7 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
       })
       setSelectedCommandId((current) => (current === id ? null : current))
     },
-    [store],
+    [store, teamRemove],
   )
 
   /**
@@ -291,14 +289,14 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     const fixed = new Set([...RAIL.map((r) => r.key.toLowerCase()), 'meus comandos'])
     const seen = new Set<string>()
     const out: string[] = []
-    for (const c of localCommands) {
+    for (const c of commands) {
       const k = c.categoria.trim().toLowerCase()
-      if (c.excluido || !k || fixed.has(k) || seen.has(k)) continue
+      if (c.oficial || c.excluido || !k || fixed.has(k) || seen.has(k)) continue
       seen.add(k)
       out.push(c.categoria.trim())
     }
     return out
-  }, [localCommands])
+  }, [commands])
 
   const listCommands = useMemo(() => filterCommands(commands, { search, rail, pinned }), [commands, search, rail, pinned])
   const searching = search.trim() !== ''
@@ -347,6 +345,7 @@ export function useAppState({ listDevices, store, pollMs = 2000, commands: baseC
     customCategories,
     renameCategory,
     deleteCategory,
+    syncStatus: team.status,
     currentDeviceDir,
     status,
     flash,

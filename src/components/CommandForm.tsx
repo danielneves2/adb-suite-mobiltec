@@ -19,20 +19,24 @@ export interface CommandFormProps {
   editing: boolean
   device: DeviceInfo | null
   deviceDir: string | null
-  onSave: (f: CommandFormData) => void
+  /** Pode ser assíncrono (vai pro servidor): se rejeitar, a mensagem aparece e o formulário continua aberto. */
+  onSave: (f: CommandFormData) => void | Promise<void>
   onCancel: () => void
   /** Categorias já criadas pelo técnico (aparecem no select). */
   customCategories?: string[]
+  /** true = comandos sincronizam com o time (muda o aviso do topo). */
+  shared?: boolean
 }
 
 const NEW_CATEGORY = '__nova__'
 
-export function CommandForm({ initial, editing, device, deviceDir, onSave, onCancel, customCategories = [] }: CommandFormProps) {
+export function CommandForm({ initial, editing, device, deviceDir, onSave, onCancel, customCategories = [], shared = false }: CommandFormProps) {
   const [f, setF] = useState<CommandFormData>(initial)
   const options = categoryOptions([...customCategories, initial.categoria])
   // "+ Nova categoria…": o select fica nessa opção e o nome vem do campo de texto.
   const [newCategory, setNewCategory] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
   const commandBox = useRef<HTMLTextAreaElement>(null)
 
   const change = <K extends keyof CommandFormData>(key: K, value: CommandFormData[K]) => {
@@ -40,11 +44,24 @@ export function CommandForm({ initial, editing, device, deviceDir, onSave, onCan
     setError(null)
   }
 
-  const save = () => {
+  const save = async () => {
+    if (saving) return
     const data = { ...f, categoria: normalizeCategory(f.categoria, customCategories) }
     const problem = validateCommandForm(data)
-    if (problem) setError(problem)
-    else onSave(data)
+    if (problem) {
+      setError(problem)
+      return
+    }
+    setSaving(true)
+    try {
+      await onSave(data)
+    } catch (e) {
+      // Sem conexão (ou servidor recusou): nada se perde, o técnico tenta de novo.
+      const msg = e instanceof Error ? e.message : String(e)
+      setError(`${msg} O comando não foi salvo; o catálogo continua funcionando.`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   /** Marcador clicável: entra onde está o cursor e, se for de valor, ajusta "O comando pede". */
@@ -70,19 +87,19 @@ export function CommandForm({ initial, editing, device, deviceDir, onSave, onCan
       className="formulario"
       onSubmit={(e) => {
         e.preventDefault()
-        save()
+        void save()
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
           e.preventDefault()
-          save()
+          void save()
         }
       }}
     >
       <div className="form-cabecalho">
         <span className="rotulo">{MY_CATEGORY} /</span>
         <h1 className="comando-nome">{editing ? 'Editar comando' : 'Novo comando'}</h1>
-        <p className="comando-resumo">Fica salvo no seu perfil neste computador. Quando a sincronização chegar, ele vai pro time todo.</p>
+        <p className="comando-resumo">{shared ? 'Vai pro time todo assim que você salvar.' : 'Fica salvo no seu perfil neste computador. Quando a sincronização chegar, ele vai pro time todo.'}</p>
       </div>
 
       <div className="form-corpo">
@@ -212,8 +229,8 @@ export function CommandForm({ initial, editing, device, deviceDir, onSave, onCan
         <button type="button" className="btn" onClick={onCancel}>
           Cancelar
         </button>
-        <button type="submit" className="btn btn-primario btn-executar">
-          {editing ? 'Salvar alterações' : 'Salvar comando'}
+        <button type="submit" className="btn btn-primario btn-executar" disabled={saving}>
+          {saving ? 'Salvando…' : editing ? 'Salvar alterações' : 'Salvar comando'}
         </button>
       </div>
     </form>

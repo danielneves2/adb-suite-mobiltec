@@ -33,6 +33,8 @@ export interface CommandViewProps {
   loadPackages: (kind: PackageKind) => Promise<string[]>
   /** Abre a janela do Windows para escolher um arquivo do computador (null = cancelou). */
   pickFile: (kind: 'apk' | 'file') => Promise<string | null>
+  /** true = comandos sincronizam com o time (o selo não diz "só neste PC"). */
+  shared?: boolean
 }
 
 const DEFAULT_LABEL: Record<ParamKind, string> = {
@@ -124,7 +126,7 @@ export function CommandView(p: CommandViewProps) {
         {c.pede_confirmacao && <span className="selo">PEDE CONFIRMAÇÃO</span>}
         {c.oficial === false && (
           <>
-            <span className="selo selo-local">{c.autor ? `POR ${c.autor.toUpperCase()} · SÓ NESTE PC` : 'SEU · SÓ NESTE PC'}</span>
+            <span className="selo selo-local">{p.shared ? (c.autor ? `POR ${c.autor.toUpperCase()}` : 'DO TIME') : c.autor ? `POR ${c.autor.toUpperCase()} · SÓ NESTE PC` : 'SEU · SÓ NESTE PC'}</span>
             <button type="button" className="btn btn-mini" onClick={p.onEdit}>
               Editar
             </button>

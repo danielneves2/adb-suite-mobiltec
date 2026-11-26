@@ -1200,6 +1200,9 @@ select.campo {
 .status-erro {
   color: var(--erro);
 }
+.status-alerta {
+  color: var(--alerta);
+}
 .status-espaco {
   flex: 1;
 }

@@ -1,4 +1,5 @@
 import { deviceName, type DeviceInfo } from '../lib/appLogic'
+import type { SyncStatus } from '../state/useTeamSync'
 import type { UpdateState } from '../state/useUpdater'
 import { Icon } from './icons'
 
@@ -18,6 +19,25 @@ interface Props {
   onInstallUpdate?: () => void
   /** Comando rodando: instalar agora derrubaria o trabalho. */
   updateBlocked?: boolean
+  /** Catálogo do time (sem servidor = "local", não mostra nada). */
+  syncStatus?: SyncStatus
+}
+
+const SYNC_TEXT: Record<Exclude<SyncStatus, 'local'>, { text: string; cls: string; title: string }> = {
+  online: { text: 'Sincronizado', cls: 'status-ok', title: 'Comandos do time em dia (confere a cada 30 s)' },
+  syncing: { text: 'Sincronizando…', cls: '', title: 'Buscando os comandos do time' },
+  offline: { text: 'Sem conexão', cls: 'status-alerta', title: 'Sem conexão com o servidor: o catálogo continua funcionando, mas criar/editar/excluir espera a conexão voltar' },
+}
+
+function SyncItem({ status }: { status?: SyncStatus }) {
+  if (!status || status === 'local') return null
+  const s = SYNC_TEXT[status]
+  return (
+    <span className={`status-item ${s.cls}`} title={s.title}>
+      <Icon name={status === 'offline' ? 'alerta' : 'camadas'} size={14} />
+      {s.text}
+    </span>
+  )
 }
 
 function UpdateItem({ update, onInstall, blocked }: { update?: UpdateState; onInstall?: () => void; blocked?: boolean }) {
@@ -54,7 +74,7 @@ function UpdateItem({ update, onInstall, blocked }: { update?: UpdateState; onIn
 }
 
 /** Barra de status no estilo de IDE: aparelhos, aparelho atual, Android, ADB e pasta de saída. */
-export function StatusBar({ deviceDir, baseDir, onChangeBase, onOpen, message, deviceCount, device, adbOk, pickFolder, update, onInstallUpdate, updateBlocked }: Props) {
+export function StatusBar({ deviceDir, baseDir, onChangeBase, onOpen, message, deviceCount, device, adbOk, pickFolder, update, onInstallUpdate, updateBlocked, syncStatus }: Props) {
   const shown = deviceDir ?? baseDir
   const ready = device?.state === 'device'
 
@@ -78,6 +98,7 @@ export function StatusBar({ deviceDir, baseDir, onChangeBase, onOpen, message, d
         {adbOk ? 'ADB: OK' : 'ADB: erro'}
       </span>
       <span className="status-espaco" />
+      <SyncItem status={syncStatus} />
       <UpdateItem update={update} onInstall={onInstallUpdate} blocked={updateBlocked} />
       {message && (
         <span className="status-mensagem" role="status">

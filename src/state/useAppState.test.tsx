@@ -15,6 +15,9 @@ function memoryStore(initial: Record<string, unknown> = {}): ConfigStore {
   }
 }
 
+/** Cache do catálogo do time (chave 'catalogo' do store). */
+const cache = (...cs: { id: string }[]) => Object.fromEntries(cs.map((c) => [c.id, c]))
+
 const setup = (store = memoryStore(), devices: DeviceInfo[] = [a54]) =>
   renderHook(() => useAppState({ listDevices: async () => devices, store, pollMs: 60_000 }))
 
@@ -74,7 +77,7 @@ describe('comandos do técnico (salvos neste computador)', () => {
   const meu = { id: 'local-1', categoria: 'Meus comandos', nome: 'Abrir Wi-Fi', resumo: '', comando: 'adb shell am start -a android.settings.WIFI_SETTINGS', parametro: null, oficial: false, excluido: false }
 
   test('comandos salvos aparecem em Meus', async () => {
-    const { result } = setup(memoryStore({ meusComandos: [meu] }))
+    const { result } = setup(memoryStore({ catalogo: cache(meu) }))
     await waitFor(() => expect(result.current.commands.some((c) => c.id === 'local-1')).toBe(true))
     act(() => result.current.setRail('Meus'))
     expect(result.current.listCommands.map((c) => c.id)).toEqual(['local-1'])
@@ -83,22 +86,23 @@ describe('comandos do técnico (salvos neste computador)', () => {
   test('salvar novo persiste e seleciona; salvar de novo substitui', async () => {
     const store = memoryStore()
     const { result } = setup(store)
-    act(() => result.current.saveCommand(meu))
+    await waitFor(() => expect(result.current.userReady).toBe(true))
+    await act(() => result.current.saveCommand(meu))
     expect(result.current.selectedCommandId).toBe('local-1')
-    act(() => result.current.saveCommand({ ...meu, nome: 'Wi-Fi' }))
+    await act(() => result.current.saveCommand({ ...meu, nome: 'Wi-Fi' }))
     expect(result.current.commands.filter((c) => c.id === 'local-1').map((c) => c.nome)).toEqual(['Wi-Fi'])
-    expect(await store.get('meusComandos')).toEqual([{ ...meu, nome: 'Wi-Fi' }])
+    expect(await store.get('catalogo')).toEqual({ 'local-1': { ...meu, nome: 'Wi-Fi', atualizado_em: expect.any(String) } })
   })
 
   test('excluir é lógico: some da lista e dos fixados, mas fica guardado com excluido', async () => {
-    const store = memoryStore({ meusComandos: [meu], fixados: ['local-1', 'foco'] })
+    const store = memoryStore({ catalogo: cache(meu), fixados: ['local-1', 'foco'] })
     const { result } = setup(store)
     await waitFor(() => expect(result.current.pinned).toContain('local-1'))
-    act(() => result.current.deleteCommand('local-1'))
+    await act(() => result.current.deleteCommand('local-1'))
     act(() => result.current.setRail('Meus'))
     expect(result.current.listCommands).toEqual([])
     expect(result.current.pinned).toEqual(['foco'])
-    expect(await store.get('meusComandos')).toEqual([expect.objectContaining({ id: 'local-1', excluido: true })])
+    expect(await store.get('catalogo')).toEqual({ 'local-1': expect.objectContaining({ id: 'local-1', excluido: true }) })
   })
 })
 
@@ -183,17 +187,14 @@ describe('perfis: cada nome guarda o seu', () => {
     expect(result.current.knownUsers).toEqual(['Ana', 'Bruno'])
   })
 
-  test('comandos criados ficam no perfil de quem criou', async () => {
+  test('comandos são do time: o que a Ana cria aparece pro Bruno', async () => {
     const store = memoryStore()
     const { result } = setup(store)
     await waitFor(() => expect(result.current.userReady).toBe(true))
     await act(async () => result.current.setUserName('Ana'))
-    act(() => result.current.saveCommand({ id: 'local-a', categoria: 'Meus comandos', nome: 'Da Ana', resumo: '', comando: 'adb shell ls', parametro: null, oficial: false }))
+    await act(() => result.current.saveCommand({ id: 'local-a', categoria: 'Meus comandos', nome: 'Da Ana', resumo: '', comando: 'adb shell ls', parametro: null, oficial: false }))
     await act(async () => result.current.setUserName(null))
     await act(async () => result.current.setUserName('Bruno'))
-    expect(result.current.commands.some((c) => c.id === 'local-a')).toBe(false)
-    await act(async () => result.current.setUserName(null))
-    await act(async () => result.current.setUserName('Ana'))
     expect(result.current.commands.some((c) => c.id === 'local-a')).toBe(true)
   })
 
@@ -215,7 +216,7 @@ describe('perfis: cada nome guarda o seu', () => {
 
 test('categorias criadas pelo técnico (fora das fixas) viram itens do menu', async () => {
   const mk = (id: string, categoria: string, excluido = false) => ({ id, categoria, nome: id, resumo: '', comando: 'adb shell ls', parametro: null, oficial: false, excluido })
-  const { result } = setup(memoryStore({ meusComandos: [mk('a', 'Rede'), mk('b', 'Apps'), mk('c', 'Meus comandos'), mk('d', 'Zebra', true), mk('e', 'rede')] }))
+  const { result } = setup(memoryStore({ catalogo: cache(mk('a', 'Rede'), mk('b', 'Apps'), mk('c', 'Meus comandos'), mk('d', 'Zebra', true), mk('e', 'rede')) }))
   await waitFor(() => expect(result.current.customCategories).toEqual(['Rede']))
   act(() => result.current.setRail('Rede'))
   expect(result.current.listCommands.map((c) => c.id)).toEqual(['a', 'e']) // 'rede' e 'Rede' são a mesma categoria
@@ -225,20 +226,20 @@ test('categorias criadas pelo técnico (fora das fixas) viram itens do menu', as
 describe('gerenciar categorias criadas', () => {
   const mk = (id: string, categoria: string) => ({ id, categoria, nome: id, resumo: '', comando: 'adb shell ls', parametro: null, oficial: false, excluido: false })
   test('renomear troca a categoria dos comandos e o menu acompanha', async () => {
-    const store = memoryStore({ meusComandos: [mk('a', 'Rede'), mk('b', 'Rede'), mk('c', 'Apps')] })
+    const store = memoryStore({ catalogo: cache(mk('a', 'Rede'), mk('b', 'Rede'), mk('c', 'Apps')) })
     const { result } = setup(store)
     await waitFor(() => expect(result.current.customCategories).toEqual(['Rede']))
     act(() => result.current.setRail('Rede'))
-    act(() => result.current.renameCategory('Rede', 'Wi-Fi'))
+    await act(() => result.current.renameCategory('Rede', 'Wi-Fi'))
     expect(result.current.customCategories).toEqual(['Wi-Fi'])
     expect(result.current.rail).toBe('Wi-Fi')
     expect(result.current.listCommands.map((c) => c.id)).toEqual(['a', 'b'])
   })
   test('excluir categoria leva os comandos pra Meus comandos (nada é apagado)', async () => {
-    const { result } = setup(memoryStore({ meusComandos: [mk('a', 'Rede'), mk('b', 'Rede')] }))
+    const { result } = setup(memoryStore({ catalogo: cache(mk('a', 'Rede'), mk('b', 'Rede')) }))
     await waitFor(() => expect(result.current.customCategories).toEqual(['Rede']))
     act(() => result.current.setRail('Rede'))
-    act(() => result.current.deleteCategory('Rede'))
+    await act(() => result.current.deleteCategory('Rede'))
     expect(result.current.customCategories).toEqual([])
     expect(result.current.rail).toBe('Meus')
     expect(result.current.listCommands.map((c) => [c.id, c.categoria])).toEqual([
@@ -264,9 +265,9 @@ describe('3ª revisão', () => {
 
   test('renomear para um nome que já existe (outra caixa) usa a grafia existente', async () => {
     const mk = (id: string, categoria: string) => ({ id, categoria, nome: id, resumo: '', comando: 'adb shell ls', parametro: null, oficial: false, excluido: false })
-    const { result } = setup(memoryStore({ meusComandos: [mk('a', 'Wifi'), mk('b', 'Rede')] }))
+    const { result } = setup(memoryStore({ catalogo: cache(mk('a', 'Wifi'), mk('b', 'Rede')) }))
     await waitFor(() => expect(result.current.customCategories).toEqual(['Wifi', 'Rede']))
-    act(() => result.current.renameCategory('Wifi', 'rede'))
+    await act(() => result.current.renameCategory('Wifi', 'rede'))
     expect(result.current.customCategories).toEqual(['Rede'])
     act(() => result.current.setRail('Rede'))
     expect(result.current.listCommands.map((c) => c.id)).toEqual(['a', 'b'])

@@ -19,6 +19,7 @@ import { EMPTY_FORM, FORM_CATEGORIES, MY_CATEGORY, commandToForm, formToCommand,
 import { tauriConfigStore } from './lib/configStore'
 import { pickFile, pickFolder } from './lib/pickFolder'
 import { fitWindowSizes } from './lib/settings'
+import { teamApiFromEnv } from './lib/teamApi'
 import { tauriUpdater } from './lib/updater'
 import { applyWindowSize, workAreaSize } from './lib/window'
 import { useActivity } from './state/useActivity'
@@ -29,6 +30,9 @@ import { useUpdater } from './state/useUpdater'
 import './styles/app.css'
 
 const catalog = rawCatalog as unknown as Catalog
+// Servidor do time (VITE_API_URL + VITE_APP_KEY no build). Sem ele, os comandos criados ficam neste PC.
+const teamApi = teamApiFromEnv()
+const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
 export default function App() {
   const runner = useRunner({ api: adb })
@@ -45,7 +49,7 @@ export default function App() {
   const [form, setForm] = useState<{ initial: CommandFormData; editingId: string | null; key: number } | null>(null)
   // Só a escolha do técnico volta a saída para "aguardando" (e para o que estiver rodando).
   // Se o aparelho some sozinho, a mensagem de erro fica na tela.
-  const s = useAppState({ listDevices: adb.listDevices, store: tauriConfigStore, onUserSelect: (kind) => {
+  const s = useAppState({ listDevices: adb.listDevices, store: tauriConfigStore, teamApi, onUserSelect: (kind) => {
       runner.reset() // a saída era de outro comando/aparelho (e para o que estiver rodando)
       // Trocar de aparelho mantém a tela atual (Comando livre, Configurações, formulário) e só muda o alvo.
       if (kind === 'command') {
@@ -164,12 +168,22 @@ export default function App() {
     setForm({ initial: { ...EMPTY_FORM, categoria, ...initial }, editingId, key: Date.now() })
   }
 
-  const saveForm = (f: CommandFormData) => {
+  // Comandos vão pro time (com servidor) ou ficam neste PC (sem servidor no build).
+  const shared = s.syncStatus !== 'local'
+
+  // Se não salvar (sem conexão), o erro aparece no formulário e ele continua aberto.
+  const saveForm = async (f: CommandFormData) => {
     const id = form?.editingId ?? `local-${crypto.randomUUID()}`
-    s.saveCommand(formToCommand(f, id, new Date(), s.userName))
+    await s.saveCommand(formToCommand(f, id, new Date(), s.userName))
     setForm(null)
-    s.flash('Comando salvo neste computador.')
+    s.flash(shared ? 'Comando salvo pro time.' : 'Comando salvo neste computador.')
   }
+
+  const deleteCommand = (id: string) =>
+    s.deleteCommand(id).then(
+      () => s.flash('Comando excluído.'),
+      (e) => s.flash(`Não excluiu: ${errorText(e)}`),
+    )
 
   return (
     <div className="app">
@@ -234,21 +248,22 @@ export default function App() {
             const c = s.commands.find((x) => x.id === id)
             if (c) openForm(commandToForm(c), c.id)
           }}
-          onDelete={(id) => {
-            s.deleteCommand(id)
-            s.flash('Comando excluído.')
-          }}
+          onDelete={(id) => void deleteCommand(id)}
           categoryActions={
             s.customCategories.includes(s.rail) && !s.searching
               ? {
                   name: s.rail,
                   onRename: (to) => {
-                    s.renameCategory(s.rail, to)
-                    s.flash(`Categoria renomeada para ${to}.`)
+                    s.renameCategory(s.rail, to).then(
+                      () => s.flash(`Categoria renomeada para ${to}.`),
+                      (e) => s.flash(`Não renomeou: ${errorText(e)}`),
+                    )
                   },
                   onDelete: () => {
-                    s.deleteCategory(s.rail)
-                    s.flash('Categoria excluída. Os comandos dela foram para Meus comandos.')
+                    s.deleteCategory(s.rail).then(
+                      () => s.flash('Categoria excluída. Os comandos dela foram para Meus comandos.'),
+                      (e) => s.flash(`Não excluiu a categoria: ${errorText(e)}`),
+                    )
                   },
                 }
               : undefined
@@ -321,6 +336,7 @@ export default function App() {
               onSave={saveForm}
               onCancel={() => setForm(null)}
               customCategories={s.customCategories}
+              shared={shared}
             />
           ) : cmd ? (
             <CommandView
@@ -344,12 +360,10 @@ export default function App() {
               onRestartServer={() => void restartServer()}
               flash={s.flash}
               onEdit={() => openForm(commandToForm(cmd), cmd.id)}
-              onDelete={() => {
-                s.deleteCommand(cmd.id)
-                s.flash('Comando excluído.')
-              }}
+              onDelete={() => void deleteCommand(cmd.id)}
               loadPackages={loadPackages}
               pickFile={pickFile}
+              shared={shared}
             />
           ) : (
             <DeviceOverview
@@ -380,6 +394,7 @@ export default function App() {
         update={updater.state}
         onInstallUpdate={() => void updater.install()}
         updateBlocked={updateBlocked}
+        syncStatus={s.syncStatus}
       />
     </div>
   )
