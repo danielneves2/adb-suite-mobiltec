@@ -180,6 +180,31 @@ describe('comandos criados antes da sincronização', () => {
     expect(api.save).toHaveBeenCalledTimes(1)
   })
 
+  test('não sobrescreve o que o time já tem (perfil que entra tarde não desfaz edição)', async () => {
+    const { store, data } = memoryStore({ 'meusComandos@ana': [cmd('local-1', { nome: 'versão velha' })] })
+    const api = fakeApi({ changes: vi.fn(async () => ({ commands: [cmd('local-1', { nome: 'editado pela Bia', autor: 'Bia' })], serverNow: '2026-11-26T15:00:00.000Z' })) })
+    const { result } = setup({ api, store, user: 'Ana' })
+    await waitFor(() => expect(data['meusComandos@ana']).toEqual([]))
+    expect(api.save).not.toHaveBeenCalled()
+    expect(result.current.commands.find((c) => c.id === 'local-1')?.nome).toBe('editado pela Bia')
+  })
+
+  test('recusado pelo servidor não fica sendo reenviado; os outros sobem e ele fica guardado à parte', async () => {
+    const { store, data } = memoryStore({ 'meusComandos@ana': [cmd('local-1', { resumo: 'x'.repeat(600) }), cmd('local-2')] })
+    const api = fakeApi({
+      save: vi.fn(async (c: Command, user: string) => {
+        if (c.id === 'local-1') throw new TeamApiError('Resumo muito longo.', false)
+        return { ...c, autor: user }
+      }),
+    })
+    const { result } = setup({ api, store, user: 'Ana' })
+    await waitFor(() => expect(data['meusComandos@ana']).toEqual([]))
+    expect(api.save).toHaveBeenCalledTimes(2)
+    expect(data.comandosNaoEnviados).toEqual([expect.objectContaining({ id: 'local-1' })])
+    await act(() => result.current.syncNow())
+    expect(api.save).toHaveBeenCalledTimes(2) // nada reenviado
+  })
+
   test('no modo local também entram no catálogo deste PC', async () => {
     const { store, data } = memoryStore({ 'meusComandos@ana': [cmd('local-1')] })
     const { result } = setup({ store, user: 'Ana' })

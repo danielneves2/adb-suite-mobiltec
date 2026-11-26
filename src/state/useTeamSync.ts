@@ -4,11 +4,11 @@ import { applyChanges, mergeCatalog, type CommandCache } from '../lib/sync'
 import { TeamApiError, type TeamApi } from '../lib/teamApi'
 import type { ConfigStore } from './useAppState'
 
-/** local = sem servidor neste build; syncing = primeira leitura; online/offline = Ãºltimo contato. */
+/** local = sem servidor neste build; syncing = primeira leitura; online/offline = último contato. */
 export type SyncStatus = 'local' | 'syncing' | 'online' | 'offline'
 
 export interface TeamSyncDeps {
-  /** null = sem servidor configurado: tudo fica sÃ³ neste PC. */
+  /** null = sem servidor configurado: tudo fica só neste PC. */
   api: TeamApi | null
   store: ConfigStore
   embedded: Command[]
@@ -20,8 +20,8 @@ const CACHE_KEY = 'catalogo'
 const SYNC_KEY = 'ultimoSync'
 
 /**
- * CatÃ¡logo do time: embutido + cache do servidor, sincronizado a cada `pollMs`.
- * TambÃ©m sobe (uma vez) os comandos criados antes da sincronizaÃ§Ã£o existir.
+ * Catálogo do time: embutido + cache do servidor, sincronizado a cada `pollMs`.
+ * Também sobe (uma vez) os comandos criados antes da sincronização existir.
  */
 export function useTeamSync({ api, store, embedded, user, pollMs = 30_000 }: TeamSyncDeps) {
   const [cache, setCache] = useState<CommandCache>({})
@@ -43,7 +43,7 @@ export function useTeamSync({ api, store, embedded, user, pollMs = 30_000 }: Tea
     [store],
   )
 
-  // Cache salvo: o catÃ¡logo aparece na hora, antes da rede.
+  // Cache salvo: o catálogo aparece na hora, antes da rede.
   useEffect(() => {
     void (async () => {
       let saved: CommandCache = {}
@@ -51,7 +51,7 @@ export function useTeamSync({ api, store, embedded, user, pollMs = 30_000 }: Tea
         saved = (await store.get<CommandCache>(CACHE_KEY)) ?? {}
         lastSync.current = (await store.get<string>(SYNC_KEY)) || null
       } catch {
-        // cache corrompido: comeÃ§a do embutido e o sync traz tudo de novo
+        // cache corrompido: começa do embutido e o sync traz tudo de novo
         lastSync.current = null
       }
       cacheRef.current = saved
@@ -60,7 +60,7 @@ export function useTeamSync({ api, store, embedded, user, pollMs = 30_000 }: Tea
     })()
   }, [store])
 
-  /** Cria ou atualiza (no servidor, ou sÃ³ neste PC sem servidor). Falha sem internet: nada muda. */
+  /** Cria ou atualiza (no servidor, ou só neste PC sem servidor). Falha sem internet: nada muda. */
   const save = useCallback(
     async (cs: Command[]) => {
       if (!api) {
@@ -84,7 +84,7 @@ export function useTeamSync({ api, store, embedded, user, pollMs = 30_000 }: Tea
     [api, commit],
   )
 
-  /** ExclusÃ£o lÃ³gica. */
+  /** Exclusão lógica. */
   const remove = useCallback(
     async (id: string) => {
       if (!api) {
@@ -104,7 +104,12 @@ export function useTeamSync({ api, store, embedded, user, pollMs = 30_000 }: Tea
     [api, commit, embedded],
   )
 
-  /** Comandos de antes da sincronizaÃ§Ã£o (por perfil e os de antes dos perfis) vÃ£o pro catÃ¡logo do time. */
+  /**
+   * Comandos de antes da sincronização (por perfil e os de antes dos perfis) vão pro catálogo do time.
+   * - Só sobe o que o time ainda não tem: um perfil que entra meses depois não desfaz edição/exclusão de ninguém.
+   * - Recusado pelo servidor (dado inválido) não é reenviado a cada sync: vai pra "comandosNaoEnviados".
+   * - Sem conexão no meio: o que faltou fica na chave e sobe no próximo sync.
+   */
   const migrate = useCallback(async () => {
     const u = userRef.current
     if (!u || migrating.current) return
@@ -113,12 +118,25 @@ export function useTeamSync({ api, store, embedded, user, pollMs = 30_000 }: Tea
       for (const key of [`meusComandos@${u.toLowerCase()}`, 'meusComandos']) {
         const list = await store.get<Command[]>(key)
         if (!Array.isArray(list) || list.length === 0) continue
-        const pending = list.filter((c) => !c.excluido)
-        if (pending.length) await save(pending)
-        await store.set(key, [])
+        const retry: Command[] = []
+        const refused: Command[] = []
+        for (const c of list) {
+          if (c.excluido || cacheRef.current[c.id]) continue
+          try {
+            await save([c])
+          } catch (e) {
+            if (e instanceof TeamApiError && !e.offline) refused.push(c)
+            else retry.push(c)
+          }
+        }
+        if (refused.length) {
+          const before = (await store.get<Command[]>('comandosNaoEnviados')) ?? []
+          await store.set('comandosNaoEnviados', [...before, ...refused])
+        }
+        await store.set(key, retry)
       }
     } catch {
-      // sem conexÃ£o no meio: o que faltou sobe no prÃ³ximo sync (salvar de novo nÃ£o duplica)
+      // armazenamento falhou: tenta de novo no próximo sync (o que já subiu é pulado)
     } finally {
       migrating.current = false
     }
@@ -147,7 +165,7 @@ export function useTeamSync({ api, store, embedded, user, pollMs = 30_000 }: Tea
     return run
   }, [api, commit, store, migrate])
 
-  // Polling (sÃ³ com servidor).
+  // Polling (só com servidor).
   useEffect(() => {
     if (!loaded || !api) return
     void syncNow()

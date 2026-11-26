@@ -9,7 +9,7 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { REPO, assetName, buildLatestJson, downloadUrl } from './release-lib.mjs'
+import { REPO, assetName, buildLatestJson, downloadUrl, missingBuildEnv } from './release-lib.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
@@ -34,6 +34,11 @@ console.log(`ADB Suite – Mobiltec ${version}${publish ? '' : ' (sem publicar)'
 
 const keyPath = join(homedir(), '.tauri', 'adb-suite.key')
 if (!existsSync(keyPath)) fail(`Chave de assinatura não encontrada em ${keyPath}.`)
+
+// Sem a API no build, o instalador sai em modo local (não sincroniza) e ninguém percebe.
+const envPath = join(root, '.env.local')
+const missing = missingBuildEnv(existsSync(envPath) ? readFileSync(envPath, 'utf8') : '')
+if (missing.length) fail(`Falta no .env.local: ${missing.join(', ')}. Sem isso o app publicado não sincroniza com o time.`)
 
 if (publish) {
   if (run('git', ['status', '--porcelain']).stdout.trim()) fail('Tem alteração sem commit. Faça o commit antes de publicar.')

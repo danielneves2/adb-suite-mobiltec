@@ -87,6 +87,9 @@ const lines = (cmd: string) => cmd.split(/\r?\n/).map((l) => l.trim()).filter(Bo
 /** Primeiro erro do formulário (na ordem da referência), ou null se está tudo certo. */
 export function validateCommandForm(f: CommandFormData): string | null {
   if (!f.nome.trim()) return 'Dá um nome pro comando.'
+  // Mesmos limites da API (server/lib/handlers.ts), senão o servidor recusa depois.
+  if (f.nome.trim().length > 80) return 'Nome do comando com no máximo 80 caracteres.'
+  if (f.resumo.trim().length > 500) return '“Pra que serve” com no máximo 500 caracteres.'
   if (!f.categoria.trim()) return 'Dá um nome pra categoria.'
   if (f.categoria.trim().length > 24) return 'Nome da categoria com no máximo 24 caracteres.'
   if (RESERVED_CATEGORIES.has(f.categoria.trim().toLowerCase())) return 'Esse nome é reservado. Escolha outro pra categoria.'

@@ -13,6 +13,13 @@ test('categoria do menu compara sem diferenciar maiúsculas', () => {
   expect(ids).toContain('extrair')
 })
 
+test('limites iguais aos do servidor: nome até 80, resumo até 500', () => {
+  const f = { ...EMPTY_FORM, nome: 'X', comando: 'adb shell ls' }
+  expect(validateCommandForm({ ...f, nome: 'n'.repeat(81) })).toBe('Nome do comando com no máximo 80 caracteres.')
+  expect(validateCommandForm({ ...f, resumo: 'r'.repeat(501) })).toBe('“Pra que serve” com no máximo 500 caracteres.')
+  expect(validateCommandForm({ ...f, nome: 'n'.repeat(80), resumo: 'r'.repeat(500) })).toBeNull()
+})
+
 test('nomes reservados do menu não viram categoria', () => {
   const f = { ...EMPTY_FORM, nome: 'X', comando: 'adb shell ls' }
   expect(validateCommandForm({ ...f, categoria: 'Fixados' })).toBe('Esse nome é reservado. Escolha outro pra categoria.')
