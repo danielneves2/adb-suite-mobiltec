@@ -90,8 +90,22 @@ class HttpError extends Error {
   }
 }
 
+// O app chama de dentro da janela do Tauri (outra origem): sem CORS o navegador embutido bloqueia.
+// "*" é aceito: a chave do app vai no cabeçalho, não em cookie.
+const CORS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'access-control-allow-headers': 'content-type, x-app-key, x-usuario',
+  'access-control-max-age': '86400',
+}
+
 const json = (status: number, data: unknown) =>
-  new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } })
+  new Response(JSON.stringify(data), { status, headers: { ...CORS, 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } })
+
+/** Resposta à pré-verificação (OPTIONS) do navegador. */
+export function preflight(): Response {
+  return new Response(null, { status: 204, headers: CORS })
+}
 
 function checkKey(req: Request, appKey: string) {
   if (!appKey || req.headers.get('x-app-key') !== appKey) throw new HttpError(401, 'Chave do app inválida.')

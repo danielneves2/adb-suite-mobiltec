@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
-import { createApi, type CommandRow, type Db } from './handlers.js'
+import { createApi, preflight, type CommandRow, type Db } from './handlers.js'
 
 const KEY = 'chave-teste'
 const row = (over: Partial<CommandRow> = {}): CommandRow => ({
@@ -138,6 +138,23 @@ describe('DELETE /api/comandos/:id', () => {
   test('inexistente: 404', async () => {
     const res = await createApi(fakeDb({ softDelete: vi.fn(async () => null) }), KEY).excluir(req('DELETE', '/api/comandos/x'), 'x')
     expect(res.status).toBe(404)
+  })
+})
+
+describe('CORS (o app chama de dentro da janela do Tauri, outra origem)', () => {
+  test('pré-verificação OPTIONS libera os cabeçalhos do app', () => {
+    const res = preflight()
+    expect(res.status).toBe(204)
+    expect(res.headers.get('access-control-allow-origin')).toBe('*')
+    expect(res.headers.get('access-control-allow-headers')).toContain('x-app-key')
+    expect(res.headers.get('access-control-allow-headers')).toContain('x-usuario')
+    expect(res.headers.get('access-control-allow-methods')).toContain('PUT')
+  })
+
+  test('respostas normais e de erro também levam o cabeçalho', async () => {
+    const api = createApi(fakeDb(), KEY)
+    expect((await api.listar(req('GET', '/api/comandos'))).headers.get('access-control-allow-origin')).toBe('*')
+    expect((await api.listar(req('GET', '/api/comandos', { key: null }))).headers.get('access-control-allow-origin')).toBe('*')
   })
 })
 
