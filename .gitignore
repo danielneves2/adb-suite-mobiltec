@@ -11,3 +11,6 @@ Saidas/
 .superpowers/
 .playwright-mcp/
 src-tauri/target-test/
+
+# Instaladores gerados pelo scripts/publicar-versao.mjs
+release/

@@ -1,6 +1,6 @@
 [package]
 name = "adb-suite"
-version = "0.2.0"
+version = "0.3.0"
 description = "ADB Suite - Mobiltec"
 authors = ["Mobiltec"]
 edition = "2024"
@@ -29,6 +29,8 @@ zip = "9.8.2"
 tauri-plugin-store = "2"
 tauri-plugin-dialog = "2"
 image = { version = "0.25.10", default-features = false, features = ["png"] }
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_JobObjects", "Win32_System_Threading"] }
