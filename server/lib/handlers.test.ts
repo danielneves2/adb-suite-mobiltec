@@ -34,6 +34,7 @@ function fakeDb(over: Partial<Db> = {}): Db {
     changesSince: vi.fn(async () => ({ rows: [row()], now: '2026-11-26T15:00:00.000Z' })),
     upsertCommand: vi.fn(async (c) => row({ ...c, autor: 'João' })),
     softDelete: vi.fn(async (id: string) => row({ id, excluido: true })),
+    listUsers: vi.fn(async () => ['Ana', 'Bruno', 'Teste Automático']),
     ...over,
   }
 }
@@ -167,4 +168,19 @@ test('erro do banco: 500 sem vazar detalhe', async () => {
   const res = await createApi(db, KEY).listar(req('GET', '/api/comandos'))
   expect(res.status).toBe(500)
   expect(await res.json()).toEqual({ erro: 'Erro no servidor. Tente de novo.' })
+})
+
+describe('GET /api/usuarios', () => {
+  test('lista os nomes do time, sem o usuário do teste automático', async () => {
+    const api = createApi(fakeDb(), KEY)
+    const res = await api.usuarios(req('GET', '/api/usuarios', { user: null }))
+    expect(res.status).toBe(200)
+    expect(await res.json()).toEqual({ usuarios: [{ nome: 'Ana' }, { nome: 'Bruno' }] })
+  })
+
+  test('sem a chave do app: 401', async () => {
+    const api = createApi(fakeDb(), KEY)
+    const res = await api.usuarios(req('GET', '/api/usuarios', { key: null }))
+    expect(res.status).toBe(401)
+  })
 })

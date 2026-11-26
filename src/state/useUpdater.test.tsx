@@ -102,3 +102,63 @@ test('clique duplo em atualizar baixa uma vez só', async () => {
   })
   expect(update.install).toHaveBeenCalledTimes(1)
 })
+
+describe('instalação automática ao abrir (installOnStart)', () => {
+  test('achou versão nova: baixa, instala e reabre sozinho', async () => {
+    const update = fakeUpdate()
+    const api = fakeApi(async () => update)
+    const { result } = renderHook(() => useUpdater(api, { autoCheck: true, installOnStart: true }))
+    await waitFor(() => expect(api.relaunch).toHaveBeenCalledTimes(1))
+    expect(update.install).toHaveBeenCalledTimes(1)
+    expect(result.current.state).toEqual({ kind: 'restarting' })
+  })
+
+  test('instalação falhou: volta o botão "Atualizar agora" pra tentar na mão', async () => {
+    const update = fakeUpdate(async () => {
+      throw new Error('download failed')
+    })
+    const api = fakeApi(async () => update)
+    const { result } = renderHook(() => useUpdater(api, { autoCheck: true, installOnStart: true }))
+    await waitFor(() => expect(update.install).toHaveBeenCalled())
+    await waitFor(() => expect(result.current.state).toEqual({ kind: 'available', version: '0.3.0', notes: 'Novidades' }))
+    expect(api.relaunch).not.toHaveBeenCalled()
+  })
+
+  test('sem versão nova: fica quieto', async () => {
+    const api = fakeApi(async () => null)
+    const { result } = renderHook(() => useUpdater(api, { autoCheck: true, installOnStart: true }))
+    await waitFor(() => expect(api.check).toHaveBeenCalled())
+    await act(async () => {})
+    expect(result.current.state).toEqual({ kind: 'idle' })
+    expect(api.relaunch).not.toHaveBeenCalled()
+  })
+})
+
+describe('procura de novo com o app aberto (recheckMs)', () => {
+  beforeEach(() => vi.useFakeTimers())
+  afterEach(() => vi.useRealTimers())
+
+  test('acha versão depois: só mostra o botão, não reinicia sozinho', async () => {
+    const update = fakeUpdate()
+    let next: AvailableUpdate | null = null
+    const api = fakeApi(async () => next)
+    const { result } = renderHook(() => useUpdater(api, { autoCheck: true, installOnStart: true, recheckMs: 1000 }))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(result.current.state).toEqual({ kind: 'idle' })
+    next = update
+    await act(() => vi.advanceTimersByTimeAsync(1000))
+    expect(api.check).toHaveBeenCalledTimes(2)
+    expect(result.current.state).toEqual({ kind: 'available', version: '0.3.0', notes: 'Novidades' })
+    expect(update.install).not.toHaveBeenCalled()
+  })
+
+  test('não procura de novo enquanto baixa a atualização', async () => {
+    const update = fakeUpdate(() => new Promise<void>(() => {}))
+    const api = fakeApi(async () => update)
+    renderHook(() => useUpdater(api, { autoCheck: true, installOnStart: true, recheckMs: 1000 }))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(update.install).toHaveBeenCalledTimes(1)
+    await act(() => vi.advanceTimersByTimeAsync(3000))
+    expect(api.check).toHaveBeenCalledTimes(1)
+  })
+})

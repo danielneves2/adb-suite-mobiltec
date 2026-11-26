@@ -89,6 +89,11 @@ export function neonDb(databaseUrl: string): Db {
       return row
     },
 
+    async listUsers() {
+      const rows = (await sql.query('select nome from usuarios order by lower(nome)')) as Raw[]
+      return rows.map((r) => String(r.nome))
+    },
+
     async softDelete(id, userId) {
       const updated = (await sql.query('update comandos set excluido = true, atualizado_por = $2 where id = $1 returning id', [id, userId])) as Raw[]
       return updated.length ? byId(id) : null

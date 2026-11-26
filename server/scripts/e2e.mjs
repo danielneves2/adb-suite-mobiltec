@@ -39,6 +39,9 @@ await call('DELETE', `/api/comandos/${id}`)
 const fim = await call('GET', `/api/comandos?desde=${encodeURIComponent(depois.servidor_agora)}`)
 check(fim.comandos.find((c) => c.id === id)?.excluido === true, 'exclusão lógica chega no sync')
 
+const time = await call('GET', '/api/usuarios')
+check(Array.isArray(time.usuarios) && !time.usuarios.some((u) => u.nome === user), `usuários do time: ${time.usuarios.length} (sem o do teste)`)
+
 const semChave = await fetch(`${base.replace(/\/$/, '')}/api/comandos`)
 check(semChave.status === 401, 'sem a chave do app: 401')
 console.log('\nPonta a ponta OK.')

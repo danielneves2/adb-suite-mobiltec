@@ -15,6 +15,8 @@ export interface SettingsProps {
   userName: string | null
   /** null = sair (volta para a tela de entrada, com os perfis salvos). */
   onUserName: (name: string | null) => void
+  /** Técnicos cadastrados no time (só com servidor; sem ele a seção some). */
+  teamUsers?: TeamUsersState
   /** Tamanhos que cabem nesta tela (os outros ficam desligados). Sem a informação, todos ficam liberados. */
   availableSizes?: string[]
   /** Abre a janela do Windows para escolher a pasta (null = cancelou). */
@@ -46,7 +48,40 @@ function updateText(u: UpdateState): string | null {
   }
 }
 
-export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName, availableSizes, pickFolder, appVersion, update = { kind: 'idle' }, onCheckUpdate, onInstallUpdate, updateBlocked }: SettingsProps) {
+export type TeamUsersState = { kind: 'loading' } | { kind: 'ok'; names: string[] } | { kind: 'error' }
+
+function TeamUsers({ state, me }: { state: TeamUsersState; me?: string | null }) {
+  const mine = (n: string) => !!me && n.toLocaleLowerCase('pt-BR') === me.toLocaleLowerCase('pt-BR')
+  return (
+    <section className="config-secao" aria-labelledby="cfg-time">
+      <h2 className="secao-titulo" id="cfg-time">
+        Usuários do time
+      </h2>
+      {state.kind === 'loading' && <p className="config-ajuda">Carregando…</p>}
+      {state.kind === 'error' && <p className="config-ajuda">Sem conexão: não deu pra carregar a lista.</p>}
+      {state.kind === 'ok' && (
+        <>
+          <p className="config-ajuda">
+            {state.names.length === 1 ? '1 técnico cadastrado' : `${state.names.length} técnicos cadastrados`}
+          </p>
+          <ul className="time-lista" aria-label="Usuários do time">
+            {state.names.map((n) => (
+              <li key={n} className="time-usuario">
+                <span className="perfil-avatar" aria-hidden="true">
+                  {initials(n)}
+                </span>
+                <span className="time-nome">{n}</span>
+                {mine(n) && <span className="time-voce">(você)</span>}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  )
+}
+
+export function Settings({ teamUsers, windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName, availableSizes, pickFolder, appVersion, update = { kind: 'idle' }, onCheckUpdate, onInstallUpdate, updateBlocked }: SettingsProps) {
   const [dir, setDir] = useState(baseDir)
   // A pasta muda por fora (outro usuário, barra de baixo): o campo acompanha.
   useEffect(() => setDir(baseDir), [baseDir])
@@ -85,6 +120,8 @@ export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOp
           </button>
         </div>
       </section>
+
+      {teamUsers && <TeamUsers state={teamUsers} me={userName} />}
 
       <section className="config-secao" aria-labelledby="cfg-janela">
         <h2 className="secao-titulo" id="cfg-janela">

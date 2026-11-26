@@ -44,3 +44,11 @@ test('sem rede vira TeamApiError offline', async () => {
   expect(err.offline).toBe(true)
   expect(err.message).toBe('Sem conexão com o servidor.')
 })
+
+test('users: GET /api/usuarios devolve os nomes do time', async () => {
+  const f = fakeFetch(200, { usuarios: [{ nome: 'Ana' }, { nome: 'João' }] })
+  expect(await createTeamApi('https://api.test', 'k', f).users()).toEqual(['Ana', 'João'])
+  const [url, init] = f.mock.calls[0]
+  expect(url).toBe('https://api.test/api/usuarios')
+  expect(new Headers(init?.headers).get('x-app-key')).toBe('k')
+})

@@ -8,7 +8,7 @@ import { CommandView } from './components/CommandView'
 import { DeviceOverview } from './components/DeviceOverview'
 import { FreeCommandView } from './components/FreeCommandView'
 import { Rail } from './components/Rail'
-import { Settings } from './components/Settings'
+import { Settings, type TeamUsersState } from './components/Settings'
 import { StatusBar } from './components/StatusBar'
 import { TopBar } from './components/TopBar'
 import { Welcome } from './components/Welcome'
@@ -18,10 +18,10 @@ import { formatTimestamp } from './lib/commandBuilder'
 import { EMPTY_FORM, FORM_CATEGORIES, MY_CATEGORY, commandToForm, formToCommand, type CommandFormData } from './lib/commandForm'
 import { tauriConfigStore } from './lib/configStore'
 import { pickFile, pickFolder } from './lib/pickFolder'
-import { fitWindowSizes } from './lib/settings'
+import { fitWindowSizes, initialWindowSize } from './lib/settings'
 import { teamApiFromEnv } from './lib/teamApi'
 import { tauriUpdater } from './lib/updater'
-import { applyWindowSize, workAreaSize } from './lib/window'
+import { applyWindowSize, fitWindow, workAreaSize } from './lib/window'
 import { useActivity } from './state/useActivity'
 import { useRunLog } from './state/useRunLog'
 import { useAppState } from './state/useAppState'
@@ -37,7 +37,7 @@ const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e))
 export default function App() {
   const runner = useRunner({ api: adb })
   // Procura versão nova ao abrir (em silêncio se não tiver internet ou release).
-  const updater = useUpdater(tauriUpdater, { autoCheck: true })
+  const updater = useUpdater(tauriUpdater, { autoCheck: true, installOnStart: true, recheckMs: 60 * 60 * 1000 })
   // Atualizar fecha o app: não deixa no meio de um comando rodando.
   const updateBlocked = runner.view.phase === 'running'
   // Formulário Novo/Editar comando aberto no lugar da área principal (key força recomeçar do zero).
@@ -79,6 +79,21 @@ export default function App() {
       .catch(() => setAdbVersion(null))
   }, [])
 
+  // Técnicos do time (lido ao abrir Configurações; sem servidor, a seção não aparece).
+  const [teamUsers, setTeamUsers] = useState<TeamUsersState | undefined>(undefined)
+  useEffect(() => {
+    if (screen !== 'config' || !teamApi) return
+    let alive = true
+    setTeamUsers({ kind: 'loading' })
+    teamApi
+      .users()
+      .then((names) => alive && setTeamUsers({ kind: 'ok', names }))
+      .catch(() => alive && setTeamUsers({ kind: 'error' }))
+    return () => {
+      alive = false
+    }
+  }, [screen])
+
   // Tamanhos que cabem nesta tela (lido ao abrir Configurações: o monitor pode ter mudado).
   useEffect(() => {
     if (screen !== 'config') return
@@ -89,16 +104,24 @@ export default function App() {
 
   // Tamanho da janela escolhido em Configurações (vale também ao abrir o app).
   // Um tamanho salvo que não cabe mais nesta tela (outro monitor, escala maior) volta para "livre".
+  // Na primeira vez em "livre", se a janela de abertura não cabe (notebook com zoom), encolhe até caber.
+  const fittedAtStart = useRef(false)
   useEffect(() => {
     void (async () => {
       let id = s.windowSize
+      let work: { width: number; height: number } | null = null
       try {
-        const work = await workAreaSize()
+        work = await workAreaSize()
         if (work && !fitWindowSizes(work).includes(id)) id = 'livre'
       } catch {
         // sem informação do monitor: aplica o que foi escolhido
       }
       await applyWindowSize(id)
+      if (id === 'livre' && work && !fittedAtStart.current) {
+        fittedAtStart.current = true
+        const fit = initialWindowSize(work)
+        if (fit) await fitWindow(fit.width, fit.height).catch(() => {})
+      }
     })()
   }, [s.windowSize])
   // Nome do que está rodando, pro log de atividade ("Comando livre" ou o nome do comando).
@@ -300,6 +323,7 @@ export default function App() {
               updateBlocked={updateBlocked}
               onClose={() => setScreen(null)}
               availableSizes={availableSizes}
+              teamUsers={teamUsers}
               pickFolder={pickFolder}
               userName={s.userName}
               onUserName={(name) => {

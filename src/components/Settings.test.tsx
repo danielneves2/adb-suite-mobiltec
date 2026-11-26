@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Settings, type SettingsProps } from './Settings'
 
@@ -83,4 +83,26 @@ test('campo da pasta acompanha a pasta atual (outro usuário, ou mudada pela bar
   expect(screen.getByRole('textbox', { name: 'Pasta de saída' })).toHaveValue('D:/Ana')
   rerender(<Settings {...props({ baseDir: 'E:/Bruno' })} />)
   expect(screen.getByRole('textbox', { name: 'Pasta de saída' })).toHaveValue('E:/Bruno')
+})
+
+describe('Usuários do time', () => {
+  test('lista cada técnico com o ícone (iniciais) e o nome; marca quem está usando', () => {
+    render(<Settings {...props({ teamUsers: { kind: 'ok', names: ['Ana Lima', 'Bruno', 'Daniel'] } })} />)
+    const list = screen.getByRole('list', { name: 'Usuários do time' })
+    const items = within(list).getAllByRole('listitem')
+    expect(items.map((li) => li.textContent)).toEqual(['ALAna Lima', 'BBruno', 'DDaniel(você)'])
+    expect(screen.getByText('3 técnicos cadastrados')).toBeInTheDocument()
+  })
+
+  test('carregando e sem conexão', () => {
+    const { rerender } = render(<Settings {...props({ teamUsers: { kind: 'loading' } })} />)
+    expect(screen.getByText('Carregando…')).toBeInTheDocument()
+    rerender(<Settings {...props({ teamUsers: { kind: 'error' } })} />)
+    expect(screen.getByText('Sem conexão: não deu pra carregar a lista.')).toBeInTheDocument()
+  })
+
+  test('sem servidor (modo local): a seção não aparece', () => {
+    render(<Settings {...props()} />)
+    expect(screen.queryByRole('heading', { name: 'Usuários do time' })).not.toBeInTheDocument()
+  })
 })

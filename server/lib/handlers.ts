@@ -39,6 +39,8 @@ export interface Db {
   upsertCommand(c: CommandInput, userId: string): Promise<CommandRow>
   /** excluido = true; null se o id não existe. */
   softDelete(id: string, userId: string): Promise<CommandRow | null>
+  /** Nomes de todos os técnicos cadastrados, em ordem alfabética. */
+  listUsers(): Promise<string[]>
 }
 
 const NAME_CHARS = /^[\p{L}\s.'-]+$/u
@@ -148,8 +150,18 @@ async function handle(fn: () => Promise<Response>): Promise<Response> {
   }
 }
 
+/** Usuário que o scripts/e2e.mjs cria; não é gente do time. */
+const E2E_USER = 'Teste Automático'
+
 export function createApi(db: Db, appKey: string) {
   return {
+    usuarios: (req: Request) =>
+      handle(async () => {
+        checkKey(req, appKey)
+        const nomes = (await db.listUsers()).filter((n) => n !== E2E_USER)
+        return json(200, { usuarios: nomes.map((nome) => ({ nome })) })
+      }),
+
     entrar: (req: Request) =>
       handle(async () => {
         checkKey(req, appKey)

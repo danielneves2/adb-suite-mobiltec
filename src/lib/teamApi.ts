@@ -20,6 +20,8 @@ export interface TeamApi {
   changes(since: string | null): Promise<{ commands: Command[]; serverNow: string }>
   save(c: Command, user: string): Promise<Command>
   remove(id: string, user: string): Promise<Command>
+  /** Nomes dos técnicos cadastrados no time. */
+  users(): Promise<string[]>
 }
 
 type FetchFn = (url: string, init?: RequestInit) => Promise<Response>
@@ -56,6 +58,9 @@ export function createTeamApi(baseUrl: string, appKey: string, fetchFn: FetchFn 
     },
     async remove(id, user) {
       return (await call<{ comando: Command }>('DELETE', `/api/comandos/${encodeURIComponent(id)}`, { user })).comando
+    },
+    async users() {
+      return (await call<{ usuarios: { nome: string }[] }>('GET', '/api/usuarios')).usuarios.map((u) => u.nome)
     },
   }
 }

@@ -1616,6 +1616,16 @@ select.campo {
   .perfil-texto {
     display: none;
   }
+  /* Em Configurações o cartão do usuário tem espaço: o nome continua visível. */
+  .config-perfil {
+    justify-content: flex-start;
+    padding: 8px;
+    border-color: var(--divisor);
+    background: var(--card);
+  }
+  .config-perfil .perfil-texto {
+    display: flex;
+  }
 }
 
 /* ---------- boas-vindas (primeira abertura) ---------- */
@@ -2111,4 +2121,35 @@ select.campo {
   border-radius: var(--raio-card);
   background: color-mix(in srgb, var(--erro) 8%, transparent);
   font-size: 12.5px;
+}
+
+/* ---------- Configurações: usuários do time ---------- */
+.time-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.time-usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--divisor);
+  border-radius: var(--raio);
+  background: var(--card);
+}
+.time-nome {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.time-voce {
+  flex: none;
+  color: var(--texto-2);
+  font-size: 12px;
 }

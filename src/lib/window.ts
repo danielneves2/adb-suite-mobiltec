@@ -54,6 +54,12 @@ const tauriWindow: WindowApi = {
 
 export const applyWindowSize = createWindowSizer(tauriWindow)
 
+/** Encolhe a janela (modo Livre) para caber na tela e centraliza. */
+export async function fitWindow(width: number, height: number): Promise<void> {
+  await tauriWindow.setSize(width, height)
+  await tauriWindow.center()
+}
+
 /** Área útil do monitor atual em pixels lógicos (sem a barra de tarefas), ou null se não der pra saber. */
 export async function workAreaSize(): Promise<{ width: number; height: number } | null> {
   const m = await currentMonitor()
