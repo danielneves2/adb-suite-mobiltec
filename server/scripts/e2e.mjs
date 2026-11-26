@@ -8,7 +8,7 @@ if (!base || !key) {
   process.exit(1)
 }
 
-const user = 'Teste E2E'
+const user = 'Teste Automático' // só letras: a regra de nome não aceita número
 const headers = { 'content-type': 'application/json', 'x-app-key': key, 'x-usuario': encodeURIComponent(user) }
 async function call(method, path, body) {
   const res = await fetch(`${base.replace(/\/$/, '')}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined })
