@@ -19,17 +19,23 @@ import { EMPTY_FORM, FORM_CATEGORIES, MY_CATEGORY, commandToForm, formToCommand,
 import { tauriConfigStore } from './lib/configStore'
 import { pickFile, pickFolder } from './lib/pickFolder'
 import { fitWindowSizes } from './lib/settings'
+import { tauriUpdater } from './lib/updater'
 import { applyWindowSize, workAreaSize } from './lib/window'
 import { useActivity } from './state/useActivity'
 import { useRunLog } from './state/useRunLog'
 import { useAppState } from './state/useAppState'
 import { useRunner } from './state/useRunner'
+import { useUpdater } from './state/useUpdater'
 import './styles/app.css'
 
 const catalog = rawCatalog as unknown as Catalog
 
 export default function App() {
   const runner = useRunner({ api: adb })
+  // Procura versão nova ao abrir (em silêncio se não tiver internet ou release).
+  const updater = useUpdater(tauriUpdater, { autoCheck: true })
+  // Atualizar fecha o app: não deixa no meio de um comando rodando.
+  const updateBlocked = runner.view.phase === 'running'
   // Formulário Novo/Editar comando aberto no lugar da área principal (key força recomeçar do zero).
   // Telas que não são um comando do catálogo: Configurações e Comando livre.
   const [screen, setScreen] = useState<'config' | 'livre' | null>(null)
@@ -273,6 +279,10 @@ export default function App() {
               onOpenBase={() => void openFolder(s.baseDir)}
               adbVersion={adbVersion}
               appVersion={appVersion}
+              update={updater.state}
+              onCheckUpdate={() => void updater.check()}
+              onInstallUpdate={() => void updater.install()}
+              updateBlocked={updateBlocked}
               onClose={() => setScreen(null)}
               availableSizes={availableSizes}
               pickFolder={pickFolder}
@@ -367,6 +377,9 @@ export default function App() {
         device={device}
         adbOk={!s.devicesError}
         pickFolder={pickFolder}
+        update={updater.state}
+        onInstallUpdate={() => void updater.install()}
+        updateBlocked={updateBlocked}
       />
     </div>
   )

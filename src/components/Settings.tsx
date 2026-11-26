@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { WINDOW_SIZES } from '../lib/settings'
 import { initials } from '../lib/user'
+import type { UpdateState } from '../state/useUpdater'
 import { Icon } from './icons'
 
 export interface SettingsProps {
@@ -20,9 +21,32 @@ export interface SettingsProps {
   pickFolder: (defaultPath: string) => Promise<string | null>
   /** Versão do app instalado (Tauri getVersion). */
   appVersion?: string | null
+  /** Atualização automática: estado e ações (Sobre → Procurar atualização). */
+  update?: UpdateState
+  onCheckUpdate?: () => void
+  onInstallUpdate?: () => void
+  /** Comando rodando: instalar agora derrubaria o trabalho. */
+  updateBlocked?: boolean
 }
 
-export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName, availableSizes, pickFolder, appVersion }: SettingsProps) {
+function updateText(u: UpdateState): string | null {
+  switch (u.kind) {
+    case 'none':
+      return 'Você já está na versão mais nova.'
+    case 'available':
+      return `Versão ${u.version} disponível.`
+    case 'downloading':
+      return u.percent === null ? 'Baixando atualização…' : `Baixando atualização ${u.percent}%`
+    case 'restarting':
+      return 'Reiniciando…'
+    case 'error':
+      return u.message
+    default:
+      return null
+  }
+}
+
+export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOpenBase, adbVersion, onClose, userName, onUserName, availableSizes, pickFolder, appVersion, update = { kind: 'idle' }, onCheckUpdate, onInstallUpdate, updateBlocked }: SettingsProps) {
   const [dir, setDir] = useState(baseDir)
   // A pasta muda por fora (outro usuário, barra de baixo): o campo acompanha.
   useEffect(() => setDir(baseDir), [baseDir])
@@ -132,6 +156,30 @@ export function Settings({ windowSize, onWindowSize, baseDir, onChangeBase, onOp
           <dt>adb embutido</dt>
           <dd className="mono">{adbVersion ?? '—'}</dd>
         </dl>
+        {onCheckUpdate && (
+          <div className="config-linha config-atualizacao">
+            <button type="button" className="btn" onClick={onCheckUpdate} disabled={update.kind === 'checking' || update.kind === 'downloading' || update.kind === 'restarting'}>
+              <Icon name="seta-cima" size={14} />
+              {update.kind === 'checking' ? 'Procurando…' : 'Procurar atualização'}
+            </button>
+            {update.kind === 'available' && onInstallUpdate && (
+              <button
+                type="button"
+                className="btn btn-primario"
+                onClick={onInstallUpdate}
+                disabled={updateBlocked}
+                title={updateBlocked ? 'Pare o comando antes de atualizar' : 'Baixa, instala e reabre o app'}
+              >
+                Atualizar agora
+              </button>
+            )}
+            {updateText(update) && (
+              <span className={`config-ajuda${update.kind === 'error' ? ' texto-erro' : ''}`} role="status">
+                {updateText(update)}
+              </span>
+            )}
+          </div>
+        )}
       </section>
     </div>
   )

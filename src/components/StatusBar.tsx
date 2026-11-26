@@ -1,4 +1,5 @@
 import { deviceName, type DeviceInfo } from '../lib/appLogic'
+import type { UpdateState } from '../state/useUpdater'
 import { Icon } from './icons'
 
 interface Props {
@@ -12,10 +13,48 @@ interface Props {
   adbOk: boolean
   /** Abre a janela do Windows para escolher a pasta (null = cancelou). */
   pickFolder: (defaultPath: string) => Promise<string | null>
+  /** Atualização automática (só aparece quando há versão nova ou durante a instalação). */
+  update?: UpdateState
+  onInstallUpdate?: () => void
+  /** Comando rodando: instalar agora derrubaria o trabalho. */
+  updateBlocked?: boolean
+}
+
+function UpdateItem({ update, onInstall, blocked }: { update?: UpdateState; onInstall?: () => void; blocked?: boolean }) {
+  if (update?.kind === 'available')
+    return (
+      <span className="status-item status-atualizacao">
+        <Icon name="seta-cima" size={14} />
+        Versão {update.version} disponível
+        <button
+          type="button"
+          className="btn btn-mini btn-atualizar"
+          disabled={blocked}
+          title={blocked ? 'Pare o comando antes de atualizar' : 'Baixa, instala e reabre o app'}
+          onClick={onInstall}
+        >
+          Atualizar agora
+        </button>
+      </span>
+    )
+  if (update?.kind === 'downloading')
+    return (
+      <span className="status-item status-atualizacao" role="status">
+        <Icon name="seta-cima" size={14} />
+        {update.percent === null ? 'Baixando atualização…' : `Baixando atualização ${update.percent}%`}
+      </span>
+    )
+  if (update?.kind === 'restarting')
+    return (
+      <span className="status-item status-atualizacao" role="status">
+        Reiniciando…
+      </span>
+    )
+  return null
 }
 
 /** Barra de status no estilo de IDE: aparelhos, aparelho atual, Android, ADB e pasta de saída. */
-export function StatusBar({ deviceDir, baseDir, onChangeBase, onOpen, message, deviceCount, device, adbOk, pickFolder }: Props) {
+export function StatusBar({ deviceDir, baseDir, onChangeBase, onOpen, message, deviceCount, device, adbOk, pickFolder, update, onInstallUpdate, updateBlocked }: Props) {
   const shown = deviceDir ?? baseDir
   const ready = device?.state === 'device'
 
@@ -39,6 +78,7 @@ export function StatusBar({ deviceDir, baseDir, onChangeBase, onOpen, message, d
         {adbOk ? 'ADB: OK' : 'ADB: erro'}
       </span>
       <span className="status-espaco" />
+      <UpdateItem update={update} onInstall={onInstallUpdate} blocked={updateBlocked} />
       {message && (
         <span className="status-mensagem" role="status">
           {message}

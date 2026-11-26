@@ -1203,6 +1203,19 @@ select.campo {
 .status-espaco {
   flex: 1;
 }
+/* Versão nova: o laranja é o único destaque da barra (regra 90/7/3). */
+.status-atualizacao {
+  color: var(--laranja);
+  border-left: 1px solid var(--divisor);
+}
+.btn-atualizar {
+  border-color: var(--laranja);
+  color: var(--laranja);
+}
+.btn-atualizar:hover:not(:disabled) {
+  background: var(--laranja);
+  color: var(--fundo);
+}
 .status-mensagem {
   padding: 0 12px;
   color: var(--texto);
@@ -1398,6 +1411,13 @@ select.campo {
 }
 .config-sobre dd {
   margin: 0;
+}
+.config-atualizacao {
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.config-atualizacao .texto-erro {
+  color: var(--erro);
 }
 
 /* ---------- apps do aparelho (seletor de pacote) ---------- */
