@@ -1,6 +1,6 @@
 [package]
 name = "adb-suite"
-version = "0.3.0"
+version = "0.4.0"
 description = "ADB Suite - Mobiltec"
 authors = ["Mobiltec"]
 edition = "2024"
